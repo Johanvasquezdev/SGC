@@ -35,6 +35,10 @@ Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "sgc.web.client", "SGC.Web\s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGC.Web.Server", "SGC.Web\SGC.Web.Server\SGC.Web.Server.csproj", "{0FA524B9-4AD7-4914-B0BE-9DE025187592}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ApllicationTest", "ApllicationTest", "{C64B781C-54FA-441C-B796-C57803C1FA92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGC.ApplicationTest", "SGC.ApplicationTest\SGC.ApplicationTest.csproj", "{156EB7F6-80FE-4732-BE58-B6F4B54B9DDB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +83,10 @@ Global
 		{0FA524B9-4AD7-4914-B0BE-9DE025187592}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0FA524B9-4AD7-4914-B0BE-9DE025187592}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0FA524B9-4AD7-4914-B0BE-9DE025187592}.Release|Any CPU.Build.0 = Release|Any CPU
+		{156EB7F6-80FE-4732-BE58-B6F4B54B9DDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{156EB7F6-80FE-4732-BE58-B6F4B54B9DDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{156EB7F6-80FE-4732-BE58-B6F4B54B9DDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{156EB7F6-80FE-4732-BE58-B6F4B54B9DDB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -93,6 +101,7 @@ Global
 		{EEE225B3-471E-4E5C-B200-EB358E5DBF4A} = {7B217A3D-3D20-49AC-B9CD-4814AF701CF8}
 		{C6FE0345-FBE7-519E-268B-36EA96EE20F6} = {ED87F6A9-FA56-46F4-BF6B-A8FE7FDB5244}
 		{0FA524B9-4AD7-4914-B0BE-9DE025187592} = {ED87F6A9-FA56-46F4-BF6B-A8FE7FDB5244}
+		{156EB7F6-80FE-4732-BE58-B6F4B54B9DDB} = {C64B781C-54FA-441C-B796-C57803C1FA92}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {41E06F6C-D24F-4AA1-877F-EB911AE5B157}

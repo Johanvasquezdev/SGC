@@ -1,6 +1,6 @@
 ﻿namespace SGC.IOC
 {
-    public class Class1
+    public class IOC
     {
 
     }
