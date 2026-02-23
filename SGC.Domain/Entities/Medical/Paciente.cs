@@ -2,7 +2,6 @@
 
 namespace SGC.Domain.Entities.Medical
 {
-
     public class Paciente : Usuario // El paciente es un tipo de usuario 
     {
         public string Cedula { get; set; } 

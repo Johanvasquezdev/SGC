@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace SGC.Domain.Entities.Medical
 {
-   
+
     public class Medico : Usuario // El médico es un tipo de usuario 
     {
         public string Exequatur { get; set; }
