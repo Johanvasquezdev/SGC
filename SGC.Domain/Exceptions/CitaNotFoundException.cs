@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SGC.Domain.Exceptions
+﻿namespace SGC.Domain.Exceptions
 {
-    internal class CitaNotFoundException //  para indicar que una cita médica no fue encontrada en el sistema.
+    public sealed class CitaNotFoundException : Exception // para indicar que no se encontró una cita con el Id especificado
     {
+        public CitaNotFoundException(int id)
+            : base($"La cita con Id {id} no fue encontrada.") { }
     }
 }

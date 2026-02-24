@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SGC.Domain.Entities.Notifications
 {
-    internal class Notificacion // para notificaciones relacionadas con citas, recordatorios, etc.
+    public class Notificacion // para notificaciones relacionadas con citas, recordatorios, etc.
     {
     }
 }

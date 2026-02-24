@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SGC.Domain.Exceptions
+﻿namespace SGC.Domain.Exceptions
 {
-    internal class HorarioNoDisponibleException // para indicar que el horario seleccionado para una cita no está disponible
+    public sealed class HorarioNoDisponibleException : Exception // para indicar que el médico no tiene disponibilidad para la fecha y hora solicitada
     {
+        public HorarioNoDisponibleException(int medicoId, DateTime fechaHora)
+            : base($"El médico {medicoId} no tiene disponibilidad para {fechaHora}.") { }
     }
 }
