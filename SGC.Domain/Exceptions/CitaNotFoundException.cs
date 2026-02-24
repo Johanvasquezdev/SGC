@@ -2,6 +2,8 @@
 {
     public sealed class CitaNotFoundException : Exception // para indicar que no se encontró una cita con el Id especificado
     {
+
+        // el constructor de la excepción recibe el ID de la cita que no se encontró, y construye un mensaje de error informativo que se puede usar para depurar o mostrar al usuario
         public CitaNotFoundException(int id)
             : base($"La cita con Id {id} no fue encontrada.") { }
     }
