@@ -3,12 +3,22 @@ using SGC.Domain.Enums;
 
 namespace SGC.Domain.Entities.Notifications
 {
-    public class Notificacion : EntidadBase
+    public sealed class Notificacion : EntidadBase // clase para notificacion del sistema
     {
-        public int UsuarioId { get; set; }          // A quién va dirigida
-        public string Mensaje { get; set; }          // Contenido del mensaje
-        public TipoNotificacion Tipo { get; set; }  // Email, SMS, Push, etc.
-        public bool Leida { get; set; } = false;     // Si fue leída o no
-        public DateTime FechaEnvio { get; set; }     // Cuándo se envió
+        public int UsuarioId { get; set; }
+        public int? CitaId { get; set; }
+        public TipoNotificacion Tipo { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public bool Leida { get; set; } = false;
+        public DateTime FechaEnvio { get; set; } = DateTime.UtcNow;
+
+        // marcar notificación como leída
+        public void MarcarLeida()
+        {
+            if (Leida)
+                throw new InvalidOperationException(
+                    "La notificación ya fue marcada como leída.");
+            Leida = true;
+        }
     }
 }
