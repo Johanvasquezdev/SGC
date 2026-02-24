@@ -1,6 +1,12 @@
-Ôªønamespace SGC.Domain.Interfaces.Repository;
+using SGC.Domain.Entities.Appointments;
 
-public interface ICitaRepository // Interfaz para el repositorio de citas, define los m√©todos que se implementar√°n para gestionar las citas en la base de datos
+public class ICitaRepository // Interfaz para el repositorio de citas, define los mÈtodos que se implementar·n para gestionar las citas en la base de datos
 {
-    
+    public interface ICitaRepository : IBaseRepository<Cita>
+    {
+        Task<IEnumerable<Cita>> GetByPacienteIdAsync(int pacienteId);
+        Task<IEnumerable<Cita>> GetByMedicoIdAsync(int medicoId);
+        Task<IEnumerable<Cita>> GetByFechaAsync(DateTime fecha);
+        Task<bool> ExisteConflictoAsync(int medicoId, DateTime fechaHora);
+    }
 }
