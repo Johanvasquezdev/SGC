@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SGC.Domain.Entities.Medical;
 
 namespace SGC.Domain.Interfaces.Repository
 {
-    internal class IMedicoRepository // para operaciones relacionadas con médicos, como agregar, actualizar, eliminar y consultar médicos en el sistema
+    public interface IMedicoRepository : IBaseRepository<Medico>
     {
+        Task<Medico> GetByExequaturAsync(string exequatur);
+        Task<IEnumerable<Medico>> GetByEspecialidadAsync(int especialidadId);
     }
 }
