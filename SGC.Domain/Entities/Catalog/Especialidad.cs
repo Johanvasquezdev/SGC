@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SGC.Domain.Base;
 
 namespace SGC.Domain.Entities.Catalog
 {
-    // Esta clase representa una especialidad médica en el sistema de gestión de citas médicas.
-    internal class Especialidad
+    public sealed class Especialidad : EntidadBase
     {
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
+        public bool Activo { get; set; } = true;
     }
 }
