@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SGC.Domain.Base;
+using SGC.Domain.Enums;
 
 namespace SGC.Domain.Entities.Notifications
 {
-    internal class Notificacion // para notificaciones relacionadas con citas, recordatorios, etc.
+    public class Notificacion : EntidadBase
     {
+        public int UsuarioId { get; set; }          // A quién va dirigida
+        public string Mensaje { get; set; }          // Contenido del mensaje
+        public TipoNotificacion Tipo { get; set; }  // Email, SMS, Push, etc.
+        public bool Leida { get; set; } = false;     // Si fue leída o no
+        public DateTime FechaEnvio { get; set; }     // Cuándo se envió
     }
 }
