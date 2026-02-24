@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SGC.Domain.Entities.Appointments;
 
 namespace SGC.Domain.Interfaces.Repository
 {
-    internal class IDisponibilidadRepository // para gestionar la disponibilidad de los proveedores de salud, incluyendo horarios, días disponibles, etc.
+    public interface IDisponibilidadRepository : IBaseRepository<Disponibilidad>
     {
+        Task<IEnumerable<Disponibilidad>> GetByMedicoIdAsync(int medicoId);
+        Task<IEnumerable<Disponibilidad>> GetByDiaAsync(string diaSemana);
     }
 }
