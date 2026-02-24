@@ -2,6 +2,7 @@
 
 namespace SGC.Domain.Entities.Medical
 {
+    //  la clase Paciente representa a un paciente del sistema, con propiedades para cédula, teléfono, fecha de nacimiento, tipo de seguro y número de seguro. Incluye un método para calcular la edad del paciente basado en su fecha de nacimiento.
     public sealed class Paciente : Usuario
     {
         public string Cedula { get; set; } = string.Empty;
