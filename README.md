@@ -1,6 +1,6 @@
 # 🏥 MedAgenda — Sistema de Gestión de Citas Médicas (SGCM)
 
-> Proyecto académico desarrollado para la asignatura **Programación II** — ITLA  
+> Proyecto académico de aplicacion web y desktop de sistema de gestion de citas medicas
 > Profesor: Francis Ramirez
 
 ---
