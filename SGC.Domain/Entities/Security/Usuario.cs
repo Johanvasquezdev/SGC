@@ -10,6 +10,7 @@ namespace SGC.Domain.Entities.Security
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public RolUsuario Rol { get; set; }
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow; // La tabla USUARIO tiene columna fechaCreacion
         public bool Activo { get; set; } = true;
 
         // regla de negocio

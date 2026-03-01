@@ -14,6 +14,7 @@ namespace SGC.Domain.Entities.Appointments
         public EstadoCita Estado { get; set; } = EstadoCita.Solicitada;
         public string? Motivo { get; set; }
         public string? Notas { get; set; }
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow; // La tabla CITA tiene columna fechaCreacion
 
         // Constructor para crear una nueva cita
         public void Confirmar()
@@ -53,7 +54,16 @@ namespace SGC.Domain.Entities.Appointments
             Estado = EstadoCita.NoAsistio;
         }
 
-        // metodo para completar una cita, solo si la cita no esta en progreso
+        // metodo para iniciar la consulta medica, transicionando la cita de Confirmada a EnProgreso. Solo se puede iniciar una cita que ha sido previamente confirmada. Esta transicion es necesaria para luego poder completar la cita.
+        public void IniciarConsulta()
+        {
+            if (Estado != EstadoCita.Confirmada)
+                throw new CitaConflictoException(
+                    "Solo se puede iniciar una cita en estado Confirmada.");
+            Estado = EstadoCita.EnProgreso;
+        }
+
+        // metodo para completar una cita, solo si la cita esta en progreso
         public void Completar()
         {
             if (Estado != EstadoCita.EnProgreso)

@@ -1,4 +1,5 @@
 ﻿using SGC.Domain.Base;
+using SGC.Domain.Enums;
 
 namespace SGC.Domain.Entities.Appointments
 {
@@ -6,7 +7,7 @@ namespace SGC.Domain.Entities.Appointments
     public class Disponibilidad : EntidadBase
     {
         public int MedicoId { get; set; }
-        public string DiaSemana { get; set; } = string.Empty;
+        public DiaSemana DiaSemana { get; set; }
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan HoraFin { get; set; }
         public int DuracionCitaMin { get; set; }
