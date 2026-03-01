@@ -1,21 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SGC.Domain.Repository
+namespace SGC.Domain.Interfaces.Repository
 {
 
-    // Interfaz genérica base para el patrón Repository.
-    // Define las operaciones CRUD estándar que todas las entidades del sistema compartirán.
-    // Esto permite desacoplar la lógica de negocio de la base de datos (PostgreSQL).
+    // Interfaz genérica base para el patrón Repository.Define las operaciones CRUD estándar que todas las entidades del sistema compartirán.Esto permite desacoplar la lógica de negocio de la base de datos (PostgreSQL).
     public interface IBaseRepository<T> where T : class
     {
     
-        // Obtiene un registro único de forma asíncrona mediante su identificador primario.
         Task<T> GetByIdAsync(int id);
+        // Obtiene un registro único de forma asíncrona mediante su identificador primario.
 
 
         // Recupera todos los registros de la entidad de forma asíncrona.
-        // Útil para listados generales como catálogos de especialidades.
         Task<IEnumerable<T>> GetAllAsync();
 
 
