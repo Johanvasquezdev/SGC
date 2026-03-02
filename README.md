@@ -110,9 +110,6 @@ SGC Solution
 - **MVVM** — Patrón aplicado en la aplicación de escritorio (.NET MAUI)
 - **MVC** — Patrón aplicado en el portal web (Next.js)
 
-### Decisión sobre Supabase
-
-Se utiliza **Supabase exclusivamente como proveedor de hosting para PostgreSQL**, sin uso de sus servicios de Auth ni Realtime. Esta decisión no afecta la integridad de la arquitectura limpia, ya que el acceso a datos se realiza mediante el patrón Repository. El core del sistema (`SGC.Domain`) permanece agnóstico al proveedor, cumpliendo con el Principio de Inversión de Dependencia.
 
 ### Comunicación en tiempo real
 
