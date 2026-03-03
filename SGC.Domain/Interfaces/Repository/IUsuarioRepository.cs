@@ -1,10 +1,12 @@
 using SGC.Domain.Entities.Security;
+using SGC.Domain.Enums;
 
 namespace SGC.Domain.Interfaces.Repository
 {
-    public interface IUsuarioRepository : IBaseRepository<Usuario> // Interfaz especifica para la entidad Usuario, que hereda de la interfaz generica IBaseRepository.
+    // Interfaz especifica para la entidad Usuario, con metodos para consultar por email o rol.
+    public interface IUsuarioRepository : IBaseRepository<Usuario>
     {
-        Task<Usuario> GetByEmailAsync(string email); // Obtener un usuario por su email, que es unico en el sistema.
-        Task<IEnumerable<Usuario>> GetByRolAsync(string rol); // Obtener todos los usuarios con un rol especifico (Administrador, Medico, Paciente).
+        Task<Usuario> GetByEmailAsync(string email);
+        Task<IEnumerable<Usuario>> GetByRolAsync(RolUsuario rol);
     }
 }
