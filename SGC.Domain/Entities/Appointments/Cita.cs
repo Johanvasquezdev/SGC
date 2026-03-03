@@ -1,10 +1,11 @@
-﻿using SGC.Domain.Base;
+using SGC.Domain.Base;
+using SGC.Domain.Entities.Medical;
 using SGC.Domain.Enums;
 using SGC.Domain.Exceptions;
 
 namespace SGC.Domain.Entities.Appointments
 {
-    // la clase cita representa una cita médica entre un paciente y un médico, con propiedades para la fecha y hora, estado de la cita, motivo de cancelación o reprogramación, y notas adicionales. Incluye reglas de negocio para confirmar, cancelar, reprogramar, marcar como no asistió o completar la cita, asegurando que las transiciones de estado sean coherentes con el flujo típico de una cita médica.
+    // Representa una cita medica entre un paciente y un medico con maquina de estados
     public class Cita : EntidadBase
     {
         public int PacienteId { get; set; }
@@ -14,9 +15,14 @@ namespace SGC.Domain.Entities.Appointments
         public EstadoCita Estado { get; set; } = EstadoCita.Solicitada;
         public string? Motivo { get; set; }
         public string? Notas { get; set; }
-        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow; // La tabla CITA tiene columna fechaCreacion
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
-        // Constructor para crear una nueva cita
+        // Propiedades de navegacion
+        public Paciente Paciente { get; set; } = null!;
+        public Medico Medico { get; set; } = null!;
+        public Disponibilidad? Disponibilidad { get; set; }
+
+        // Transiciones de estado
         public void Confirmar()
         {
             if (Estado != EstadoCita.Solicitada)
@@ -25,7 +31,6 @@ namespace SGC.Domain.Entities.Appointments
             Estado = EstadoCita.Confirmada;
         }
 
-        // El método Cancelar permite cancelar una cita, pero solo si no está completada. Si la cita ya está completada, se lanza una excepción CitaConflictoException. Al cancelar, se establece el estado de la cita a Cancelada y se registra el motivo de la cancelación.
         public void Cancelar(string motivo)
         {
             if (Estado == EstadoCita.Completada)
@@ -35,7 +40,15 @@ namespace SGC.Domain.Entities.Appointments
             Motivo = motivo;
         }
 
-        // metodo Reprogramar permite cambiar la fecha y hora de una cita, pero solo si la cita no está completada ni cancelada. Si la cita ya está en uno de esos estados, se lanza una excepción CitaConflictoException. Al reprogramar, se actualiza la fecha y hora de la cita y se restablece su estado a Solicitada.
+        public void Rechazar(string motivo)
+        {
+            if (Estado != EstadoCita.Solicitada)
+                throw new CitaConflictoException(
+                    "Solo se puede rechazar una cita en estado Solicitada.");
+            Estado = EstadoCita.Rechazada;
+            Motivo = motivo;
+        }
+
         public void Reprogramar(DateTime nuevaFecha)
         {
             if (Estado == EstadoCita.Completada || Estado == EstadoCita.Cancelada)
@@ -45,7 +58,6 @@ namespace SGC.Domain.Entities.Appointments
             Estado = EstadoCita.Solicitada;
         }
 
-        // metodo para marcar una cita como NoAsistio, pero solo si la cita está en estado Confirmada. Si la cita no está confirmada, se lanza una excepción CitaConflictoException. Al marcar como NoAsistio, se actualiza el estado de la cita a NoAsistio.
         public void MarcarNoAsistio()
         {
             if (Estado != EstadoCita.Confirmada)
@@ -54,7 +66,6 @@ namespace SGC.Domain.Entities.Appointments
             Estado = EstadoCita.NoAsistio;
         }
 
-        // metodo para iniciar la consulta medica, transicionando la cita de Confirmada a EnProgreso. Solo se puede iniciar una cita que ha sido previamente confirmada. Esta transicion es necesaria para luego poder completar la cita.
         public void IniciarConsulta()
         {
             if (Estado != EstadoCita.Confirmada)
@@ -63,7 +74,6 @@ namespace SGC.Domain.Entities.Appointments
             Estado = EstadoCita.EnProgreso;
         }
 
-        // metodo para completar una cita, solo si la cita esta en progreso
         public void Completar()
         {
             if (Estado != EstadoCita.EnProgreso)
