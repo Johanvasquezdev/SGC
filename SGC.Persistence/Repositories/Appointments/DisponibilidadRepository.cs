@@ -1,4 +1,5 @@
 using SGC.Domain.Entities.Appointments;
+using SGC.Domain.Enums;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Persistence.Base;
 using SGC.Persistence.Context;
@@ -19,7 +20,7 @@ namespace SGC.Persistence.Repositories.Appointments
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Disponibilidad>> GetByDiaAsync(string diaSemana)
+        public Task<IEnumerable<Disponibilidad>> GetByDiaAsync(DiaSemana diaSemana)
         {
             throw new NotImplementedException();
         }

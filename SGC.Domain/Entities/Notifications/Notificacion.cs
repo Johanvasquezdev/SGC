@@ -1,9 +1,12 @@
 using SGC.Domain.Base;
+using SGC.Domain.Entities.Appointments;
+using SGC.Domain.Entities.Security;
 using SGC.Domain.Enums;
 
 namespace SGC.Domain.Entities.Notifications
 {
-    public sealed class Notificacion : EntidadBase // La clase Notificacion representa una notificación que se envía a un usuario, con información sobre el tipo de notificación, el mensaje, si ha sido leída y la fecha de envío. Hereda de EntidadBase para incluir propiedades comunes como Id y FechaCreacion.
+    // Notificacion enviada a un usuario del sistema
+    public sealed class Notificacion : EntidadBase
     {
         public int UsuarioId { get; set; }
         public int? CitaId { get; set; }
@@ -12,13 +15,16 @@ namespace SGC.Domain.Entities.Notifications
         public bool Leida { get; set; } = false;
         public DateTime FechaEnvio { get; set; } = DateTime.UtcNow;
 
+        // Propiedades de navegacion
+        public Usuario Usuario { get; set; } = null!;
+        public Cita? Cita { get; set; }
 
-        // marcar notificación como leída
+        // Marcar notificacion como leida
         public void MarcarLeida()
         {
             if (Leida)
                 throw new InvalidOperationException(
-                    "La notificación ya fue marcada como leída.");
+                    "La notificacion ya fue marcada como leida.");
             Leida = true;
         }
     }
