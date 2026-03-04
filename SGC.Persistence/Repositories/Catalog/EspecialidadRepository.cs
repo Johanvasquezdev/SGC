@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SGC.Domain.Entities.Catalog;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Persistence.Base;
@@ -14,9 +15,12 @@ namespace SGC.Persistence.Repositories.Catalog
             _context = context;
         }
 
-        public Task<IEnumerable<Especialidad>> GetActivasAsync()
+        // Retorna solo las especialidades con Activo == true
+        public async Task<IEnumerable<Especialidad>> GetActivasAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Especialidades
+                .Where(e => e.Activo)
+                .ToListAsync();
         }
     }
 }
