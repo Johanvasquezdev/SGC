@@ -3,7 +3,7 @@
 namespace SGC.Domain.Entities.Catalog
 {
 
-    // el proveedor de salud representa a las entidades que suministran servicios médicos, como hospitales, clínicas o laboratorios. Incluye propiedades para el nombre del proveedor, tipo (por ejemplo, hospital, clínica), información de contacto (teléfono y email) y un indicador de si el proveedor está activo. Esta clase es sellada para evitar herencias no deseadas, ya que representa un concepto específico dentro del dominio de la gestión de citas médicas.
+    // Proveedor de salud (hospital, clinica, laboratorio). Sellada para evitar herencia.
     public sealed class ProveedorSalud : EntidadBase
     {
         public string Nombre { get; set; } = string.Empty;
@@ -11,5 +11,8 @@ namespace SGC.Domain.Entities.Catalog
         public string? Telefono { get; set; }
         public string? Email { get; set; }
         public bool Activo { get; set; } = true;
+
+        // Navegacion inversa: todos los medicos asociados a este proveedor
+        public ICollection<Medical.Medico> Medicos { get; set; } = new List<Medical.Medico>();
     }
 }

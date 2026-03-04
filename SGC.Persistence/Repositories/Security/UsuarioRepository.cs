@@ -1,4 +1,5 @@
 using SGC.Domain.Entities.Security;
+using SGC.Domain.Enums;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Persistence.Base;
 using SGC.Persistence.Context;
@@ -19,7 +20,7 @@ namespace SGC.Persistence.Repositories.Security
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Usuario>> GetByRolAsync(string rol)
+        public Task<IEnumerable<Usuario>> GetByRolAsync(RolUsuario rol)
         {
             throw new NotImplementedException();
         }
