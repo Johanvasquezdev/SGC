@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SGC.Domain.Base;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Persistence.Base;
@@ -14,19 +15,31 @@ namespace SGC.Persistence.Repositories.Audit
             _context = context;
         }
 
-        public Task<IEnumerable<AuditEntity>> GetByEntidadAsync(string entidad)
+        // Filtra eventos de auditoria por nombre de entidad (ej. "Cita", "Medico")
+        public async Task<IEnumerable<AuditEntity>> GetByEntidadAsync(string entidad)
         {
-            throw new NotImplementedException();
+            return await _context.EventosAuditoria
+                .Where(a => a.Entidad == entidad)
+                .OrderByDescending(a => a.Fecha)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<AuditEntity>> GetByUsuarioIdAsync(int usuarioId)
+        // Filtra eventos de auditoria por el usuario que realizo la accion
+        public async Task<IEnumerable<AuditEntity>> GetByUsuarioIdAsync(int usuarioId)
         {
-            throw new NotImplementedException();
+            return await _context.EventosAuditoria
+                .Where(a => a.UsuarioId == usuarioId)
+                .OrderByDescending(a => a.Fecha)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<AuditEntity>> GetByFechaAsync(DateTime fecha)
+        // Filtra eventos de auditoria por fecha (compara solo la parte Date)
+        public async Task<IEnumerable<AuditEntity>> GetByFechaAsync(DateTime fecha)
         {
-            throw new NotImplementedException();
+            return await _context.EventosAuditoria
+                .Where(a => a.Fecha.Date == fecha.Date)
+                .OrderByDescending(a => a.Fecha)
+                .ToListAsync();
         }
     }
 }
