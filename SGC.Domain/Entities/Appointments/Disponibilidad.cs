@@ -1,9 +1,10 @@
-﻿using SGC.Domain.Base;
+using SGC.Domain.Base;
+using SGC.Domain.Entities.Medical;
 using SGC.Domain.Enums;
 
 namespace SGC.Domain.Entities.Appointments
 {
-    // La clase Disponibilidad representa los horarios disponibles de un médico para atender citas. Incluye propiedades para el día de la semana, horas de inicio y fin, duración de las citas, y si es recurrente. También tiene una regla de validación para asegurar que el horario sea coherente.
+    // Horarios disponibles de un medico para atender citas
     public class Disponibilidad : EntidadBase
     {
         public int MedicoId { get; set; }
@@ -13,8 +14,10 @@ namespace SGC.Domain.Entities.Appointments
         public int DuracionCitaMin { get; set; }
         public bool EsRecurrente { get; set; } = true;
 
+        // Navegacion inversa al medico
+        public Medico Medico { get; set; } = null!;
 
-        // valida que el horario sea coherente
+        // Valida que el horario sea coherente
         public bool EsValido()
         {
             return HoraFin > HoraInicio && DuracionCitaMin > 0;
