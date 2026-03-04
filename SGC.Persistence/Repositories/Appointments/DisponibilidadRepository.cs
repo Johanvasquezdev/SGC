@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SGC.Domain.Entities.Appointments;
 using SGC.Domain.Enums;
 using SGC.Domain.Interfaces.Repository;
@@ -15,14 +16,24 @@ namespace SGC.Persistence.Repositories.Appointments
             _context = context;
         }
 
-        public Task<IEnumerable<Disponibilidad>> GetByMedicoIdAsync(int medicoId)
+        // Obtiene todos los horarios disponibles de un medico especifico
+        public async Task<IEnumerable<Disponibilidad>> GetByMedicoIdAsync(int medicoId)
         {
-            throw new NotImplementedException();
+            return await _context.Disponibilidades
+                .Where(d => d.MedicoId == medicoId)
+                .OrderBy(d => d.DiaSemana)
+                .ThenBy(d => d.HoraInicio)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<Disponibilidad>> GetByDiaAsync(DiaSemana diaSemana)
+        // Obtiene todos los horarios disponibles de un dia de la semana, incluyendo el medico
+        public async Task<IEnumerable<Disponibilidad>> GetByDiaAsync(DiaSemana diaSemana)
         {
-            throw new NotImplementedException();
+            return await _context.Disponibilidades
+                .Include(d => d.Medico)
+                .Where(d => d.DiaSemana == diaSemana)
+                .OrderBy(d => d.HoraInicio)
+                .ToListAsync();
         }
     }
 }
