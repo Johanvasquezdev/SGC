@@ -1,5 +1,8 @@
-public class AuditEntity
+// Base namespace
+namespace SGC.Domain.Base
 {
-    public int? UsuarioId { get; set; } = 0; // Initialize to default as needed
-    // Initialize other string properties as well
+    public class AuditEntity : EntidadBase
+    {
+        public int? UsuarioId { get; set; }
+    }
 }
