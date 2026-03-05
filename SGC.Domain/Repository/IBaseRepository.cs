@@ -25,11 +25,11 @@ namespace SGC.Domain.Repository
         
         // Marca una entidad existente para ser actualizada. 
         // Las validaciones de negocio deben ocurrir en la capa de Application antes de llamar a este método.
-        void Update(T entity);
+        Task UpdateAsync(T entity);
 
 
         // Marca una entidad para ser eliminada de la persistencia.
         // Para el SGCM se recomienda usar borrado lógico (cambiar estado a Inactivo) 
-        void Delete(T entity);
+        Task DeleteAsync(T entity);
     }
 }
