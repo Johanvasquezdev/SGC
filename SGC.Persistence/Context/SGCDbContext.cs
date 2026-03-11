@@ -87,18 +87,6 @@ namespace SGC.Persistence.Context
                 entity.Property(e => e.Foto).HasColumnName("foto");
                 entity.Property(e => e.MedicoActivo).HasColumnName("activo").HasDefaultValue(true);
 
-                // Relaciones de navegacion
-                entity.HasOne(e => e.Especialidad)
-                      .WithMany(esp => esp.Medicos)
-                      .HasForeignKey(e => e.EspecialidadId);
-
-                entity.HasOne(e => e.ProveedorSalud)
-                      .WithMany(p => p.Medicos)
-                      .HasForeignKey(e => e.ProveedorSaludId);
-
-                entity.HasIndex(e => e.EspecialidadId);
-                entity.HasIndex(e => e.ProveedorSaludId);
-
                 // Relacion: un medico pertenece a una especialidad, una especialidad tiene muchos medicos
                 entity.HasOne(m => m.Especialidad)
                       .WithMany(e => e.Medicos)
@@ -110,6 +98,9 @@ namespace SGC.Persistence.Context
                       .WithMany(p => p.Medicos)
                       .HasForeignKey(m => m.ProveedorSaludId)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(e => e.EspecialidadId);
+                entity.HasIndex(e => e.ProveedorSaludId);
             });
             // =============================================
             // PACIENTE
@@ -171,18 +162,13 @@ namespace SGC.Persistence.Context
                       .HasColumnName("esRecurrente")
                       .HasDefaultValue(true);
 
-                // Relacion: cada disponibilidad pertenece a un medico
-                entity.HasOne(e => e.Medico)
-                      .WithMany(m => m.Horarios)
-                      .HasForeignKey(e => e.MedicoId);
-
-                entity.HasIndex(e => e.MedicoId);
-
                 // Relacion: una disponibilidad pertenece a un medico, un medico tiene muchos horarios
                 entity.HasOne(d => d.Medico)
                       .WithMany(m => m.Horarios)
                       .HasForeignKey(d => d.MedicoId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.MedicoId);
             });
             modelBuilder.Entity<Cita>(entity =>
             {
@@ -203,23 +189,6 @@ namespace SGC.Persistence.Context
                       .HasColumnName("fechaCreacion")
                       .HasDefaultValueSql("now()");
 
-                // Relaciones de navegacion
-                entity.HasOne(e => e.Paciente)
-                      .WithMany(p => p.Citas)
-                      .HasForeignKey(e => e.PacienteId);
-
-                entity.HasOne(e => e.Medico)
-                      .WithMany(m => m.Citas)
-                      .HasForeignKey(e => e.MedicoId);
-
-                entity.HasOne(e => e.Disponibilidad)
-                      .WithMany()
-                      .HasForeignKey(e => e.DisponibilidadId);
-
-                entity.HasIndex(e => e.PacienteId);
-                entity.HasIndex(e => e.MedicoId);
-                entity.HasIndex(e => e.DisponibilidadId);
-
                 // Relacion: una cita pertenece a un paciente, un paciente tiene muchas citas
                 entity.HasOne(c => c.Paciente)
                       .WithMany(p => p.Citas)
@@ -237,6 +206,10 @@ namespace SGC.Persistence.Context
                       .WithMany()
                       .HasForeignKey(c => c.DisponibilidadId)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(e => e.PacienteId);
+                entity.HasIndex(e => e.MedicoId);
+                entity.HasIndex(e => e.DisponibilidadId);
             });
 
             // =============================================
@@ -257,18 +230,13 @@ namespace SGC.Persistence.Context
                       .HasDefaultValueSql("now()");
                 entity.Property(e => e.DireccionIP).HasColumnName("direccionIP");
 
-                // Relacion: el evento puede tener un usuario asociado (null = accion del sistema)
-                entity.HasOne(e => e.Usuario)
-                      .WithMany()
-                      .HasForeignKey(e => e.UsuarioId);
-
-                entity.HasIndex(e => e.UsuarioId);
-
                 // Relacion: un evento de auditoria puede estar asociado a un usuario (null si fue el sistema)
                 entity.HasOne(a => a.Usuario)
                       .WithMany()
                       .HasForeignKey(a => a.UsuarioId)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(e => e.UsuarioId);
             });
 
             // =============================================
@@ -293,18 +261,6 @@ namespace SGC.Persistence.Context
                       .HasColumnName("fechaEnvio")
                       .HasDefaultValueSql("now()");
 
-                // Relaciones de navegacion
-                entity.HasOne(e => e.Usuario)
-                      .WithMany(u => u.Notificaciones)
-                      .HasForeignKey(e => e.UsuarioId);
-
-                entity.HasOne(e => e.Cita)
-                      .WithMany()
-                      .HasForeignKey(e => e.CitaId);
-
-                entity.HasIndex(e => e.UsuarioId);
-                entity.HasIndex(e => e.CitaId);
-
                 // Relacion: una notificacion pertenece a un usuario, un usuario tiene muchas notificaciones
                 entity.HasOne(n => n.Usuario)
                       .WithMany(u => u.Notificaciones)
@@ -316,6 +272,9 @@ namespace SGC.Persistence.Context
                       .WithMany()
                       .HasForeignKey(n => n.CitaId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.UsuarioId);
+                entity.HasIndex(e => e.CitaId);
             });
 
             // =============================================
@@ -340,18 +299,13 @@ namespace SGC.Persistence.Context
                       .HasColumnName("horasAntesRecordatorio")
                       .HasDefaultValue(24);
 
-                // Relacion 1-a-1: cada usuario tiene una sola preferencia de notificacion
-                entity.HasOne(e => e.Usuario)
-                      .WithOne(u => u.PrefNotificacion)
-                      .HasForeignKey<PrefNotificacion>(e => e.UsuarioId);
-
-                entity.HasIndex(e => e.UsuarioId).IsUnique();
-
                 // Relacion: un usuario tiene una unica preferencia de notificacion (uno a uno)
                 entity.HasOne(p => p.Usuario)
                       .WithOne(u => u.PrefNotificacion)
                       .HasForeignKey<PrefNotificacion>(p => p.UsuarioId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.UsuarioId).IsUnique();
             });
         }
     }
