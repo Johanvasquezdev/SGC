@@ -6,19 +6,15 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Catalog
 {
+    // Repositorio para operaciones de persistencia de proveedores de salud
     public class ProveedorSaludRepository : BaseRepository<ProveedorSalud>, IProveedorSaludRepository
     {
-        private readonly SGCDbContext _context;
+        public ProveedorSaludRepository(SGCDbContext context) : base(context) { }
 
-        public ProveedorSaludRepository(SGCDbContext context) : base(context)
-        {
-            _context = context;
-        }
-
-        // Retorna solo los proveedores de salud con Activo == true
+        // Obtiene solo los proveedores de salud que estan activos en el sistema
         public async Task<IEnumerable<ProveedorSalud>> GetActivosAsync()
         {
-            return await _context.ProveedoresSalud
+            return await Context.ProveedoresSalud
                 .Where(p => p.Activo)
                 .ToListAsync();
         }
