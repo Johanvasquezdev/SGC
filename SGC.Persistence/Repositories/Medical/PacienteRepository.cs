@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SGC.Domain.Entities.Medical;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Persistence.Base;
@@ -5,18 +6,17 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Medical
 {
+    // Repositorio para operaciones de persistencia de pacientes
     public class PacienteRepository : BaseRepository<Paciente>, IPacienteRepository
     {
-        private readonly SGCDbContext _context;
+        public PacienteRepository(SGCDbContext context) : base(context) { }
 
-        public PacienteRepository(SGCDbContext context) : base(context)
+        // Busca un paciente por su numero de cedula
+        public async Task<Paciente> GetByCedulaAsync(string cedula)
         {
-            _context = context;
-        }
-
-        public Task<Paciente> GetByCedulaAsync(string cedula)
-        {
-            throw new NotImplementedException();
+            return await Context.Pacientes
+                .FirstOrDefaultAsync(p => p.Cedula == cedula)
+                ?? throw new KeyNotFoundException($"No se encontro un paciente con cedula {cedula}.");
         }
     }
 }
