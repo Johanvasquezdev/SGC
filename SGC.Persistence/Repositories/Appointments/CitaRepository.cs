@@ -7,57 +7,47 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Appointments
 {
+    // Repositorio para operaciones de persistencia de citas medicas
     public class CitaRepository : BaseRepository<Cita>, ICitaRepository
     {
-        private readonly SGCDbContext _context;
+        public CitaRepository(SGCDbContext context) : base(context) { }
 
-        public CitaRepository(SGCDbContext context) : base(context)
-        {
-            _context = context;
-        }
-
-        // Obtiene todas las citas de un paciente, incluyendo medico y disponibilidad
+        // Obtiene todas las citas de un paciente con los datos del medico incluidos
         public async Task<IEnumerable<Cita>> GetByPacienteIdAsync(int pacienteId)
         {
-            return await _context.Citas
-                .Include(c => c.Medico)
-                .Include(c => c.Disponibilidad)
+            return await Context.Citas
                 .Where(c => c.PacienteId == pacienteId)
-                .OrderByDescending(c => c.FechaHora)
+                .Include(c => c.Medico)
                 .ToListAsync();
         }
 
-        // Obtiene todas las citas de un medico, incluyendo paciente y disponibilidad
+        // Obtiene todas las citas de un medico con los datos del paciente incluidos
         public async Task<IEnumerable<Cita>> GetByMedicoIdAsync(int medicoId)
         {
-            return await _context.Citas
-                .Include(c => c.Paciente)
-                .Include(c => c.Disponibilidad)
+            return await Context.Citas
                 .Where(c => c.MedicoId == medicoId)
-                .OrderByDescending(c => c.FechaHora)
+                .Include(c => c.Paciente)
                 .ToListAsync();
         }
 
-        // Obtiene todas las citas de una fecha especifica, incluyendo paciente y medico
+        // Obtiene todas las citas de una fecha especifica con medico y paciente incluidos
         public async Task<IEnumerable<Cita>> GetByFechaAsync(DateTime fecha)
         {
-            return await _context.Citas
-                .Include(c => c.Paciente)
-                .Include(c => c.Medico)
+            return await Context.Citas
                 .Where(c => c.FechaHora.Date == fecha.Date)
-                .OrderBy(c => c.FechaHora)
+                .Include(c => c.Medico)
+                .Include(c => c.Paciente)
                 .ToListAsync();
         }
 
-        // Verifica si un medico ya tiene una cita activa en esa fecha y hora
+        // Verifica si existe un conflicto de horario para un medico en una fecha y hora especifica
         public async Task<bool> ExisteConflictoAsync(int medicoId, DateTime fechaHora)
         {
-            return await _context.Citas
-                .AnyAsync(c =>
-                    c.MedicoId == medicoId &&
-                    c.FechaHora == fechaHora &&
-                    c.Estado != EstadoCita.Cancelada &&
-                    c.Estado != EstadoCita.Rechazada);
+            return await Context.Citas.AnyAsync(c =>
+                c.MedicoId == medicoId &&
+                c.FechaHora == fechaHora &&
+                c.Estado != EstadoCita.Cancelada &&
+                c.Estado != EstadoCita.Rechazada);
         }
     }
 }
