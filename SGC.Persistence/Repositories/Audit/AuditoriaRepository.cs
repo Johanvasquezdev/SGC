@@ -6,37 +6,33 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Audit
 {
+    // Repositorio para operaciones de persistencia de eventos de auditoria
     public class AuditoriaRepository : BaseRepository<AuditEntity>, IAuditoriaRepository
     {
-        private readonly SGCDbContext _context;
+        public AuditoriaRepository(SGCDbContext context) : base(context) { }
 
-        public AuditoriaRepository(SGCDbContext context) : base(context)
-        {
-            _context = context;
-        }
-
-        // Filtra eventos de auditoria por nombre de entidad (ej. "Cita", "Medico")
+        // Obtiene todos los eventos de auditoria de una entidad especifica (ej: "Cita", "Medico")
         public async Task<IEnumerable<AuditEntity>> GetByEntidadAsync(string entidad)
         {
-            return await _context.EventosAuditoria
+            return await Context.EventosAuditoria
                 .Where(a => a.Entidad == entidad)
                 .OrderByDescending(a => a.Fecha)
                 .ToListAsync();
         }
 
-        // Filtra eventos de auditoria por el usuario que realizo la accion
+        // Obtiene todos los eventos de auditoria realizados por un usuario
         public async Task<IEnumerable<AuditEntity>> GetByUsuarioIdAsync(int usuarioId)
         {
-            return await _context.EventosAuditoria
+            return await Context.EventosAuditoria
                 .Where(a => a.UsuarioId == usuarioId)
                 .OrderByDescending(a => a.Fecha)
                 .ToListAsync();
         }
 
-        // Filtra eventos de auditoria por fecha (compara solo la parte Date)
+        // Obtiene todos los eventos de auditoria de una fecha especifica
         public async Task<IEnumerable<AuditEntity>> GetByFechaAsync(DateTime fecha)
         {
-            return await _context.EventosAuditoria
+            return await Context.EventosAuditoria
                 .Where(a => a.Fecha.Date == fecha.Date)
                 .OrderByDescending(a => a.Fecha)
                 .ToListAsync();
