@@ -1,37 +1,53 @@
+using Microsoft.EntityFrameworkCore;
 using SGC.Domain.Entities.Appointments;
+using SGC.Domain.Enums;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Persistence.Base;
 using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Appointments
 {
+    // Repositorio para operaciones de persistencia de citas medicas
     public class CitaRepository : BaseRepository<Cita>, ICitaRepository
     {
-        private readonly SGCDbContext _context;
+        public CitaRepository(SGCDbContext context) : base(context) { }
 
-        public CitaRepository(SGCDbContext context) : base(context)
+        // Obtiene todas las citas de un paciente con los datos del medico incluidos
+        public async Task<IEnumerable<Cita>> GetByPacienteIdAsync(int pacienteId)
         {
-            _context = context;
+            return await Context.Citas
+                .Where(c => c.PacienteId == pacienteId)
+                .Include(c => c.Medico)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<Cita>> GetByPacienteIdAsync(int pacienteId)
+        // Obtiene todas las citas de un medico con los datos del paciente incluidos
+        public async Task<IEnumerable<Cita>> GetByMedicoIdAsync(int medicoId)
         {
-            throw new NotImplementedException();
+            return await Context.Citas
+                .Where(c => c.MedicoId == medicoId)
+                .Include(c => c.Paciente)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<Cita>> GetByMedicoIdAsync(int medicoId)
+        // Obtiene todas las citas de una fecha especifica con medico y paciente incluidos
+        public async Task<IEnumerable<Cita>> GetByFechaAsync(DateTime fecha)
         {
-            throw new NotImplementedException();
+            return await Context.Citas
+                .Where(c => c.FechaHora.Date == fecha.Date)
+                .Include(c => c.Medico)
+                .Include(c => c.Paciente)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<Cita>> GetByFechaAsync(DateTime fecha)
+        // Verifica si existe un conflicto de horario para un medico en una fecha y hora especifica
+        public async Task<bool> ExisteConflictoAsync(int medicoId, DateTime fechaHora)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> ExisteConflictoAsync(int medicoId, DateTime fechaHora)
-        {
-            throw new NotImplementedException();
+            return await Context.Citas.AnyAsync(c =>
+                c.MedicoId == medicoId &&
+                c.FechaHora == fechaHora &&
+                c.Estado != EstadoCita.Cancelada &&
+                c.Estado != EstadoCita.Rechazada);
         }
     }
 }
