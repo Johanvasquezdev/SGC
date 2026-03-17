@@ -6,6 +6,7 @@ using SGC.Domain.Entities.Medical;
 using SGC.Domain.Enums;
 using SGC.Domain.Exceptions;
 using SGC.Domain.Interfaces.Repository;
+using System;
 using Xunit;
 
 namespace SGC.ApplicationTest.Services
@@ -124,7 +125,7 @@ namespace SGC.ApplicationTest.Services
             _citaRepoMock.Setup(r => r.ExisteConflictoAsync(20, fechaCita)).ReturnsAsync(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<CitaConflictoException>(
+            await Assert.ThrowsAsync<InvalidOperationException>(
                 () => _citaService.AgendarAsync(request));
         }
 

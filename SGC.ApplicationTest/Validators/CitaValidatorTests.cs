@@ -1,6 +1,7 @@
 using SGC.Domain.Entities.Appointments;
 using SGC.Domain.Exceptions;
 using SGC.Domain.Validators;
+using System;
 using Xunit;
 
 namespace SGC.ApplicationTest.Validators
@@ -30,7 +31,7 @@ namespace SGC.ApplicationTest.Validators
             cita.FechaHora = DateTime.UtcNow.AddDays(-1);
 
             // Act & Assert
-            Assert.Throws<CitaConflictoException>(() => _validator.Validar(cita));
+            Assert.Throws<InvalidOperationException>(() => _validator.Validar(cita));
         }
 
         [Fact]
@@ -41,7 +42,7 @@ namespace SGC.ApplicationTest.Validators
             cita.FechaHora = DateTime.UtcNow.AddDays(1).Date.AddHours(4);
 
             // Act & Assert
-            Assert.Throws<HorarioNoDisponibleException>(() => _validator.Validar(cita));
+            Assert.Throws<InvalidOperationException>(() => _validator.Validar(cita));
         }
 
         [Fact]
@@ -53,7 +54,7 @@ namespace SGC.ApplicationTest.Validators
             cita.MedicoId = 10;
 
             // Act & Assert
-            Assert.Throws<CitaConflictoException>(() => _validator.Validar(cita));
+            Assert.Throws<InvalidOperationException>(() => _validator.Validar(cita));
         }
 
         [Fact]
@@ -64,7 +65,7 @@ namespace SGC.ApplicationTest.Validators
             cita.DisponibilidadId = null;
 
             // Act & Assert
-            Assert.Throws<HorarioNoDisponibleException>(() => _validator.Validar(cita));
+            Assert.Throws<InvalidOperationException>(() => _validator.Validar(cita));
         }
     }
 }

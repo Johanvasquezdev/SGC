@@ -1,6 +1,7 @@
 using SGC.Domain.Entities.Appointments;
 using SGC.Domain.Enums;
 using SGC.Domain.Exceptions;
+using System;
 using Xunit;
 
 namespace SGC.ApplicationTest.Domain
@@ -22,9 +23,9 @@ namespace SGC.ApplicationTest.Domain
             };
         }
 
-        // =============================================
+    
         // Confirmar
-        // =============================================
+  
 
         [Fact]
         public void Confirmar_CuandoEstadoSolicitada_CambiaAConfirmada()
@@ -47,12 +48,12 @@ namespace SGC.ApplicationTest.Domain
             cita.Confirmar();
 
             // Act & Assert - intentar confirmar de nuevo debe fallar
-            Assert.Throws<CitaConflictoException>(() => cita.Confirmar());
+            Assert.Throws<InvalidOperationException>(() => cita.Confirmar());
         }
 
-        // =============================================
+      
         // Cancelar
-        // =============================================
+     
 
         [Fact]
         public void Cancelar_CuandoEstadoSolicitada_CambiaACancelada()
@@ -78,12 +79,12 @@ namespace SGC.ApplicationTest.Domain
             cita.Completar();
 
             // Act & Assert - no se puede cancelar una cita completada
-            Assert.Throws<CitaConflictoException>(() => cita.Cancelar("Motivo"));
+            Assert.Throws<InvalidOperationException>(() => cita.Cancelar("Motivo"));
         }
 
-        // =============================================
+
         // Rechazar
-        // =============================================
+  
 
         [Fact]
         public void Rechazar_CuandoEstadoSolicitada_CambiaARechazada()
@@ -99,9 +100,9 @@ namespace SGC.ApplicationTest.Domain
             Assert.Equal("Horario no disponible", cita.Motivo);
         }
 
-        // =============================================
+
         // IniciarConsulta y Completar
-        // =============================================
+        
 
         [Fact]
         public void IniciarConsulta_CuandoConfirmada_CambiaAEnProgreso()
@@ -132,9 +133,9 @@ namespace SGC.ApplicationTest.Domain
             Assert.Equal(EstadoCita.Completada, cita.Estado);
         }
 
-        // =============================================
+        
         // MarcarNoAsistio
-        // =============================================
+      
 
         [Fact]
         public void MarcarNoAsistio_CuandoNoConfirmada_LanzaExcepcion()
@@ -143,7 +144,7 @@ namespace SGC.ApplicationTest.Domain
             var cita = CrearCitaPrueba();
 
             // Act & Assert - solo se puede marcar NoAsistio cuando esta Confirmada
-            Assert.Throws<CitaConflictoException>(() => cita.MarcarNoAsistio());
+            Assert.Throws<InvalidOperationException>(() => cita.MarcarNoAsistio());
         }
     }
 }
