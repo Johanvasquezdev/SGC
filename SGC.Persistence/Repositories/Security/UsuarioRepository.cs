@@ -6,6 +6,7 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Security
 {
+    // Repositorio de usuarios con metodos especificos para la entidad Usuario
     public class UsuarioRepository : BaseRepository<Usuario>, IUsuarioRepository
     {
         private readonly SGCDbContext _context;
@@ -15,11 +16,13 @@ namespace SGC.Persistence.Repositories.Security
             _context = context;
         }
 
+        // Metodos especificos para la entidad Usuario
         public Task<Usuario> GetByEmailAsync(string email)
         {
             throw new NotImplementedException();
         }
 
+        // Obtener usuarios por su rol (Administrador, Medico, Recepcionista)
         public Task<IEnumerable<Usuario>> GetByRolAsync(RolUsuario rol)
         {
             throw new NotImplementedException();
