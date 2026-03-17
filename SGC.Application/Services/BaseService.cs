@@ -14,6 +14,7 @@ namespace SGC.Application.Services.Base
             Logger = logger;
         }
 
+        // Metodos de log comunes para las operaciones de los servicios, que incluyen el nombre del servicio en el mensaje para facilitar la identificacion en los logs.
         protected void LogOperacion(string operacion, string detalle) =>
             Logger.LogInfo($"[{GetType().Name}] {operacion}: {detalle}");
 

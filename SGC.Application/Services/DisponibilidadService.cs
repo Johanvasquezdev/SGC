@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
+    // Servicio de aplicacion para gestionar la disponibilidad de los medicos, con validaciones y logueo de operaciones
     public class DisponibilidadService : BaseService, IDisponibilidadService
     {
         private readonly IDisponibilidadRepository _disponibilidadRepository;
@@ -25,6 +26,7 @@ namespace SGC.Application.Services
             _validator = validator;
         }
 
+        // Crea una nueva disponibilidad para un medico, validando que no se solape con las existentes y logueando la operacion
         public async Task<DisponibilidadResponse> CrearAsync(
             DisponibilidadRequest request)
         {
@@ -36,6 +38,7 @@ namespace SGC.Application.Services
             return DisponibilidadMapper.ToResponse(disponibilidad);
         }
 
+        // Obtiene una disponibilidad por su ID, logueando la consulta
         public async Task<DisponibilidadResponse> GetByIdAsync(int id)
         {
             var disponibilidad = await _disponibilidadRepository
@@ -43,6 +46,7 @@ namespace SGC.Application.Services
             return DisponibilidadMapper.ToResponse(disponibilidad);
         }
 
+        // Obtiene todas las disponibilidades, logueando la consulta
         public async Task<IEnumerable<DisponibilidadResponse>> GetAllAsync()
         {
             var disponibilidades = await _disponibilidadRepository
@@ -50,6 +54,7 @@ namespace SGC.Application.Services
             return disponibilidades.Select(DisponibilidadMapper.ToResponse);
         }
 
+        // Obtiene las disponibilidades de un medico por su ID, logueando la consulta
         public async Task<IEnumerable<DisponibilidadResponse>> GetByMedicoAsync(
             int medicoId)
         {
@@ -58,6 +63,7 @@ namespace SGC.Application.Services
             return disponibilidades.Select(DisponibilidadMapper.ToResponse);
         }
 
+        // Obtiene las disponibilidades de un medico por el dia de la semana, logueando la consulta
         public async Task<IEnumerable<DisponibilidadResponse>> GetByDiaAsync(
             int diaSemana)
         {
@@ -67,6 +73,7 @@ namespace SGC.Application.Services
             return disponibilidades.Select(DisponibilidadMapper.ToResponse);
         }
 
+        // Actualiza una disponibilidad existente, validando que no se solape con las otras y logueando la operacion
         public async Task ActualizarAsync(int id, DisponibilidadRequest request)
         {
             LogOperacion("ActualizarDisponibilidad", $"Id: {id}");
@@ -82,6 +89,7 @@ namespace SGC.Application.Services
             await _disponibilidadRepository.UpdateAsync(disponibilidad);
         }
 
+        // Elimina una disponibilidad por su ID, logueando la operacion
         public async Task EliminarAsync(int id)
         {
             LogAdvertencia("EliminarDisponibilidad", $"Id: {id}");

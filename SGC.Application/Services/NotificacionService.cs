@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
+    // Servicio de notificaciones para manejar la logica de negocio relacionada con las notificaciones del sistema
     public class NotificacionService : BaseService, INotificacionService
     {
         private readonly INotificacionRepository _notificacionRepository;
@@ -20,12 +21,14 @@ namespace SGC.Application.Services
             _notificacionRepository = notificacionRepository;
         }
 
+        // Crea una nueva notificacion para un usuario
         public async Task<NotificacionResponse> GetByIdAsync(int id)
         {
             var notificacion = await _notificacionRepository.GetByIdAsync(id);
             return NotificacionMapper.ToResponse(notificacion);
         }
 
+        // Obtiene todas las notificaciones de un usuario
         public async Task<IEnumerable<NotificacionResponse>> GetByUsuarioAsync(
             int usuarioId)
         {
@@ -34,6 +37,7 @@ namespace SGC.Application.Services
             return notificaciones.Select(NotificacionMapper.ToResponse);
         }
 
+        // Obtiene solo las notificaciones no leidas de un usuario
         public async Task<IEnumerable<NotificacionResponse>> GetNoLeidasAsync(
             int usuarioId)
         {
@@ -42,6 +46,7 @@ namespace SGC.Application.Services
             return notificaciones.Select(NotificacionMapper.ToResponse);
         }
 
+        // Marca una notificacion como leida
         public async Task MarcarLeidaAsync(int notificacionId)
         {
             LogOperacion("MarcarLeida", $"NotificacionId: {notificacionId}");

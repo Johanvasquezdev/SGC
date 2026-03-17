@@ -3,8 +3,10 @@ using SGC.Domain.Entities.Medical;
 
 namespace SGC.Application.Mappers
 {
+    // Mapper para convertir entre la entidad Medico y los DTOs de solicitud/respuesta
     public static class MedicoMapper
     {
+        // Convierte una entidad Medico a un DTO de respuesta MedicoResponse
         public static MedicoResponse ToResponse(Medico medico)
         {
             return new MedicoResponse
@@ -22,6 +24,7 @@ namespace SGC.Application.Mappers
             };
         }
 
+        // Convierte un DTO de solicitud CrearMedicoRequest a una entidad Medico para crear un nuevo medico
         public static Medico ToEntity(CrearMedicoRequest request)
         {
             return new Medico
@@ -36,6 +39,7 @@ namespace SGC.Application.Mappers
             };
         }
 
+        // Actualiza una entidad Medico existente con los datos de un DTO de solicitud ActualizarMedicoRequest, solo si los campos no son nulos
         public static void UpdateEntity(Medico medico,
             ActualizarMedicoRequest request)
         {

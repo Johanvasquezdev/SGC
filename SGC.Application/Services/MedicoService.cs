@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
+    // Servicio de aplicacion para gestionar la logica de negocio relacionada con los medicos, utilizando el repositorio para acceder a los datos y el validador para asegurar la integridad de las operaciones.
     public class MedicoService : BaseService, IMedicoService
     {
         private readonly IMedicoRepository _medicoRepository;
@@ -27,6 +28,7 @@ namespace SGC.Application.Services
             _validator = validator;
         }
 
+        // Crea un nuevo medico a partir de la informacion proporcionada en el request, validando los datos y guardando el nuevo medico en la base de datos.
         public async Task<MedicoResponse> CrearAsync(CrearMedicoRequest request)
         {
             LogOperacion("CrearMedico", $"Email: {request.Email}");
@@ -49,24 +51,28 @@ namespace SGC.Application.Services
             return MedicoMapper.ToResponse(medico);
         }
 
+        // Obtiene un medico por su ID, devolviendo un DTO con la informacion del medico.
         public async Task<MedicoResponse> GetByIdAsync(int id)
         {
             var medico = await _medicoRepository.GetByIdAsync(id);
             return MedicoMapper.ToResponse(medico);
         }
 
+        // Obtiene todos los medicos registrados en el sistema, devolviendo una lista de DTOs con la informacion de cada medico.
         public async Task<IEnumerable<MedicoResponse>> GetAllAsync()
         {
             var medicos = await _medicoRepository.GetAllAsync();
             return medicos.Select(MedicoMapper.ToResponse);
         }
 
+        // Obtiene un medico por su exequatur, devolviendo un DTO con la informacion del medico.
         public async Task<MedicoResponse> GetByExequaturAsync(string exequatur)
         {
             var medico = await _medicoRepository.GetByExequaturAsync(exequatur);
             return MedicoMapper.ToResponse(medico);
         }
 
+        // Obtiene una lista de medicos que pertenecen a una especialidad especifica, devolviendo una lista de DTOs con la informacion de cada medico.
         public async Task<IEnumerable<MedicoResponse>> GetByEspecialidadAsync(
             int especialidadId)
         {
@@ -75,6 +81,7 @@ namespace SGC.Application.Services
             return medicos.Select(MedicoMapper.ToResponse);
         }
 
+        // Actualiza la informacion de un medico existente a partir de la informacion proporcionada en el request, validando los datos y guardando los cambios en la base de datos.
         public async Task ActualizarAsync(ActualizarMedicoRequest request)
         {
             LogOperacion("ActualizarMedico", $"Id: {request.Id}");
@@ -84,6 +91,7 @@ namespace SGC.Application.Services
             await _medicoRepository.UpdateAsync(medico);
         }
 
+        // Desactiva un medico, cambiando su estado a inactivo y guardando el cambio en la base de datos.
         public async Task DesactivarAsync(int id)
         {
             LogAdvertencia("DesactivarMedico", $"Id: {id}");
@@ -92,6 +100,7 @@ namespace SGC.Application.Services
             await _medicoRepository.UpdateAsync(medico);
         }
 
+        // Activa un medico, cambiando su estado a activo y guardando el cambio en la base de datos.
         public async Task ActivarAsync(int id)
         {
             LogOperacion("ActivarMedico", $"Id: {id}");
