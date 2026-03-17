@@ -1,23 +1,20 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using SGC.API.Middleware;
-using SGC.API.Services;
-using SGC.Application.Contracts;
-using SGC.IOC;
+using SGC.IOC.Dependencies;
+using SGC.Infrastructure.SignalR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ============================================================
-// 1. Registro de dependencias del sistema (IoC)
+// 1. Dependencias del sistema
 // ============================================================
 builder.Services.AddSGCDependencies(builder.Configuration);
 
-// Registro del servicio de tokens JWT (implementacion en la capa API)
-builder.Services.AddScoped<ITokenService, TokenService>();
-
 // ============================================================
-// 2. Configuracion de autenticacion JWT
+// 2. JWT Authentication
 // ============================================================
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
@@ -41,50 +38,108 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddAuthorization();
+
 // ============================================================
-// 3. CORS - Permitir acceso desde el frontend web y desktop
+// 3. CORS
 // ============================================================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("SGCPolicy", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else
+        {
+            policy.WithOrigins(
+                    "https://tu-dominio-web.com",
+                    "https://tu-dominio-desktop.com")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
     });
 });
 
 // ============================================================
-// 4. Controllers y Swagger
+// 4. Controllers y Swagger con JWT
 // ============================================================
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "MedAgenda API",
+        Version = "v1",
+        Description = "API del Sistema de Gestión de Citas Médicas"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingresa: Bearer {token}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// ============================================================
+// 5. Health Checks
+// ============================================================
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
 // ============================================================
 // Pipeline de middleware
 // ============================================================
-
-// Middleware global de manejo de excepciones (primer middleware para capturar todo)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "MedAgenda v1");
+    });
 }
 
 app.UseHttpsRedirection();
-
-// CORS antes de autenticacion
 app.UseCors("SGCPolicy");
-
-// Autenticacion antes de autorizacion
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
+
+// ============================================================
+// SignalR Hubs
+// ============================================================
+app.MapHub<CitaHub>("/hubs/citas");
+app.MapHub<DisponibilidadHub>("/hubs/disponibilidad");
+
+// ============================================================
+// Health Check endpoint
+// ============================================================
+app.MapHealthChecks("/health");
 
 app.Run();
