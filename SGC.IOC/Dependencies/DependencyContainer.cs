@@ -3,9 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 // Repositorios - Interfaces
 using SGC.Domain.Interfaces.Repository;
-using SGC.Domain.Interfaces;
-using SGC.Domain.Interfaces.ILogger;
-// Repositorios - Implementaciones
 using SGC.Persistence.Context;
 using SGC.Persistence.Repositories.Appointments;
 using SGC.Persistence.Repositories.Audit;
@@ -31,16 +28,16 @@ using SGC.Infrastructure.Cache;
 
 namespace SGC.IOC
 {
-    // Contenedor central de inyección de dependencias del sistema
+    // Contenedor central de dependencias para registrar servicios y repositorios.
     public static class DependencyContainer
     {
-        // Registra todos los servicios, repositorios y el DbContext
+        // Registra el DbContext, repositorios y servicios de la aplicacion.
         public static IServiceCollection AddSGCDependencies(
             this IServiceCollection services,
             IConfiguration configuration)
         {
             // ============================================================
-            // 1. DbContext — PostgreSQL via Supabase
+            // 1. DbContext â€” PostgreSQL via Supabase
             // ============================================================
             services.AddDbContext<SGCDbContext>(options =>
                 options.UseNpgsql(
@@ -59,29 +56,9 @@ namespace SGC.IOC
             services.AddScoped<INotificacionRepository, NotificacionRepository>();
             services.AddScoped<IPrefNotificacionRepository, PrefNotificacionRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-            services.AddScoped<IPagoRepository, PagoRepository>();
 
-            // ============================================================
-            // 3. Validators
-            // ============================================================
-            services.AddScoped<CitaValidator>();
-            services.AddScoped<MedicoValidator>();
-            services.AddScoped<PacienteValidator>();
-            services.AddScoped<EspecialidadValidator>();
-            services.AddScoped<DisponibilidadValidator>();
-            services.AddScoped<ProveedorSaludValidator>();
-            services.AddScoped<PrefNotificacionValidator>();
-
-            // ============================================================
-            // 4. Domain Services
-            // ============================================================
+            // Servicios de la capa Application.
             services.AddScoped<CitaDomainService>();
-
-            // ============================================================
-            // 5. Application Services
-            // ============================================================
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ICitaService, CitaService>();
             services.AddScoped<IDisponibilidadService, DisponibilidadService>();
             services.AddScoped<IEspecialidadService, EspecialidadService>();
