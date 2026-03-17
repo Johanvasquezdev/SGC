@@ -1,41 +1,36 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGC.Application.Contracts;
+using SGC.Application.DTOs.Security;
 
 namespace SGC.API.Controllers
 {
-    [Route("api/auditoria")]
+    // Controlador para autenticación de usuarios
+    [Route("api/auth")]
     [ApiController]
-    [Authorize(Roles = "Administrador")]
-    public class AuditoriaController : ControllerBase
+    public class AuthController : ControllerBase
     {
-        private readonly IAuditoriaService _auditoriaService;
+        // Servicio que maneja la lógica de autenticación
+        private readonly IAuthService _authService;
 
-        public AuditoriaController(IAuditoriaService auditoriaService)
+        public AuthController(IAuthService authService)
         {
-            _auditoriaService = auditoriaService;
+            _authService = authService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll(
-            [FromQuery] string? entidad,
-            [FromQuery] int? usuarioId)
+        // POST api/auth/login - Autentica un usuario y devuelve un token JWT
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(
+            [FromBody] LoginRequest request)
         {
-            if (!string.IsNullOrEmpty(entidad))
+            try
             {
-                var porEntidad = await _auditoriaService
-                    .GetByEntidadAsync(entidad);
-                return Ok(porEntidad);
+                var response = await _authService.LoginAsync(request);
+                return Ok(response);
             }
-
-            if (usuarioId.HasValue)
+            catch (UnauthorizedAccessException ex)
             {
-                var porUsuario = await _auditoriaService
-                    .GetByUsuarioAsync(usuarioId.Value);
-                return Ok(porUsuario);
+                return Unauthorized(new { mensaje = ex.Message });
             }
-
-            return BadRequest("Debe especificar entidad o usuarioId.");
         }
     }
 }

@@ -8,11 +8,11 @@ namespace SGC.API.Controllers
     [Route("api/auditoria")]
     [ApiController]
     [Authorize(Roles = "Administrador")]
-    public class AuditoriaController : ControllerBase
+    public class AuditoriasController : ControllerBase
     {
         private readonly IAuditoriaService _auditoriaService;
 
-        public AuditoriaController(IAuditoriaService auditoriaService)
+        public AuditoriasController(IAuditoriaService auditoriaService)
         {
             _auditoriaService = auditoriaService;
         }

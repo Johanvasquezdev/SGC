@@ -49,17 +49,23 @@ builder.Services.AddCors(options =>
     {
         if (builder.Environment.IsDevelopment())
         {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
+            // SignalR requiere origen específico con AllowCredentials
+            policy.WithOrigins(
+                    "http://localhost:3000",
+                    "http://localhost:5189",
+                    "https://localhost:7224")
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
         }
         else
         {
             policy.WithOrigins(
                     "https://tu-dominio-web.com",
                     "https://tu-dominio-desktop.com")
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
         }
     });
 });
