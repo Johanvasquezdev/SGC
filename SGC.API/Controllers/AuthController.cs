@@ -1,52 +1,41 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGC.Application.Contracts;
-using SGC.Application.DTOs.Security;
-using SGC.Domain.Interfaces.Repository;
 
 namespace SGC.API.Controllers
 {
-    // Controlador para autenticacion de usuarios (login y refresh de tokens)
-    [Route("api/auth")]
+    [Route("api/auditoria")]
     [ApiController]
-    public class AuthController : ControllerBase
+    [Authorize(Roles = "Administrador")]
+    public class AuditoriaController : ControllerBase
     {
-        private readonly IUsuarioRepository _usuarioRepository;
-        private readonly ITokenService _tokenService;
+        private readonly IAuditoriaService _auditoriaService;
 
-        public AuthController(IUsuarioRepository usuarioRepository, ITokenService tokenService)
+        public AuditoriaController(IAuditoriaService auditoriaService)
         {
-            _usuarioRepository = usuarioRepository;
-            _tokenService = tokenService;
+            _auditoriaService = auditoriaService;
         }
 
-        // POST api/auth/login - Inicia sesion con email y contrasena
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        [HttpGet]
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string? entidad,
+            [FromQuery] int? usuarioId)
         {
-            // Buscar usuario por email
-            var usuario = await _usuarioRepository.GetByEmailAsync(request.Email);
-            if (usuario == null)
-                return Unauthorized(new { mensaje = "Credenciales incorrectas." });
+            if (!string.IsNullOrEmpty(entidad))
+            {
+                var porEntidad = await _auditoriaService
+                    .GetByEntidadAsync(entidad);
+                return Ok(porEntidad);
+            }
 
-            // Verificar que el usuario este activo
-            if (!usuario.Activo)
-                return Unauthorized(new { mensaje = "El usuario esta desactivado." });
+            if (usuarioId.HasValue)
+            {
+                var porUsuario = await _auditoriaService
+                    .GetByUsuarioAsync(usuarioId.Value);
+                return Ok(porUsuario);
+            }
 
-            // Verificar contrasena con BCrypt
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
-                return Unauthorized(new { mensaje = "Credenciales incorrectas." });
-
-            // Generar token JWT
-            var response = _tokenService.GenerarToken(usuario);
-            return Ok(response);
-        }
-
-        // POST api/auth/refresh - Renueva el token JWT usando un refresh token
-        [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
-        {
-            var response = await _tokenService.RefrescarTokenAsync(request.RefreshToken);
-            return Ok(response);
+            return BadRequest("Debe especificar entidad o usuarioId.");
         }
     }
 }

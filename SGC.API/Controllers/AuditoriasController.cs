@@ -1,53 +1,42 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SGC.Domain.Interfaces.Repository;
+using SGC.Application.Contracts;
+using System.Threading.Tasks;
 
 namespace SGC.API.Controllers
 {
-    // Controlador para consultar registros de auditoria (solo administradores)
     [Route("api/auditoria")]
     [ApiController]
     [Authorize(Roles = "Administrador")]
     public class AuditoriaController : ControllerBase
     {
-        private readonly IAuditoriaRepository _auditoriaRepository;
+        private readonly IAuditoriaService _auditoriaService;
 
-        public AuditoriaController(IAuditoriaRepository auditoriaRepository)
+        public AuditoriaController(IAuditoriaService auditoriaService)
         {
-            _auditoriaRepository = auditoriaRepository;
+            _auditoriaService = auditoriaService;
         }
 
-        // GET api/auditoria - Obtiene todos los registros de auditoria
         [HttpGet]
         public async Task<IActionResult> GetAll(
             [FromQuery] string? entidad,
-            [FromQuery] int? usuarioId,
-            [FromQuery] DateTime? fecha)
+            [FromQuery] int? usuarioId)
         {
-            // Filtrar por entidad si se proporciona
             if (!string.IsNullOrEmpty(entidad))
             {
-                var porEntidad = await _auditoriaRepository.GetByEntidadAsync(entidad);
+                var porEntidad = await _auditoriaService
+                    .GetByEntidadAsync(entidad);
                 return Ok(porEntidad);
             }
 
-            // Filtrar por usuario si se proporciona
             if (usuarioId.HasValue)
             {
-                var porUsuario = await _auditoriaRepository.GetByUsuarioIdAsync(usuarioId.Value);
+                var porUsuario = await _auditoriaService
+                    .GetByUsuarioAsync(usuarioId.Value);
                 return Ok(porUsuario);
             }
 
-            // Filtrar por fecha si se proporciona
-            if (fecha.HasValue)
-            {
-                var porFecha = await _auditoriaRepository.GetByFechaAsync(fecha.Value);
-                return Ok(porFecha);
-            }
-
-            // Sin filtros, obtener todos
-            var registros = await _auditoriaRepository.GetAllAsync();
-            return Ok(registros);
+            return BadRequest("Debe especificar entidad o usuarioId.");
         }
     }
 }
