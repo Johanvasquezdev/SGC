@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using SGC.Application.Contracts;
+using SGC.Application.Services.Base;
 using SGC.Domain.Entities.Security;
+using SGC.Domain.Interfaces.ILogger;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -9,19 +11,21 @@ using System.Text;
 
 namespace SGC.Application.Services
 {
-    // Servicio para generar y validar tokens JWT para autenticacion y autorizacion
-    public class TokenService : ITokenService
+    public class TokenService : BaseService, ITokenService
     {
         private readonly IConfiguration _config;
 
-        public TokenService(IConfiguration config)
+        public TokenService(
+            IConfiguration config,
+            ISGCLogger logger) : base(logger)
         {
             _config = config;
         }
 
-        // Genera un token JWT con los datos del usuario y las configuraciones de seguridad
         public string GenerarToken(Usuario usuario)
         {
+            LogOperacion("GenerarToken", $"UsuarioId: {usuario.Id}");
+
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
 
@@ -52,7 +56,6 @@ namespace SGC.Application.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        // Valida un token JWT y retorna el Id del usuario si es valido, o null si no lo es
         public int? ValidarToken(string token)
         {
             try
@@ -75,8 +78,9 @@ namespace SGC.Application.Services
                 return int.Parse(jwt.Claims
                     .First(c => c.Type == ClaimTypes.NameIdentifier).Value);
             }
-            catch
+            catch (Exception ex)
             {
+                LogError("ValidarToken", ex);
                 return null;
             }
         }

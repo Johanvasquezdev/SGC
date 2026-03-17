@@ -1,34 +1,41 @@
+using BCrypt.Net;
 using SGC.Application.Contracts;
 using SGC.Application.DTOs.Medical;
+using SGC.Application.Mappers;
+using SGC.Application.Services.Base;
 using SGC.Domain.Entities.Medical;
 using SGC.Domain.Enums;
+using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Domain.Validators;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
-    // Servicio de aplicacion para la gestion de medicos
-    public class MedicoService : IMedicoService
+    public class MedicoService : BaseService, IMedicoService
     {
-        // Repositorio de medicos para acceso a datos
         private readonly IMedicoRepository _medicoRepository;
+        private readonly MedicoValidator _validator;
 
-        // Validador de reglas de negocio para medicos
-        private readonly MedicoValidator _validator = new MedicoValidator();
-
-        public MedicoService(IMedicoRepository medicoRepository)
+        public MedicoService(
+            IMedicoRepository medicoRepository,
+            MedicoValidator validator,
+            ISGCLogger logger) : base(logger)
         {
             _medicoRepository = medicoRepository;
+            _validator = validator;
         }
 
-        // Registra un nuevo medico en el sistema con rol Medico
         public async Task<MedicoResponse> CrearAsync(CrearMedicoRequest request)
         {
+            LogOperacion("CrearMedico", $"Email: {request.Email}");
+
             var medico = new Medico
             {
                 Nombre = request.Nombre,
                 Email = request.Email,
-                PasswordHash = request.Password, // En produccion se debe hashear la contrasena
+                PasswordHash = BCrypt.HashPassword(request.Password),
                 Rol = RolUsuario.Medico,
                 Exequatur = request.Exequatur,
                 EspecialidadId = request.EspecialidadId,
@@ -37,93 +44,60 @@ namespace SGC.Application.Services
                 Foto = request.Foto
             };
 
-            // Validar reglas de negocio antes de guardar
             _validator.Validar(medico);
-
             await _medicoRepository.AddAsync(medico);
-            return MapToResponse(medico);
+            return MedicoMapper.ToResponse(medico);
         }
 
-        // Obtiene un medico por su identificador
         public async Task<MedicoResponse> GetByIdAsync(int id)
         {
             var medico = await _medicoRepository.GetByIdAsync(id);
-            return MapToResponse(medico);
+            return MedicoMapper.ToResponse(medico);
         }
 
-        // Obtiene todos los medicos del sistema
         public async Task<IEnumerable<MedicoResponse>> GetAllAsync()
         {
             var medicos = await _medicoRepository.GetAllAsync();
-            return medicos.Select(MapToResponse);
+            return medicos.Select(MedicoMapper.ToResponse);
         }
 
-        // Busca un medico por su numero de exequatur (licencia medica)
         public async Task<MedicoResponse> GetByExequaturAsync(string exequatur)
         {
             var medico = await _medicoRepository.GetByExequaturAsync(exequatur);
-            return MapToResponse(medico);
+            return MedicoMapper.ToResponse(medico);
         }
 
-        // Obtiene todos los medicos que pertenecen a una especialidad
-        public async Task<IEnumerable<MedicoResponse>> GetByEspecialidadAsync(int especialidadId)
+        public async Task<IEnumerable<MedicoResponse>> GetByEspecialidadAsync(
+            int especialidadId)
         {
-            var medicos = await _medicoRepository.GetByEspecialidadAsync(especialidadId);
-            return medicos.Select(MapToResponse);
+            var medicos = await _medicoRepository
+                .GetByEspecialidadAsync(especialidadId);
+            return medicos.Select(MedicoMapper.ToResponse);
         }
 
-        // Actualiza la informacion de un medico existente
         public async Task ActualizarAsync(ActualizarMedicoRequest request)
         {
+            LogOperacion("ActualizarMedico", $"Id: {request.Id}");
             var medico = await _medicoRepository.GetByIdAsync(request.Id);
-
-            // Actualizar propiedades con los datos del request
-            medico.Nombre = request.Nombre;
-            medico.Email = request.Email;
-            medico.Exequatur = request.Exequatur;
-            medico.EspecialidadId = request.EspecialidadId;
-            medico.ProveedorSaludId = request.ProveedorSaludId;
-            medico.TelefonoConsultorio = request.TelefonoConsultorio;
-            medico.Foto = request.Foto;
-
-            // Validar reglas de negocio antes de actualizar
+            MedicoMapper.UpdateEntity(medico, request);
             _validator.Validar(medico);
-
             await _medicoRepository.UpdateAsync(medico);
         }
 
-        // Desactiva un medico del sistema usando la regla de dominio
         public async Task DesactivarAsync(int id)
         {
+            LogAdvertencia("DesactivarMedico", $"Id: {id}");
             var medico = await _medicoRepository.GetByIdAsync(id);
             medico.Desactivar();
             await _medicoRepository.UpdateAsync(medico);
         }
 
-        // Activa un medico en el sistema usando la regla de dominio
         public async Task ActivarAsync(int id)
         {
+            LogOperacion("ActivarMedico", $"Id: {id}");
             var medico = await _medicoRepository.GetByIdAsync(id);
             medico.Activar();
             await _medicoRepository.UpdateAsync(medico);
-        }
-
-        // Convierte una entidad Medico a su DTO de respuesta
-        private static MedicoResponse MapToResponse(Medico medico)
-        {
-            return new MedicoResponse
-            {
-                Id = medico.Id,
-                Nombre = medico.Nombre,
-                Email = medico.Email,
-                Exequatur = medico.Exequatur,
-                Especialidad = medico.Especialidad?.Nombre,
-                ProveedorSalud = medico.ProveedorSalud?.Nombre,
-                TelefonoConsultorio = medico.TelefonoConsultorio,
-                Foto = medico.Foto,
-                Activo = medico.Activo,
-                MedicoActivo = medico.MedicoActivo
-            };
         }
     }
 }
