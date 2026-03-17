@@ -11,7 +11,6 @@ namespace SGC.Domain.Interfaces.Repository
         Task<T> GetByIdAsync(int id);
         // Obtiene un registro único de forma asíncrona mediante su identificador primario.
 
-
         // Recupera todos los registros de la entidad de forma asíncrona.
         Task<IEnumerable<T>> GetAllAsync();
 

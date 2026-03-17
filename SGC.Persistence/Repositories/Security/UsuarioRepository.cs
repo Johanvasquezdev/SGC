@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SGC.Domain.Entities.Security;
 using SGC.Domain.Enums;
 using SGC.Domain.Interfaces.Repository;
@@ -6,26 +7,25 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Security
 {
-    // Repositorio de usuarios con metodos especificos para la entidad Usuario
+    // Repositorio para la entidad Usuario con consultas personalizadas
     public class UsuarioRepository : BaseRepository<Usuario>, IUsuarioRepository
     {
-        private readonly SGCDbContext _context;
+        public UsuarioRepository(SGCDbContext context) : base(context) { }
 
-        public UsuarioRepository(SGCDbContext context) : base(context)
+        public async Task<Usuario> GetByEmailAsync(string email)
         {
-            _context = context;
+            return await Context.Usuarios
+                       .FirstOrDefaultAsync(u => u.Email == email)
+                   ?? throw new KeyNotFoundException(
+                       $"No se encontró usuario con email {email}.");
         }
 
-        // Metodos especificos para la entidad Usuario
-        public Task<Usuario> GetByEmailAsync(string email)
+        public async Task<IEnumerable<Usuario>> GetByRolAsync(RolUsuario rol)
         {
-            throw new NotImplementedException();
-        }
-
-        // Obtener usuarios por su rol (Administrador, Medico, Recepcionista)
-        public Task<IEnumerable<Usuario>> GetByRolAsync(RolUsuario rol)
-        {
-            throw new NotImplementedException();
+            return await Context.Usuarios
+                .Where(u => u.Rol == rol)
+                .OrderBy(u => u.Nombre)
+                .ToListAsync();
         }
     }
 }
