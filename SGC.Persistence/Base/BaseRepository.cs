@@ -4,10 +4,9 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Base
 {
-    /// <summary>
-    /// Repositorio genérico base que implementa las operaciones CRUD comunes.
-    /// Todos los repositorios específicos heredan de esta clase.
-    /// </summary>
+
+
+    // Todos los repositorios específicos heredan de esta clase.
     public abstract class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
     {
         private readonly SGCDbContext _context;
@@ -19,9 +18,8 @@ namespace SGC.Persistence.Base
             _dbSet = _context.Set<TEntity>();
         }
 
-        /// <summary>
-        /// Expone el contexto a los repositorios hijos para consultas personalizadas.
-        /// </summary>
+
+        //  Expone el contexto a los repositorios hijos para consultas personalizadas.
         protected SGCDbContext Context => _context;
 
         public virtual async Task<TEntity> GetByIdAsync(int id)

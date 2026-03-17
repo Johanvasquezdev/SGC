@@ -1,32 +1,43 @@
+using Microsoft.EntityFrameworkCore;
 using SGC.Domain.Base;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Persistence.Base;
 using SGC.Persistence.Context;
+using System;
+using System.Collections.Generic;
+using System.Runtime.Remoting.Contexts;
+using System.Threading.Tasks;
 
 namespace SGC.Persistence.Repositories.Audit
 {
+    // Repositorio específico para la entidad de auditoría, implementando métodos personalizados para consultas
     public class AuditoriaRepository : BaseRepository<AuditEntity>, IAuditoriaRepository
     {
-        private readonly SGCDbContext _context;
+        public AuditoriaRepository(SGCDbContext context) : base(context) { }
 
-        public AuditoriaRepository(SGCDbContext context) : base(context)
+        // Métodos personalizados para obtener eventos de auditoría por diferentes criterios
+        public async Task<IEnumerable<AuditEntity>> GetByEntidadAsync(string entidad)
         {
-            _context = context;
+            return await Context.EventosAuditoria
+                .Where(a => a.Entidad == entidad)
+                .OrderByDescending(a => a.Fecha)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<AuditEntity>> GetByEntidadAsync(string entidad)
+        public async Task<IEnumerable<AuditEntity>> GetByUsuarioIdAsync(int usuarioId)
         {
-            throw new NotImplementedException();
+            return await Context.EventosAuditoria
+                .Where(a => a.UsuarioId == usuarioId)
+                .OrderByDescending(a => a.Fecha)
+                .ToListAsync();
         }
 
-        public Task<IEnumerable<AuditEntity>> GetByUsuarioIdAsync(int usuarioId)
+        public async Task<IEnumerable<AuditEntity>> GetByFechaAsync(DateTime fecha)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<AuditEntity>> GetByFechaAsync(DateTime fecha)
-        {
-            throw new NotImplementedException();
+            return await Context.EventosAuditoria
+                .Where(a => a.Fecha.Date == fecha.Date)
+                .OrderByDescending(a => a.Fecha)
+                .ToListAsync();
         }
     }
 }
