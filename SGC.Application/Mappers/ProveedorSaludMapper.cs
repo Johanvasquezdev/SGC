@@ -3,6 +3,7 @@ using SGC.Domain.Entities.Catalog;
 
 namespace SGC.Application.Mappers
 {
+    // Mapper para convertir entre la entidad ProveedorSalud y sus DTOs de solicitud y respuesta.
     public static class ProveedorSaludMapper
     {
         public static ProveedorSaludResponse ToResponse(
@@ -19,6 +20,7 @@ namespace SGC.Application.Mappers
             };
         }
 
+        // Para actualizar una entidad existente con los datos de la solicitud. El Id se mantiene igual.
         public static ProveedorSalud ToEntity(
             ProveedorSaludRequest request)
         {

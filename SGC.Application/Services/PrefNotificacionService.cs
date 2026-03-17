@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
+    // Servicio para gestionar las preferencias de notificacion de los usuarios
     public class PrefNotificacionService : BaseService, IPrefNotificacionService
     {
         private readonly IPrefNotificacionRepository _prefRepository;
@@ -24,6 +25,7 @@ namespace SGC.Application.Services
             _validator = validator;
         }
 
+        // Obtiene las preferencias de notificacion de un usuario por su ID
         public async Task<PrefNotificacionResponse> GetByUsuarioAsync(
             int usuarioId)
         {
@@ -31,6 +33,7 @@ namespace SGC.Application.Services
             return MapToResponse(pref);
         }
 
+        // Guarda o actualiza las preferencias de notificacion de un usuario
         public async Task<PrefNotificacionResponse> GuardarAsync(
             PrefNotificacionRequest request)
         {
@@ -64,6 +67,7 @@ namespace SGC.Application.Services
             return MapToResponse(pref);
         }
 
+        // Mapea la entidad PrefNotificacion a su DTO de respuesta
         private static PrefNotificacionResponse MapToResponse(
             PrefNotificacion p)
         {

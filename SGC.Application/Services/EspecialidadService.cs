@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
+    // Servicio de aplicacion para gestionar las operaciones relacionadas con la entidad Especialidad, implementando la interfaz IEspecialidadService.
     public class EspecialidadService : BaseService, IEspecialidadService
     {
         private readonly IEspecialidadRepository _especialidadRepository;
@@ -24,6 +25,7 @@ namespace SGC.Application.Services
             _validator = validator;
         }
 
+        // Crea una nueva especialidad, validando los datos y registrando la operacion en el log.
         public async Task<EspecialidadResponse> CrearAsync(EspecialidadRequest request)
         {
             LogOperacion("CrearEspecialidad", $"Nombre: {request.Nombre}");
@@ -33,24 +35,29 @@ namespace SGC.Application.Services
             return EspecialidadMapper.ToResponse(especialidad);
         }
 
+        // Obtiene una especialidad por su ID, registrando la consulta en el log.
         public async Task<EspecialidadResponse> GetByIdAsync(int id)
         {
             var especialidad = await _especialidadRepository.GetByIdAsync(id);
             return EspecialidadMapper.ToResponse(especialidad);
         }
 
+        // Obtiene todas las especialidades, registrando la consulta en el log.
         public async Task<IEnumerable<EspecialidadResponse>> GetAllAsync()
         {
             var especialidades = await _especialidadRepository.GetAllAsync();
             return especialidades.Select(EspecialidadMapper.ToResponse);
         }
 
+        }
+    // Obtiene solo las especialidades activas, registrando la consulta en el log.
         public async Task<IEnumerable<EspecialidadResponse>> GetActivasAsync()
         {
             var especialidades = await _especialidadRepository.GetActivasAsync();
             return especialidades.Select(EspecialidadMapper.ToResponse);
         }
 
+        // Actualiza una especialidad existente, validando los datos y registrando la operacion en el log.
         public async Task ActualizarAsync(int id, EspecialidadRequest request)
         {
             LogOperacion("ActualizarEspecialidad", $"Id: {id}");
@@ -61,6 +68,7 @@ namespace SGC.Application.Services
             await _especialidadRepository.UpdateAsync(especialidad);
         }
 
+        // Elimina (desactiva) una especialidad, registrando la operacion en el log.
         public async Task EliminarAsync(int id)
         {
             LogAdvertencia("EliminarEspecialidad", $"Id: {id}");

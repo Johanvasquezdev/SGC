@@ -11,8 +11,10 @@ using System.Text;
 
 namespace SGC.Application.Services
 {
+    // Servicio para generar y validar tokens JWT
     public class TokenService : BaseService, ITokenService
     {
+        // Configuración para acceder a los parámetros JWT
         private readonly IConfiguration _config;
 
         public TokenService(
@@ -22,6 +24,7 @@ namespace SGC.Application.Services
             _config = config;
         }
 
+        // Genera un token JWT firmado con los datos del usuario
         public string GenerarToken(Usuario usuario)
         {
             LogOperacion("GenerarToken", $"UsuarioId: {usuario.Id}");
@@ -32,6 +35,7 @@ namespace SGC.Application.Services
             var credenciales = new SigningCredentials(
                 key, SecurityAlgorithms.HmacSha256);
 
+            // Claims que identifican al usuario dentro del token
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier,
@@ -56,6 +60,7 @@ namespace SGC.Application.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        // Valida un token JWT y retorna el ID del usuario si es válido
         public int? ValidarToken(string token)
         {
             try
@@ -75,6 +80,8 @@ namespace SGC.Application.Services
                 }, out var tokenValidado);
 
                 var jwt = (JwtSecurityToken)tokenValidado;
+
+                // Extrae el ID del usuario desde los claims del token
                 return int.Parse(jwt.Claims
                     .First(c => c.Type == ClaimTypes.NameIdentifier).Value);
             }

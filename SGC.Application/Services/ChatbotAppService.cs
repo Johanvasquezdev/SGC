@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
+    // Servicio de aplicacion para manejar la logica de negocio relacionada con el chatbot del sistema.
     public class ChatbotAppService : BaseService, IChatbotAppService
     {
         private readonly IChatbotService _chatbotService;
@@ -19,6 +20,7 @@ namespace SGC.Application.Services
             _chatbotService = chatbotService;
         }
 
+        // Envia un mensaje al chatbot y obtiene una respuesta asincronamente, registrando la operacion en el log.
         public async Task<ChatResponse> EnviarMensajeAsync(
             ChatRequest request)
         {

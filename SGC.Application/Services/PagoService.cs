@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
+    // Servicio de dominio para gestionar pagos relacionados con citas medicas, integrando con un servicio de pagos externo (ej. Stripe) y manejando la persistencia de datos a traves del repositorio de pagos.
     public class PagoService : BaseService, IPagoService
     {
         private readonly IPagoRepository _pagoRepo;
@@ -25,6 +26,7 @@ namespace SGC.Application.Services
             _paymentService = paymentService;
         }
 
+        // Crea un intento de pago para una cita, generando un PaymentIntent en el servicio de pagos externo y guardando la informacion del pago en la base de datos con estado pendiente.
         public async Task<string> CrearIntentoPagoAsync(
             CrearPagoRequest request)
         {
@@ -50,6 +52,7 @@ namespace SGC.Application.Services
             return clientSecret;
         }
 
+        // Confirma el pago una vez que el cliente ha completado el proceso de pago en el servicio externo, actualizando el estado del pago en la base de datos a confirmado.
         public async Task<bool> ConfirmarPagoAsync(
             string stripePaymentIntentId)
         {
@@ -73,6 +76,7 @@ namespace SGC.Application.Services
             return confirmado;
         }
 
+        // Reembolsa un pago previamente confirmado, interactuando con el servicio de pagos externo para procesar el reembolso y actualizando el estado del pago en la base de datos a reembolsado.
         public async Task<bool> ReembolsarPagoAsync(int pagoId)
         {
             LogAdvertencia("ReembolsarPago", $"PagoId: {pagoId}");
@@ -90,12 +94,14 @@ namespace SGC.Application.Services
             return reembolsado;
         }
 
+        // Obtiene el pago asociado a una cita, devolviendo la informacion del pago si existe o null si no se ha registrado ningun pago para esa cita.
         public async Task<PagoResponse?> GetByCitaAsync(int citaId)
         {
             var pago = await _pagoRepo.GetByCitaAsync(citaId);
             return pago == null ? null : PagoMapper.ToResponse(pago);
         }
 
+        // Obtiene todos los pagos realizados por un paciente, devolviendo una lista de respuestas con la informacion de cada pago asociado a las citas del paciente.
         public async Task<IEnumerable<PagoResponse>> GetByPacienteAsync(
             int pacienteId)
         {
