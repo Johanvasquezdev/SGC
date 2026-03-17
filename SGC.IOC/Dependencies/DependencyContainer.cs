@@ -31,8 +31,10 @@ using SGC.Infrastructure.Cache;
 
 namespace SGC.IOC
 {
+    // Contenedor central de inyección de dependencias del sistema
     public static class DependencyContainer
     {
+        // Registra todos los servicios, repositorios y el DbContext
         public static IServiceCollection AddSGCDependencies(
             this IServiceCollection services,
             IConfiguration configuration)
@@ -78,6 +80,7 @@ namespace SGC.IOC
             // ============================================================
             // 5. Application Services
             // ============================================================
+            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ICitaService, CitaService>();
             services.AddScoped<IDisponibilidadService, DisponibilidadService>();
