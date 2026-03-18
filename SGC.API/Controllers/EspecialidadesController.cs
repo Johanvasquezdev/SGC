@@ -27,7 +27,7 @@ namespace SGC.API.Controllers
 
         // POST api/especialidades - Crea una nueva especialidad (solo admin)
         [HttpPost]
-        // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear([FromBody] EspecialidadRequest request)
         {
             var especialidad = await _especialidadService.CrearAsync(request);
@@ -36,7 +36,7 @@ namespace SGC.API.Controllers
 
         // PUT api/especialidades/{id} - Actualiza una especialidad existente
         [HttpPut("{id}")]
-        // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Actualizar(int id, [FromBody] EspecialidadRequest request)
         {
             await _especialidadService.ActualizarAsync(id, request);

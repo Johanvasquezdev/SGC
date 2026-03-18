@@ -9,7 +9,7 @@ namespace SGC.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize]
+    [Authorize]
     public class PagosController : ControllerBase
     {
         private readonly IPagoService _pagoService;
@@ -56,7 +56,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPost("reembolsar/{id}")]
-        // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Reembolsar(int id)
         {
             var reembolsado = await _pagoService.ReembolsarPagoAsync(id);

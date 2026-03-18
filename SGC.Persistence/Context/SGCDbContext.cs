@@ -4,6 +4,7 @@ using SGC.Domain.Entities.Appointments;
 using SGC.Domain.Entities.Catalog;
 using SGC.Domain.Entities.Medical;
 using SGC.Domain.Entities.Notifications;
+using SGC.Domain.Entities.Payments;
 using SGC.Domain.Entities.Security;
 
 namespace SGC.Persistence.Context
@@ -32,6 +33,9 @@ namespace SGC.Persistence.Context
         // Notifications
         public DbSet<Notificacion> Notificaciones { get; set; }
         public DbSet<PrefNotificacion> PrefNotificaciones { get; set; }
+
+        // Payments
+        public DbSet<Pago> Pagos { get; set; }
 
         // Audit
         public DbSet<AuditEntity> EventosAuditoria { get; set; }
@@ -306,6 +310,29 @@ namespace SGC.Persistence.Context
                       .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => e.UsuarioId).IsUnique();
+            });
+
+            // =============================================
+            // PAGO
+            // =============================================
+            modelBuilder.Entity<Pago>(entity =>
+            {
+                entity.ToTable("PAGO");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.CitaId).HasColumnName("citaId").IsRequired();
+                entity.Property(e => e.PacienteId).HasColumnName("pacienteId").IsRequired();
+                entity.Property(e => e.Monto).HasColumnName("monto").HasColumnType("numeric(18,2)");
+                entity.Property(e => e.Moneda).HasColumnName("moneda").IsRequired();
+                entity.Property(e => e.Estado)
+                      .HasColumnName("estado")
+                      .HasConversion<string>()
+                      .IsRequired();
+                entity.Property(e => e.StripePaymentIntentId).HasColumnName("stripePaymentIntentId");
+                entity.Property(e => e.FechaPago).HasColumnName("fechaPago");
+                entity.Property(e => e.FechaCreacion)
+                      .HasColumnName("fechaCreacion")
+                      .HasDefaultValueSql("now()");
             });
         }
     }

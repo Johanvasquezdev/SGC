@@ -37,7 +37,8 @@ namespace SGC.Application.Services
             {
                 Nombre = request.Nombre,
                 Email = request.Email,
-                PasswordHash = BCrypt.HashPassword(request.Password),
+                // Genera hash seguro de la contraseña antes de persistir.
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 Rol = RolUsuario.Paciente,
                 Cedula = request.Cedula,
                 Telefono = request.Telefono,

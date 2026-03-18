@@ -11,22 +11,35 @@ namespace SGC.Persistence.Repositories.Medical
     {
         public MedicoRepository(SGCDbContext context) : base(context) { }
 
-        // Busca un medico por su numero de exequatur (licencia medica)
+        // Busca un medico por su numero de exequatur incluyendo su especialidad
         public async Task<Medico> GetByExequaturAsync(string exequatur)
         {
             return await Context.Medicos
-                .Include(m => m.Especialidad)
-                .FirstOrDefaultAsync(m => m.Exequatur == exequatur)
-                ?? throw new KeyNotFoundException($"No se encontro un medico con exequatur {exequatur}.");
+                       .Include(m => m.Especialidad)
+                       .FirstOrDefaultAsync(m => m.Exequatur == exequatur)
+                   ?? throw new KeyNotFoundException(
+                       $"No se encontró médico con exequatur {exequatur}.");
         }
 
-        // Obtiene todos los medicos de una especialidad con sus datos de especialidad incluidos
+        // Obtiene todos los medicos de una especialidad con sus datos incluidos
         public async Task<IEnumerable<Medico>> GetByEspecialidadAsync(int especialidadId)
         {
             return await Context.Medicos
                 .Where(m => m.EspecialidadId == especialidadId)
                 .Include(m => m.Especialidad)
+                .OrderBy(m => m.Nombre)
                 .ToListAsync();
+        }
+
+        // Obtiene un medico con sus horarios cargados para validar disponibilidad
+        public async Task<Medico> GetByIdWithHorariosAsync(int id)
+        {
+            return await Context.Medicos
+                       .Include(m => m.Horarios)
+                       .Include(m => m.Especialidad)
+                       .FirstOrDefaultAsync(m => m.Id == id)
+                   ?? throw new KeyNotFoundException(
+                       $"No se encontró médico con Id {id}.");
         }
     }
 }

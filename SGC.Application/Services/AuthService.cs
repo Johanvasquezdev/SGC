@@ -37,7 +37,8 @@ namespace SGC.Application.Services
                 throw new UnauthorizedAccessException(
                     "El usuario está desactivado.");
 
-            if (!BCrypt.Verify(request.Password, usuario.PasswordHash))
+            // Verifica la contraseña contra el hash almacenado.
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
                 throw new UnauthorizedAccessException(
                     "Credenciales incorrectas.");
 

@@ -8,7 +8,7 @@ namespace SGC.API.Controllers
 {
     [Route("api/citas")]
     [ApiController]
-    // [Authorize]
+    [Authorize]
     public class CitasController : ControllerBase
     {
         // Controlador para la gestion de citas medicas, con acciones para pacientes y medicos segun su rol. Se utiliza el servicio de citas para la logica de negocio.
@@ -40,8 +40,7 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> GetAgendaMedico(
             [FromQuery] DateTime fecha)
         {
-            var medicoId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var medicoId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var citas = await _citaService.GetByMedicoAsync(medicoId);
             var citasFecha = citas.Where(
                 c => c.FechaHora.Date == fecha.Date);
@@ -59,7 +58,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/confirmar")]
-        // [Authorize(Roles = "Medico,Administrador")]
+        [Authorize(Roles = "Medico,Administrador")]
         // PUT api/citas/{id}/confirmar - Confirma una cita, solo para medicos y administradores
         public async Task<IActionResult> Confirmar(int id)
         {
@@ -78,7 +77,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/rechazar")]
-        // [Authorize(Roles = "Medico")]
+        [Authorize(Roles = "Medico")]
         // PUT api/citas/{id}/rechazar - Rechaza una cita, solo para medicos (si es su cita)
         public async Task<IActionResult> Rechazar(int id,
             [FromBody] ActualizarCitaRequest request)
@@ -101,7 +100,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/iniciar-consulta")]
-        // [Authorize(Roles = "Medico")]
+        [Authorize(Roles = "Medico")]
         // PUT api/citas/{id}/iniciar-consulta - Inicia la consulta de una cita, solo para medicos (si es su cita)
         public async Task<IActionResult> IniciarConsulta(int id)
         {
@@ -110,7 +109,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/asistencia")]
-        // [Authorize(Roles = "Medico")]
+        [Authorize(Roles = "Medico")]
         // PUT api/citas/{id}/asistencia?asistio=true - Marca la asistencia de una cita, solo para medicos (si es su cita)
         public async Task<IActionResult> MarcarAsistencia(int id,
             [FromQuery] bool asistio)

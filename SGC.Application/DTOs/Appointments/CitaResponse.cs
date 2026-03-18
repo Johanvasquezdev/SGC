@@ -18,6 +18,9 @@ namespace SGC.Application.DTOs.Appointments
         // Nombre del medico
         public string MedicoNombre { get; set; } = string.Empty;
 
+        // Identificador de la disponibilidad asociada (si aplica)
+        public int? DisponibilidadId { get; set; }
+
         // Fecha y hora de la cita
         public DateTime FechaHora { get; set; }
 

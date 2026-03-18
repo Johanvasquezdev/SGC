@@ -38,7 +38,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPost]
-        // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(
             [FromBody] CrearMedicoRequest request)
         {
@@ -48,7 +48,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}")]
-        // [Authorize(Roles = "Administrador,Medico")]
+        [Authorize(Roles = "Administrador,Medico")]
         public async Task<IActionResult> Actualizar(int id,
             [FromBody] ActualizarMedicoRequest request)
         {
@@ -58,7 +58,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/desactivar")]
-        // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Desactivar(int id)
         {
             await _medicoService.DesactivarAsync(id);
@@ -66,7 +66,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/activar")]
-        // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Activar(int id)
         {
             await _medicoService.ActivarAsync(id);

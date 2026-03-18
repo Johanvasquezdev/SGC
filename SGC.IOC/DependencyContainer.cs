@@ -4,6 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 // Repositorios - Interfaces (Domain)
 using SGC.Domain.Interfaces.Repository;
+using SGC.Domain.Interfaces;
+using SGC.Domain.Interfaces.ILogger;
+using SGC.Domain.Services;
+using SGC.Domain.Validators;
 
 // Repositorios - Implementaciones (Persistence)
 using SGC.Persistence.Context;
@@ -12,6 +16,7 @@ using SGC.Persistence.Repositories.Audit;
 using SGC.Persistence.Repositories.Catalog;
 using SGC.Persistence.Repositories.Medical;
 using SGC.Persistence.Repositories.Notifications;
+using SGC.Persistence.Repositories.Payments;
 using SGC.Persistence.Repositories.Security;
 
 // Servicios - Interfaces (Application Contracts)
@@ -19,26 +24,32 @@ using SGC.Application.Contracts;
 
 // Servicios - Implementaciones (Application Services)
 using SGC.Application.Services;
+using SGC.Infraestructure.IA;
+using SGC.Infraestructure.Logging;
+using SGC.Infraestructure.Pagos;
 
 namespace SGC.IOC
 {
-    // Contenedor de inyeccion de dependencias.
-    // Registra todos los servicios, repositorios y el DbContext del sistema.
+    // Contenedor de inyeccion de dependencias
     public static class DependencyContainer
     {
-        // Metodo de extension para registrar todas las dependencias del sistema en el contenedor de servicios
+        // Registra todos los servicios, repositorios y el DbContext del sistema
         public static IServiceCollection AddSGCDependencies(
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // ============================================================
-            // 1. Registro del DbContext con PostgreSQL
-            // ============================================================
-            services.AddDbContext<SGCDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("SGCConnection")));
+            // Fix para timestamps sin timezone con Npgsql y PostgreSQL
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             // ============================================================
-            // 2. Registro de repositorios (Persistence -> Domain interfaces)
+            // 1. DbContext con PostgreSQL via Supabase
+            // ============================================================
+            services.AddDbContext<SGCDbContext>(options =>
+                options.UseNpgsql(
+                    configuration.GetConnectionString("SGCConnection")));
+
+            // ============================================================
+            // 2. Repositorios (Persistence -> Domain interfaces)
             // ============================================================
 
             // Appointments
@@ -63,14 +74,34 @@ namespace SGC.IOC
             // Security
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
-            // ============================================================
-            // 3. Registro de servicios de aplicacion (Application layer)
-            // ============================================================
+            // Payments
+            services.AddScoped<IPagoRepository, PagoRepository>();
 
-            // Servicio de logica de negocio para validaciones de citas
+            // ============================================================
+            // 3. Domain Services y Validators
+            // ============================================================
             services.AddScoped<CitaDomainService>();
+            services.AddScoped<CitaValidator>();
+            services.AddScoped<DisponibilidadValidator>();
+            services.AddScoped<EspecialidadValidator>();
+            services.AddScoped<MedicoValidator>();
+            services.AddScoped<PacienteValidator>();
+            services.AddScoped<PrefNotificacionValidator>();
+            services.AddScoped<ProveedorSaludValidator>();
+            services.AddScoped<UsuarioValidator>();
 
-            // Servicios de aplicacion
+            // ============================================================
+            // 4. Infrastructure — registrar ANTES que los servicios
+            // ============================================================
+            services.AddScoped<ISGCLogger, SGCLogger>();
+            services.AddScoped<IChatbotService, AnthropicChatService>();
+            services.AddScoped<IPaymentService, StripePaymentService>();
+
+            // ============================================================
+            // 5. Application Services
+            // ============================================================
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICitaService, CitaService>();
             services.AddScoped<IDisponibilidadService, DisponibilidadService>();
             services.AddScoped<IEspecialidadService, EspecialidadService>();
@@ -80,8 +111,6 @@ namespace SGC.IOC
             services.AddScoped<IPrefNotificacionService, PrefNotificacionService>();
             services.AddScoped<IProveedorSaludService, ProveedorSaludService>();
             services.AddScoped<IUsuarioService, UsuarioService>();
-            // Servicios adicionales de autenticacion, auditoria, pagos y chatbot.
-            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IAuditoriaService, AuditoriaService>();
             services.AddScoped<IChatbotAppService, ChatbotAppService>();
             services.AddScoped<IPagoService, PagoService>();

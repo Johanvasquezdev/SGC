@@ -8,7 +8,7 @@ namespace SGC.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize]
+    [Authorize]
     public class NotificacionesController : ControllerBase
     {
         private readonly INotificacionService _notificacionService;

@@ -19,8 +19,8 @@ namespace SGC.Application.Mappers
                 MedicoId = cita.MedicoId,
                 DisponibilidadId = cita.DisponibilidadId,
                 FechaCreacion = cita.FechaCreacion,
-                NombrePaciente = cita.Paciente?.Nombre,
-                NombreMedico = cita.Medico?.Nombre
+                PacienteNombre = cita.Paciente?.Nombre,
+                MedicoNombre = cita.Medico?.Nombre
             };
         }
 

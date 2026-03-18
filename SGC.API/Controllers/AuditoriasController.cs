@@ -7,7 +7,7 @@ namespace SGC.API.Controllers
 {
     [Route("api/auditoria")]
     [ApiController]
-    // [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador")]
     public class AuditoriasController : ControllerBase
     {
         private readonly IAuditoriaService _auditoriaService;
