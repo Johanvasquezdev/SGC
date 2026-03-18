@@ -1,9 +1,9 @@
-using System.Text;
+ï»¿using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SGC.API.Middleware;
-using SGC.IOC.Dependencies;
+using SGC.IOC;
 using SGC.Infrastructure.SignalR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,7 +49,6 @@ builder.Services.AddCors(options =>
     {
         if (builder.Environment.IsDevelopment())
         {
-            // SignalR requiere origen específico con AllowCredentials
             policy.WithOrigins(
                     "http://localhost:3000",
                     "http://localhost:5189",
@@ -71,9 +70,10 @@ builder.Services.AddCors(options =>
 });
 
 // ============================================================
-// 4. Controllers y Swagger con JWT
+// 4. Controllers, SignalR y Swagger con JWT
 // ============================================================
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -81,7 +81,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "MedAgenda API",
         Version = "v1",
-        Description = "API del Sistema de Gestión de Citas Médicas"
+        Description = "API del Sistema de GestiÃ³n de Citas MÃ©dicas"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

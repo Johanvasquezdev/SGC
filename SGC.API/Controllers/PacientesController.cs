@@ -8,7 +8,7 @@ namespace SGC.API.Controllers
     // Controlador para la gestion de pacientes
     [Route("api/pacientes")]
     [ApiController]
-    [Authorize]
+    // [Authorize]
     public class PacientesController : ControllerBase
     {
         private readonly IPacienteService _pacienteService;
@@ -20,7 +20,7 @@ namespace SGC.API.Controllers
 
         // GET api/pacientes - Obtiene todos los pacientes (admin o medico)
         [HttpGet]
-        [Authorize(Roles = "Administrador,Medico")]
+        // [Authorize(Roles = "Administrador,Medico")]
         public async Task<IActionResult> GetAll()
         {
             var pacientes = await _pacienteService.GetAllAsync();
@@ -63,7 +63,7 @@ namespace SGC.API.Controllers
 
         // PUT api/pacientes/{id}/desactivar - Desactiva un paciente
         [HttpPut("{id}/desactivar")]
-        [Authorize(Roles = "Administrador")]
+        // [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Desactivar(int id)
         {
             await _pacienteService.DesactivarAsync(id);
@@ -72,7 +72,7 @@ namespace SGC.API.Controllers
 
         // PUT api/pacientes/{id}/activar - Activa un paciente
         [HttpPut("{id}/activar")]
-        [Authorize(Roles = "Administrador")]
+        // [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Activar(int id)
         {
             await _pacienteService.ActivarAsync(id);

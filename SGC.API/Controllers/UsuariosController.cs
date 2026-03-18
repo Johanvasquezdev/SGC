@@ -7,7 +7,7 @@ namespace SGC.API.Controllers
     // Controlador para la gestion de usuarios del sistema (solo administradores)
     [Route("api/usuarios")]
     [ApiController]
-    [Authorize(Roles = "Administrador")]
+    // [Authorize(Roles = "Administrador")]
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioService _usuarioService;

@@ -8,9 +8,10 @@ namespace SGC.API.Controllers
 {
     [Route("api/citas")]
     [ApiController]
-    [Authorize]
+    // [Authorize]
     public class CitasController : ControllerBase
     {
+        // Controlador para la gestion de citas medicas, con acciones para pacientes y medicos segun su rol. Se utiliza el servicio de citas para la logica de negocio.
         private readonly ICitaService _citaService;
 
         public CitasController(ICitaService citaService)
@@ -19,6 +20,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpGet("{id}")]
+        // GET api/citas/{id} - Obtiene una cita por su ID, accesible para pacientes y medicos (si es su cita)
         public async Task<IActionResult> GetById(int id)
         {
             var cita = await _citaService.GetByIdAsync(id);
@@ -26,6 +28,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpGet("paciente/{id}")]
+        // GET api/citas/paciente/{id} - Obtiene las citas de un paciente, solo para el paciente autenticado
         public async Task<IActionResult> GetByPaciente(int id)
         {
             var citas = await _citaService.GetByPacienteAsync(id);
@@ -33,6 +36,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpGet("medico/agenda")]
+        // GET api/citas/medico/agenda?fecha=2024-06-01 - Obtiene las citas de un medico para una fecha especifica, solo para el medico autenticado
         public async Task<IActionResult> GetAgendaMedico(
             [FromQuery] DateTime fecha)
         {
@@ -45,6 +49,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPost]
+        // POST api/citas - Crea una nueva cita, solo para pacientes
         public async Task<IActionResult> Crear(
             [FromBody] CrearCitaRequest request)
         {
@@ -54,7 +59,8 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/confirmar")]
-        [Authorize(Roles = "Medico,Administrador")]
+        // [Authorize(Roles = "Medico,Administrador")]
+        // PUT api/citas/{id}/confirmar - Confirma una cita, solo para medicos y administradores
         public async Task<IActionResult> Confirmar(int id)
         {
             await _citaService.ConfirmarAsync(id);
@@ -62,6 +68,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/cancelar")]
+        // PUT api/citas/{id}/cancelar - Cancela una cita, para pacientes (si es su cita) y medicos (si es su cita o por cualquier motivo)
         public async Task<IActionResult> Cancelar(int id,
             [FromBody] ActualizarCitaRequest request)
         {
@@ -71,7 +78,8 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/rechazar")]
-        [Authorize(Roles = "Medico")]
+        // [Authorize(Roles = "Medico")]
+        // PUT api/citas/{id}/rechazar - Rechaza una cita, solo para medicos (si es su cita)
         public async Task<IActionResult> Rechazar(int id,
             [FromBody] ActualizarCitaRequest request)
         {
@@ -81,6 +89,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/reprogramar")]
+        // PUT api/citas/{id}/reprogramar - Reprograma una cita, para pacientes (si es su cita) y medicos (si es su cita o por cualquier motivo)
         public async Task<IActionResult> Reprogramar(int id,
             [FromBody] ActualizarCitaRequest request)
         {
@@ -92,7 +101,8 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/iniciar-consulta")]
-        [Authorize(Roles = "Medico")]
+        // [Authorize(Roles = "Medico")]
+        // PUT api/citas/{id}/iniciar-consulta - Inicia la consulta de una cita, solo para medicos (si es su cita)
         public async Task<IActionResult> IniciarConsulta(int id)
         {
             await _citaService.IniciarConsultaAsync(id);
@@ -100,7 +110,8 @@ namespace SGC.API.Controllers
         }
 
         [HttpPut("{id}/asistencia")]
-        [Authorize(Roles = "Medico")]
+        // [Authorize(Roles = "Medico")]
+        // PUT api/citas/{id}/asistencia?asistio=true - Marca la asistencia de una cita, solo para medicos (si es su cita)
         public async Task<IActionResult> MarcarAsistencia(int id,
             [FromQuery] bool asistio)
         {

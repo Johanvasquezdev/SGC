@@ -80,6 +80,11 @@ namespace SGC.IOC
             services.AddScoped<IPrefNotificacionService, PrefNotificacionService>();
             services.AddScoped<IProveedorSaludService, ProveedorSaludService>();
             services.AddScoped<IUsuarioService, UsuarioService>();
+            // Servicios adicionales de autenticacion, auditoria, pagos y chatbot.
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAuditoriaService, AuditoriaService>();
+            services.AddScoped<IChatbotAppService, ChatbotAppService>();
+            services.AddScoped<IPagoService, PagoService>();
 
             return services;
         }
