@@ -5,13 +5,13 @@ namespace SGC.Application.Contracts
     // Contrato para las operaciones de gestion de citas medicas
     public interface ICitaService
     {
-        // Agenda una nueva cita medica
+        // Agenda una nueva cita despues de validar reglas de negocio
         Task<CitaResponse> AgendarAsync(CrearCitaRequest request);
 
         // Obtiene una cita por su identificador
         Task<CitaResponse> GetByIdAsync(int id);
 
-        // Obtiene todas las citas
+        // Obtiene todas las citas del sistema
         Task<IEnumerable<CitaResponse>> GetAllAsync();
 
         // Obtiene todas las citas de un paciente
@@ -23,25 +23,25 @@ namespace SGC.Application.Contracts
         // Obtiene todas las citas de una fecha especifica
         Task<IEnumerable<CitaResponse>> GetByFechaAsync(DateTime fecha);
 
-        // Confirma una cita que esta en estado Solicitada
+        // Confirma una cita solicitada
         Task ConfirmarAsync(int citaId);
 
-        // Cancela una cita con un motivo
+        // Cancela una cita registrando el motivo
         Task CancelarAsync(int citaId, string motivo);
 
-        // Rechaza una cita que esta en estado Solicitada
+        // Rechaza una cita solicitada registrando el motivo
         Task RechazarAsync(int citaId, string motivo);
 
-        // Reprograma una cita a una nueva fecha y hora
+        // Reprograma una cita a una nueva fecha
         Task ReprogramarAsync(int citaId, DateTime nuevaFecha);
 
-        // Marca una cita como no asistida por el paciente
+        // Marca una cita confirmada como no asistida
         Task MarcarNoAsistioAsync(int citaId);
 
-        // Inicia la consulta de una cita confirmada
+        // Inicia una consulta medica
         Task IniciarConsultaAsync(int citaId);
 
-        // Completa una cita que esta en progreso
+        // Completa una cita en progreso
         Task CompletarAsync(int citaId);
     }
 }

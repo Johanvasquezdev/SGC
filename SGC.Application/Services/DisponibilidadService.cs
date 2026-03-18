@@ -1,121 +1,101 @@
 using SGC.Application.Contracts;
 using SGC.Application.DTOs.Appointments;
-using SGC.Domain.Entities.Appointments;
+using SGC.Application.Mappers;
+using SGC.Application.Services.Base;
 using SGC.Domain.Enums;
+using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Domain.Validators;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
-    // Servicio de aplicacion para la gestion de horarios de disponibilidad de medicos
-    public class DisponibilidadService : IDisponibilidadService
+    // Servicio de aplicacion para gestionar la disponibilidad de los medicos, con validaciones y logueo de operaciones
+    public class DisponibilidadService : BaseService, IDisponibilidadService
     {
-        // Repositorio de disponibilidad para acceso a datos
         private readonly IDisponibilidadRepository _disponibilidadRepository;
+        private readonly DisponibilidadValidator _validator;
 
-        // Validador de reglas de negocio para disponibilidad
-        private readonly DisponibilidadValidator _validator = new DisponibilidadValidator();
-
-        public DisponibilidadService(IDisponibilidadRepository disponibilidadRepository)
+        public DisponibilidadService(
+            IDisponibilidadRepository disponibilidadRepository,
+            DisponibilidadValidator validator,
+            ISGCLogger logger) : base(logger)
         {
             _disponibilidadRepository = disponibilidadRepository;
+            _validator = validator;
         }
 
-        // Crea un nuevo horario de disponibilidad para un medico
-        public async Task<DisponibilidadResponse> CrearAsync(DisponibilidadRequest request)
+        // Crea una nueva disponibilidad para un medico, validando que no se solape con las existentes y logueando la operacion
+        public async Task<DisponibilidadResponse> CrearAsync(
+            DisponibilidadRequest request)
         {
-            var disponibilidad = MapToEntity(request);
-
-            // Validar reglas de negocio antes de guardar
+            LogOperacion("CrearDisponibilidad",
+                $"MedicoId: {request.MedicoId}");
+            var disponibilidad = DisponibilidadMapper.ToEntity(request);
             _validator.Validar(disponibilidad);
-
             await _disponibilidadRepository.AddAsync(disponibilidad);
-            return MapToResponse(disponibilidad);
+            return DisponibilidadMapper.ToResponse(disponibilidad);
         }
 
-        // Obtiene una disponibilidad por su identificador
+        // Obtiene una disponibilidad por su ID, logueando la consulta
         public async Task<DisponibilidadResponse> GetByIdAsync(int id)
         {
-            var disponibilidad = await _disponibilidadRepository.GetByIdAsync(id);
-            return MapToResponse(disponibilidad);
+            var disponibilidad = await _disponibilidadRepository
+                .GetByIdAsync(id);
+            return DisponibilidadMapper.ToResponse(disponibilidad);
         }
 
-        // Obtiene todas las disponibilidades del sistema
+        // Obtiene todas las disponibilidades, logueando la consulta
         public async Task<IEnumerable<DisponibilidadResponse>> GetAllAsync()
         {
-            var disponibilidades = await _disponibilidadRepository.GetAllAsync();
-            return disponibilidades.Select(MapToResponse);
+            var disponibilidades = await _disponibilidadRepository
+                .GetAllAsync();
+            return disponibilidades.Select(DisponibilidadMapper.ToResponse);
         }
 
-        // Obtiene todos los horarios disponibles de un medico especifico
-        public async Task<IEnumerable<DisponibilidadResponse>> GetByMedicoAsync(int medicoId)
+        // Obtiene las disponibilidades de un medico por su ID, logueando la consulta
+        public async Task<IEnumerable<DisponibilidadResponse>> GetByMedicoAsync(
+            int medicoId)
         {
-            var disponibilidades = await _disponibilidadRepository.GetByMedicoIdAsync(medicoId);
-            return disponibilidades.Select(MapToResponse);
+            var disponibilidades = await _disponibilidadRepository
+                .GetByMedicoIdAsync(medicoId);
+            return disponibilidades.Select(DisponibilidadMapper.ToResponse);
         }
 
-        // Obtiene todas las disponibilidades de un dia de la semana
-        public async Task<IEnumerable<DisponibilidadResponse>> GetByDiaAsync(int diaSemana)
+        // Obtiene las disponibilidades de un medico por el dia de la semana, logueando la consulta
+        public async Task<IEnumerable<DisponibilidadResponse>> GetByDiaAsync(
+            int diaSemana)
         {
             var dia = (DiaSemana)diaSemana;
-            var disponibilidades = await _disponibilidadRepository.GetByDiaAsync(dia);
-            return disponibilidades.Select(MapToResponse);
+            var disponibilidades = await _disponibilidadRepository
+                .GetByDiaAsync(dia);
+            return disponibilidades.Select(DisponibilidadMapper.ToResponse);
         }
 
-        // Actualiza un horario de disponibilidad existente
+        // Actualiza una disponibilidad existente, validando que no se solape con las otras y logueando la operacion
         public async Task ActualizarAsync(int id, DisponibilidadRequest request)
         {
-            var disponibilidad = await _disponibilidadRepository.GetByIdAsync(id);
-
-            // Actualizar propiedades con los datos del request
+            LogOperacion("ActualizarDisponibilidad", $"Id: {id}");
+            var disponibilidad = await _disponibilidadRepository
+                .GetByIdAsync(id);
             disponibilidad.MedicoId = request.MedicoId;
             disponibilidad.DiaSemana = (DiaSemana)request.DiaSemana;
             disponibilidad.HoraInicio = request.HoraInicio;
             disponibilidad.HoraFin = request.HoraFin;
             disponibilidad.DuracionCitaMin = request.DuracionCitaMin;
             disponibilidad.EsRecurrente = request.EsRecurrente;
-
-            // Validar reglas de negocio antes de actualizar
             _validator.Validar(disponibilidad);
-
             await _disponibilidadRepository.UpdateAsync(disponibilidad);
         }
 
-        // Elimina un horario de disponibilidad del sistema
+        // Elimina una disponibilidad por su ID, logueando la operacion
         public async Task EliminarAsync(int id)
         {
-            var disponibilidad = await _disponibilidadRepository.GetByIdAsync(id);
+            LogAdvertencia("EliminarDisponibilidad", $"Id: {id}");
+            var disponibilidad = await _disponibilidadRepository
+                .GetByIdAsync(id);
             await _disponibilidadRepository.DeleteAsync(disponibilidad);
-        }
-
-        // Convierte un request a la entidad Disponibilidad
-        private static Disponibilidad MapToEntity(DisponibilidadRequest request)
-        {
-            return new Disponibilidad
-            {
-                MedicoId = request.MedicoId,
-                DiaSemana = (DiaSemana)request.DiaSemana,
-                HoraInicio = request.HoraInicio,
-                HoraFin = request.HoraFin,
-                DuracionCitaMin = request.DuracionCitaMin,
-                EsRecurrente = request.EsRecurrente
-            };
-        }
-
-        // Convierte una entidad Disponibilidad a su DTO de respuesta
-        private static DisponibilidadResponse MapToResponse(Disponibilidad d)
-        {
-            return new DisponibilidadResponse
-            {
-                Id = d.Id,
-                MedicoId = d.MedicoId,
-                MedicoNombre = d.Medico?.Nombre ?? string.Empty,
-                DiaSemana = d.DiaSemana.ToString(),
-                HoraInicio = d.HoraInicio,
-                HoraFin = d.HoraFin,
-                DuracionCitaMin = d.DuracionCitaMin,
-                EsRecurrente = d.EsRecurrente
-            };
         }
     }
 }

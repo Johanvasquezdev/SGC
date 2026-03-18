@@ -1,63 +1,59 @@
 using SGC.Application.Contracts;
 using SGC.Application.DTOs.Notifications;
-using SGC.Domain.Entities.Notifications;
+using SGC.Application.Mappers;
+using SGC.Application.Services.Base;
+using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
-    // Servicio de aplicacion para la gestion de notificaciones del sistema
-    public class NotificacionService : INotificacionService
+    // Servicio de notificaciones para manejar la logica de negocio relacionada con las notificaciones del sistema
+    public class NotificacionService : BaseService, INotificacionService
     {
-        // Repositorio de notificaciones para acceso a datos
         private readonly INotificacionRepository _notificacionRepository;
 
-        public NotificacionService(INotificacionRepository notificacionRepository)
+        public NotificacionService(
+            INotificacionRepository notificacionRepository,
+            ISGCLogger logger) : base(logger)
         {
             _notificacionRepository = notificacionRepository;
         }
 
-        // Obtiene una notificacion por su identificador
+        // Crea una nueva notificacion para un usuario
         public async Task<NotificacionResponse> GetByIdAsync(int id)
         {
             var notificacion = await _notificacionRepository.GetByIdAsync(id);
-            return MapToResponse(notificacion);
+            return NotificacionMapper.ToResponse(notificacion);
         }
 
-        // Obtiene todas las notificaciones de un usuario ordenadas por fecha
-        public async Task<IEnumerable<NotificacionResponse>> GetByUsuarioAsync(int usuarioId)
+        // Obtiene todas las notificaciones de un usuario
+        public async Task<IEnumerable<NotificacionResponse>> GetByUsuarioAsync(
+            int usuarioId)
         {
-            var notificaciones = await _notificacionRepository.GetByUsuarioIdAsync(usuarioId);
-            return notificaciones.Select(MapToResponse);
+            var notificaciones = await _notificacionRepository
+                .GetByUsuarioIdAsync(usuarioId);
+            return notificaciones.Select(NotificacionMapper.ToResponse);
         }
 
         // Obtiene solo las notificaciones no leidas de un usuario
-        public async Task<IEnumerable<NotificacionResponse>> GetNoLeidasAsync(int usuarioId)
+        public async Task<IEnumerable<NotificacionResponse>> GetNoLeidasAsync(
+            int usuarioId)
         {
-            var notificaciones = await _notificacionRepository.GetNoLeidasAsync(usuarioId);
-            return notificaciones.Select(MapToResponse);
+            var notificaciones = await _notificacionRepository
+                .GetNoLeidasAsync(usuarioId);
+            return notificaciones.Select(NotificacionMapper.ToResponse);
         }
 
-        // Marca una notificacion como leida usando la regla de dominio
+        // Marca una notificacion como leida
         public async Task MarcarLeidaAsync(int notificacionId)
         {
-            var notificacion = await _notificacionRepository.GetByIdAsync(notificacionId);
+            LogOperacion("MarcarLeida", $"NotificacionId: {notificacionId}");
+            var notificacion = await _notificacionRepository
+                .GetByIdAsync(notificacionId);
             notificacion.MarcarLeida();
             await _notificacionRepository.UpdateAsync(notificacion);
-        }
-
-        // Convierte una entidad Notificacion a su DTO de respuesta
-        private static NotificacionResponse MapToResponse(Notificacion n)
-        {
-            return new NotificacionResponse
-            {
-                Id = n.Id,
-                UsuarioId = n.UsuarioId,
-                CitaId = n.CitaId,
-                Tipo = n.Tipo.ToString(),
-                Mensaje = n.Mensaje,
-                Leida = n.Leida,
-                FechaEnvio = n.FechaEnvio
-            };
         }
     }
 }

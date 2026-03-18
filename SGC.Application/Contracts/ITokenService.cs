@@ -1,15 +1,14 @@
-using SGC.Application.DTOs.Security;
 using SGC.Domain.Entities.Security;
 
 namespace SGC.Application.Contracts
 {
-    // Contrato para la generacion y validacion de tokens JWT
+    // Servicio para generar y validar tokens JWT de autenticacion
     public interface ITokenService
     {
-        // Genera un token JWT y un refresh token para el usuario autenticado
-        LoginResponse GenerarToken(Usuario usuario);
+        // Genera el token JWT del usuario autenticado
+        string GenerarToken(Usuario usuario);
 
-        // Valida un refresh token y genera un nuevo par de tokens
-        Task<LoginResponse> RefrescarTokenAsync(string refreshToken);
+        // Valida el token y retorna el ID del usuario si es valido
+        int? ValidarToken(string token);
     }
 }

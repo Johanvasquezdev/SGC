@@ -1,34 +1,43 @@
+using BCrypt.Net;
 using SGC.Application.Contracts;
 using SGC.Application.DTOs.Medical;
+using SGC.Application.Mappers;
+using SGC.Application.Services.Base;
 using SGC.Domain.Entities.Medical;
 using SGC.Domain.Enums;
+using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Domain.Validators;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
-    // Servicio de aplicacion para la gestion de pacientes
-    public class PacienteService : IPacienteService
+    // Servicio de aplicacion para gestionar pacientes, implementa la logica de negocio y validaciones antes de acceder al repositorio.
+    public class PacienteService : BaseService, IPacienteService
     {
-        // Repositorio de pacientes para acceso a datos
         private readonly IPacienteRepository _pacienteRepository;
+        private readonly PacienteValidator _validator;
 
-        // Validador de reglas de negocio para pacientes
-        private readonly PacienteValidator _validator = new PacienteValidator();
-
-        public PacienteService(IPacienteRepository pacienteRepository)
+        public PacienteService(
+            IPacienteRepository pacienteRepository,
+            PacienteValidator validator,
+            ISGCLogger logger) : base(logger)
         {
             _pacienteRepository = pacienteRepository;
+            _validator = validator;
         }
 
-        // Registra un nuevo paciente en el sistema con rol Paciente
+        // Crea un nuevo paciente, validando los datos y aplicando la logica de negocio antes de guardarlo en el repositorio.
         public async Task<PacienteResponse> CrearAsync(CrearPacienteRequest request)
         {
+            LogOperacion("CrearPaciente", $"Email: {request.Email}");
+
             var paciente = new Paciente
             {
                 Nombre = request.Nombre,
                 Email = request.Email,
-                PasswordHash = request.Password, // En produccion se debe hashear la contrasena
+                PasswordHash = BCrypt.HashPassword(request.Password),
                 Rol = RolUsuario.Paciente,
                 Cedula = request.Cedula,
                 Telefono = request.Telefono,
@@ -37,86 +46,58 @@ namespace SGC.Application.Services
                 NumeroSeguro = request.NumeroSeguro
             };
 
-            // Validar reglas de negocio antes de guardar
             _validator.Validar(paciente);
-
             await _pacienteRepository.AddAsync(paciente);
-            return MapToResponse(paciente);
+            return PacienteMapper.ToResponse(paciente);
         }
 
-        // Obtiene un paciente por su identificador
+        // Obtiene un paciente por su ID, lanzando una excepcion si no se encuentra o esta desactivado.
         public async Task<PacienteResponse> GetByIdAsync(int id)
         {
             var paciente = await _pacienteRepository.GetByIdAsync(id);
-            return MapToResponse(paciente);
+            return PacienteMapper.ToResponse(paciente);
         }
 
-        // Obtiene todos los pacientes del sistema
+        // Obtiene todos los pacientes, incluyendo solo los activos y mapeando a DTOs de respuesta.
         public async Task<IEnumerable<PacienteResponse>> GetAllAsync()
         {
             var pacientes = await _pacienteRepository.GetAllAsync();
-            return pacientes.Select(MapToResponse);
+            return pacientes.Select(PacienteMapper.ToResponse);
         }
 
-        // Busca un paciente por su numero de cedula de identidad
+        // Obtiene un paciente por su cedula, lanzando una excepcion si no se encuentra o esta desactivado.
         public async Task<PacienteResponse> GetByCedulaAsync(string cedula)
         {
             var paciente = await _pacienteRepository.GetByCedulaAsync(cedula);
-            return MapToResponse(paciente);
+            return PacienteMapper.ToResponse(paciente);
         }
 
-        // Actualiza la informacion de un paciente existente
+        // Actualiza los datos de un paciente existente, validando los cambios y aplicando la logica de negocio antes de guardarlo en el repositorio.
         public async Task ActualizarAsync(ActualizarPacienteRequest request)
         {
+            LogOperacion("ActualizarPaciente", $"Id: {request.Id}");
             var paciente = await _pacienteRepository.GetByIdAsync(request.Id);
-
-            // Actualizar propiedades con los datos del request
-            paciente.Nombre = request.Nombre;
-            paciente.Email = request.Email;
-            paciente.Cedula = request.Cedula;
-            paciente.Telefono = request.Telefono;
-            paciente.FechaNacimiento = request.FechaNacimiento;
-            paciente.TipoSeguro = request.TipoSeguro;
-            paciente.NumeroSeguro = request.NumeroSeguro;
-
-            // Validar reglas de negocio antes de actualizar
+            PacienteMapper.UpdateEntity(paciente, request);
             _validator.Validar(paciente);
-
             await _pacienteRepository.UpdateAsync(paciente);
         }
 
-        // Desactiva un paciente del sistema usando la regla de dominio
+        // Desactiva un paciente, aplicando la logica de negocio antes de guardarlo en el repositorio.
         public async Task DesactivarAsync(int id)
         {
+            LogAdvertencia("DesactivarPaciente", $"Id: {id}");
             var paciente = await _pacienteRepository.GetByIdAsync(id);
             paciente.Desactivar();
             await _pacienteRepository.UpdateAsync(paciente);
         }
 
-        // Activa un paciente en el sistema usando la regla de dominio
+        // Activa un paciente, aplicando la logica de negocio antes de guardarlo en el repositorio.
         public async Task ActivarAsync(int id)
         {
+            LogOperacion("ActivarPaciente", $"Id: {id}");
             var paciente = await _pacienteRepository.GetByIdAsync(id);
             paciente.Activar();
             await _pacienteRepository.UpdateAsync(paciente);
-        }
-
-        // Convierte una entidad Paciente a su DTO de respuesta incluyendo la edad calculada
-        private static PacienteResponse MapToResponse(Paciente paciente)
-        {
-            return new PacienteResponse
-            {
-                Id = paciente.Id,
-                Nombre = paciente.Nombre,
-                Email = paciente.Email,
-                Cedula = paciente.Cedula,
-                Telefono = paciente.Telefono,
-                FechaNacimiento = paciente.FechaNacimiento,
-                Edad = paciente.CalcularEdad(),
-                TipoSeguro = paciente.TipoSeguro,
-                NumeroSeguro = paciente.NumeroSeguro,
-                Activo = paciente.Activo
-            };
         }
     }
 }

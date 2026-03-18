@@ -1,10 +1,9 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SGC.API.Middleware;
 using SGC.IOC;
-using SGC.Infrastructure.SignalR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,10 +69,9 @@ builder.Services.AddCors(options =>
 });
 
 // ============================================================
-// 4. Controllers, SignalR y Swagger con JWT
+// 4. Controllers y Swagger con JWT
 // ============================================================
 builder.Services.AddControllers();
-builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -81,7 +79,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "MedAgenda API",
         Version = "v1",
-        Description = "API del Sistema de Gestión de Citas Médicas"
+        Description = "API del Sistema de Gestion de Citas Medicas"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -136,12 +134,6 @@ app.UseCors("SGCPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-// ============================================================
-// SignalR Hubs
-// ============================================================
-app.MapHub<CitaHub>("/hubs/citas");
-app.MapHub<DisponibilidadHub>("/hubs/disponibilidad");
 
 // ============================================================
 // Health Check endpoint
