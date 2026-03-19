@@ -24,7 +24,7 @@ namespace SGC.API.Controllers
         {
             try
             {
-                var response = await _authService.LoginAsync(request);
+                var response = await _authService.LoginAsync(request); // Intenta autenticar al usuario con las credenciales proporcionadas
                 return Ok(response);
             }
             catch (UnauthorizedAccessException ex)

@@ -6,7 +6,7 @@ using SGC.Application.DTOs.Medical;
 namespace SGC.API.Controllers
 {
     // Controlador para la gestion de pacientes
-    [Route("api/pacientes")]
+    [Route("api/pacientes")] // Ruta base para las acciones relacionadas con pacientes
     [ApiController]
     [Authorize]
     public class PacientesController : ControllerBase

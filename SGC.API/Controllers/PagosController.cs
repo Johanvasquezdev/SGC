@@ -10,7 +10,7 @@ namespace SGC.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class PagosController : ControllerBase
+    public class PagosController : ControllerBase // Controlador para gestionar los pagos de las citas, con acciones para crear intentos de pago, confirmar pagos, recibir webhooks de Stripe, reembolsar pagos y obtener pagos por cita o paciente. Se utiliza el servicio de pagos para la logica de negocio.
     {
         private readonly IPagoService _pagoService;
 
@@ -20,7 +20,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPost("crear-intento")]
-        public async Task<IActionResult> CrearIntento(
+        public async Task<IActionResult> CrearIntento( // POST api/pagos/crear-intento - Crea un intento de pago para una cita, recibiendo los detalles del pago en el cuerpo de la solicitud
             [FromBody] CrearPagoRequest request)
         {
             var clientSecret = await _pagoService
@@ -29,7 +29,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpPost("confirmar")]
-        public async Task<IActionResult> Confirmar(
+        public async Task<IActionResult> Confirmar( // POST api/pagos/confirmar - Confirma un pago, recibiendo el ID del intento de pago de Stripe en el cuerpo de la solicitud
             [FromBody] string stripePaymentIntentId)
         {
             var confirmado = await _pagoService
@@ -43,7 +43,7 @@ namespace SGC.API.Controllers
 
         [HttpPost("webhook")]
         [AllowAnonymous]
-        public async Task<IActionResult> Webhook()
+        public async Task<IActionResult> Webhook() // POST api/pagos/webhook - Recibe los webhooks de Stripe para eventos relacionados con los pagos, como confirmaciones o reembolsos. Se valida la firma del webhook y se procesa el evento correspondiente.
         {
             var payload = await new StreamReader(
                 Request.Body).ReadToEndAsync();
@@ -57,7 +57,7 @@ namespace SGC.API.Controllers
 
         [HttpPost("reembolsar/{id}")]
         [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Reembolsar(int id)
+        public async Task<IActionResult> Reembolsar(int id) // POST api/pagos/reembolsar/{id} - Reembolsa un pago por su ID, solo accesible para usuarios con rol de Administrador
         {
             var reembolsado = await _pagoService.ReembolsarPagoAsync(id);
 
@@ -68,7 +68,7 @@ namespace SGC.API.Controllers
         }
 
         [HttpGet("cita/{citaId}")]
-        public async Task<IActionResult> GetByCita(int citaId)
+        public async Task<IActionResult> GetByCita(int citaId) // GET api/pagos/cita/{citaId} - Obtiene el pago asociado a una cita por su ID, accesible para el paciente o medico relacionado con la cita
         {
             var pago = await _pagoService.GetByCitaAsync(citaId);
 
@@ -79,8 +79,8 @@ namespace SGC.API.Controllers
             return Ok(pago);
         }
 
-        [HttpGet("paciente/{pacienteId}")]
-        public async Task<IActionResult> GetByPaciente(int pacienteId)
+        [HttpGet("paciente/{pacienteId}")] 
+        public async Task<IActionResult> GetByPaciente(int pacienteId) // GET api/pagos/paciente/{pacienteId} - Obtiene los pagos realizados por un paciente, solo accesible para el paciente autenticado
         {
             var pagos = await _pagoService.GetByPacienteAsync(pacienteId);
             return Ok(pagos);
