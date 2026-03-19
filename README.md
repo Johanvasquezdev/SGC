@@ -4,6 +4,9 @@
 > Profesor: Francis Ramirez
 
 ---
+## OJO LEER: INFORMACION IMPORTANTE SOBRE RAMAS 
+las ramas sin matricula significa que se trabajaron en conjunto entre los 2 participantes gregori y johan
+
 
 ## 📋 Descripción del Proyecto
 
