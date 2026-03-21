@@ -128,7 +128,7 @@ Se utiliza **SignalR** para:
 
 | Nombre | Matrícula | Responsabilidad |
 |---|---|---|
-| **Johan Vasquez** | 2025-1235 | SGC.Web (Next.js), SGC.API, Capas compartidas |
+| **Johan Vasquez** | 2025-1235 | SGC.Web (Next.js), Capas compartidas |
 | **Gregori Evangelista** | 2025-1232 | SGC.Desktop (.NET MAUI), Capas compartidas |
 
 ---
