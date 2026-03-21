@@ -38,11 +38,12 @@ Actualmente muchos centros médicos gestionan sus citas de forma manual o con he
 - Gestión de proveedores de salud
 - Envío de notificaciones y recordatorios (Email, SMS, Push)
 - Registro histórico y auditoría de operaciones
+- Facturación médica y pagos en línea
+ Diagnósticos automatizados o soporte médico con IA
 
 ❌ Fuera de alcance:
-- Facturación médica y pagos en línea
+
 - Expedientes clínicos completos
-- Diagnósticos automatizados o soporte médico con IA
 
 ---
 
