@@ -1,22 +1,32 @@
+using Microsoft.Extensions.Logging;
 using SGC.Domain.Interfaces.ILogger;
-using System;
 
 namespace SGC.Infraestructure.Logging
 {
-    // Logger básico para desarrollo que escribe en consola.
+    // Implementación concreta del logger usando el sistema de logging de .NET.
     public class SGCLogger : ISGCLogger
     {
+        private readonly ILogger<SGCLogger> _logger;
+
+        public SGCLogger(ILogger<SGCLogger> logger)
+        {
+            _logger = logger;
+        }
+
         // Registra mensajes informativos.
-        public void LogInfo(string mensaje) => Console.WriteLine($"[INFO] {mensaje}");
+        public void LogInfo(string mensaje) =>
+            _logger.LogInformation(mensaje);
 
         // Registra advertencias.
-        public void LogWarning(string mensaje) => Console.WriteLine($"[WARN] {mensaje}");
+        public void LogWarning(string mensaje) =>
+            _logger.LogWarning(mensaje);
 
         // Registra errores y su excepción asociada si existe.
         public void LogError(string mensaje, Exception? ex = null) =>
-            Console.WriteLine($"[ERROR] {mensaje} {ex?.Message}");
+            _logger.LogError(ex, mensaje);
 
         // Registra mensajes de depuración.
-        public void LogDebug(string mensaje) => Console.WriteLine($"[DEBUG] {mensaje}");
+        public void LogDebug(string mensaje) =>
+            _logger.LogDebug(mensaje);
     }
 }
