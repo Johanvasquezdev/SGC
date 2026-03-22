@@ -66,6 +66,8 @@ MedAgenda está construido bajo una **Arquitectura en Capas (Layering)** con **C
 | Notificaciones SMS | Twilio API |
 | Caché | Redis |
 | CI/CD | GitHub Actions |
+| Pagos | Stripe |
+| Chatbot | Claude |
 
 ### Estructura de la solución
 
