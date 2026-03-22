@@ -6,17 +6,19 @@ using SGC.Domain.Entities.Appointments;
 using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Domain.Services;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace SGC.Application.Services
 {
-    // Servicio de aplicacion para gestionar citas medicas, implementa la logica de negocio y coordina con los repositorios y servicios de dominio.
+    // Servicio para gestionar el ciclo de vida de las citas medicas
     public class CitaService : BaseService, ICitaService
     {
+        // Repositorio de citas para acceso a datos
         private readonly ICitaRepository _citaRepository;
+
+        // Repositorio de medicos para validar disponibilidad
         private readonly IMedicoRepository _medicoRepository;
+
+        // Servicio de dominio para validar reglas de negocio
         private readonly CitaDomainService _domainService;
 
         public CitaService(
@@ -30,17 +32,22 @@ namespace SGC.Application.Services
             _domainService = domainService;
         }
 
-        // Agendar una nueva cita, validando disponibilidad y reglas de negocio
+        // Agenda una nueva cita validando disponibilidad y conflictos de horario
         public async Task<CitaResponse> AgendarAsync(CrearCitaRequest request)
         {
             LogOperacion("AgendarCita",
                 $"Paciente: {request.PacienteId}, Medico: {request.MedicoId}");
 
-            var medico = await _medicoRepository.GetByIdAsync(request.MedicoId);
+            // Carga el medico con sus horarios para validar disponibilidad
+            var medico = await _medicoRepository
+                .GetByIdWithHorariosAsync(request.MedicoId);
+
             var cita = CitaMapper.ToEntity(request);
 
+            // Valida reglas de dominio — disponibilidad y estado del medico
             _domainService.ValidarAgendamiento(cita, medico);
 
+            // Verifica que no exista otra cita en el mismo horario
             var existeConflicto = await _citaRepository
                 .ExisteConflictoAsync(request.MedicoId, request.FechaHora);
             if (existeConflicto)
@@ -51,42 +58,42 @@ namespace SGC.Application.Services
             return CitaMapper.ToResponse(cita);
         }
 
-        // Obtener los detalles de una cita por su ID
+        // Obtiene una cita por su identificador
         public async Task<CitaResponse> GetByIdAsync(int id)
         {
             var cita = await _citaRepository.GetByIdAsync(id);
             return CitaMapper.ToResponse(cita);
         }
 
-        // Obtener todas las citas, con opciones de filtrado por paciente, medico o fecha
+        // Obtiene todas las citas del sistema
         public async Task<IEnumerable<CitaResponse>> GetAllAsync()
         {
             var citas = await _citaRepository.GetAllAsync();
             return citas.Select(CitaMapper.ToResponse);
         }
 
-        // Obtener las citas de un paciente específico
+        // Obtiene todas las citas de un paciente especifico
         public async Task<IEnumerable<CitaResponse>> GetByPacienteAsync(int pacienteId)
         {
             var citas = await _citaRepository.GetByPacienteIdAsync(pacienteId);
             return citas.Select(CitaMapper.ToResponse);
         }
 
-        // Obtener las citas de un medico específico
+        // Obtiene todas las citas de un medico especifico
         public async Task<IEnumerable<CitaResponse>> GetByMedicoAsync(int medicoId)
         {
             var citas = await _citaRepository.GetByMedicoIdAsync(medicoId);
             return citas.Select(CitaMapper.ToResponse);
         }
 
-        // Obtener las citas programadas para una fecha específica
+        // Obtiene todas las citas de una fecha especifica
         public async Task<IEnumerable<CitaResponse>> GetByFechaAsync(DateTime fecha)
         {
             var citas = await _citaRepository.GetByFechaAsync(fecha);
             return citas.Select(CitaMapper.ToResponse);
         }
 
-        // Confirmar una cita, cambiando su estado a Confirmada
+        // Confirma una cita cambiando su estado a Confirmada
         public async Task ConfirmarAsync(int citaId)
         {
             LogOperacion("ConfirmarCita", $"CitaId: {citaId}");
@@ -95,7 +102,7 @@ namespace SGC.Application.Services
             await _citaRepository.UpdateAsync(cita);
         }
 
-        // Cancelar una cita, cambiando su estado a Cancelada y registrando el motivo
+        // Cancela una cita registrando el motivo
         public async Task CancelarAsync(int citaId, string motivo)
         {
             LogAdvertencia("CancelarCita",
@@ -105,7 +112,7 @@ namespace SGC.Application.Services
             await _citaRepository.UpdateAsync(cita);
         }
 
-        // Rechazar una cita, cambiando su estado a Rechazada y registrando el motivo
+        // Rechaza una cita solicitada registrando el motivo
         public async Task RechazarAsync(int citaId, string motivo)
         {
             LogAdvertencia("RechazarCita",
@@ -115,16 +122,21 @@ namespace SGC.Application.Services
             await _citaRepository.UpdateAsync(cita);
         }
 
-        // Reprogramar una cita, cambiando su fecha y estado a Solicitada
+        // Reprograma una cita a una nueva fecha validando disponibilidad
         public async Task ReprogramarAsync(int citaId, DateTime nuevaFecha)
         {
             LogOperacion("ReprogramarCita",
                 $"CitaId: {citaId}, NuevaFecha: {nuevaFecha}");
+
             var cita = await _citaRepository.GetByIdAsync(citaId);
-            var medico = await _medicoRepository.GetByIdAsync(cita.MedicoId);
+
+            // Carga el medico con horarios para validar nueva disponibilidad
+            var medico = await _medicoRepository
+                .GetByIdWithHorariosAsync(cita.MedicoId);
 
             _domainService.ValidarReprogramacion(cita, medico, nuevaFecha);
 
+            // Verifica que no haya conflicto en la nueva fecha
             var existeConflicto = await _citaRepository
                 .ExisteConflictoAsync(cita.MedicoId, nuevaFecha);
             if (existeConflicto)
@@ -135,7 +147,7 @@ namespace SGC.Application.Services
             await _citaRepository.UpdateAsync(cita);
         }
 
-        // Marcar una cita como No Asistió, cambiando su estado a NoAsistio
+        // Marca una cita como no asistida por el paciente
         public async Task MarcarNoAsistioAsync(int citaId)
         {
             LogAdvertencia("MarcarNoAsistio", $"CitaId: {citaId}");
@@ -144,7 +156,7 @@ namespace SGC.Application.Services
             await _citaRepository.UpdateAsync(cita);
         }
 
-        // Iniciar una consulta médica, cambiando el estado de la cita a EnConsulta
+        // Inicia la consulta medica de una cita confirmada
         public async Task IniciarConsultaAsync(int citaId)
         {
             LogOperacion("IniciarConsulta", $"CitaId: {citaId}");
@@ -153,7 +165,7 @@ namespace SGC.Application.Services
             await _citaRepository.UpdateAsync(cita);
         }
 
-        // Completar una consulta médica, cambiando el estado de la cita a Completada
+        // Completa una cita que esta en progreso
         public async Task CompletarAsync(int citaId)
         {
             LogOperacion("CompletarCita", $"CitaId: {citaId}");

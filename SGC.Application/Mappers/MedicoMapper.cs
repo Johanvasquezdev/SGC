@@ -18,6 +18,8 @@ namespace SGC.Application.Mappers
                 EspecialidadId = medico.EspecialidadId,
                 NombreEspecialidad = medico.Especialidad?.Nombre,
                 ProveedorSaludId = medico.ProveedorSaludId,
+                Especialidad = medico.Especialidad?.Nombre,
+                ProveedorSalud = medico.ProveedorSalud?.Nombre,
                 TelefonoConsultorio = medico.TelefonoConsultorio,
                 Foto = medico.Foto,
                 Activo = medico.Activo

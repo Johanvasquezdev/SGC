@@ -49,8 +49,7 @@ namespace SGC.Application.Services
             return especialidades.Select(EspecialidadMapper.ToResponse);
         }
 
-        }
-    // Obtiene solo las especialidades activas, registrando la consulta en el log.
+        // Obtiene solo las especialidades activas, registrando la consulta en el log.
         public async Task<IEnumerable<EspecialidadResponse>> GetActivasAsync()
         {
             var especialidades = await _especialidadRepository.GetActivasAsync();

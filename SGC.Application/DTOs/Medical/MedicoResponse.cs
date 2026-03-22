@@ -15,6 +15,15 @@ namespace SGC.Application.DTOs.Medical
         // Numero de exequatur (licencia medica)
         public string? Exequatur { get; set; }
 
+        // Identificador de la especialidad
+        public int? EspecialidadId { get; set; }
+
+        // Nombre de la especialidad
+        public string? NombreEspecialidad { get; set; }
+
+        // Identificador del proveedor de salud
+        public int? ProveedorSaludId { get; set; }
+
         // Nombre de la especialidad medica
         public string? Especialidad { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using SGC.Application.DTOs.Appointments;
 using SGC.Domain.Entities.Appointments;
+using SGC.Domain.Enums;
 
 namespace SGC.Application.Mappers
 {
@@ -29,7 +30,8 @@ namespace SGC.Application.Mappers
             return new Disponibilidad
             {
                 MedicoId = request.MedicoId,
-                DiaSemana = request.DiaSemana,
+                // Mapea el int del request al enum de dominio.
+                DiaSemana = (DiaSemana)request.DiaSemana,
                 HoraInicio = request.HoraInicio,
                 HoraFin = request.HoraFin,
                 DuracionCitaMin = request.DuracionCitaMin,

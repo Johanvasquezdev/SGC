@@ -1,4 +1,4 @@
-dnamespace SGC.Application.DTOs.Notifications
+namespace SGC.Application.DTOs.Notifications
 {
     // Datos para actualizar las preferencias de notificacion de un usuario
     public class PrefNotificacionRequest

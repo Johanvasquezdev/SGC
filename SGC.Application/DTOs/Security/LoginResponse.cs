@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 
 namespace SGC.Application.DTOs.Security
 {
-    // DTO de respuesta para el login exitoso, contiene el token JWT y datos basicos del usuario
+    // DTO de respuesta para el login exitoso, contiene el token y datos basicos del usuario
     public class LoginResponse
     {
         public string Token { get; set; } = string.Empty;
