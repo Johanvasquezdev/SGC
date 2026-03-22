@@ -1,32 +1,31 @@
-﻿using SGC.Domain.Entities.Medical;
+using SGC.Domain.Entities.Medical;
 
 namespace SGC.Domain.Validators
 {
-    // Validador para la entidad Medico. Se encarga de validar las reglas de negocio antes de crear o actualizar un medico.
+    // Valida las reglas de negocio para la creacion o actualizacion de un medico
     public class MedicoValidator
     {
-        // Valida los datos de un medico. Lanza excepciones si alguna regla de negocio no se cumple.
         public void Validar(Medico medico)
         {
+            // Regla: el nombre es obligatorio
             if (string.IsNullOrWhiteSpace(medico.Nombre))
                 throw new InvalidOperationException(
-                    "El nombre del médico es requerido.");
+                    "El nombre del medico es obligatorio.");
 
+            // Regla: el email es obligatorio
             if (string.IsNullOrWhiteSpace(medico.Email))
                 throw new InvalidOperationException(
-                    "El email del médico es requerido.");
+                    "El email del medico es obligatorio.");
 
-            if (!medico.Email.Contains("@"))
-                throw new InvalidOperationException(
-                    "El email no tiene un formato válido.");
-
+            // Regla: el exequatur es obligatorio para ejercer
             if (string.IsNullOrWhiteSpace(medico.Exequatur))
                 throw new InvalidOperationException(
-                    "El exequátur del médico es requerido.");
+                    "El exequatur es obligatorio para registrar un medico.");
 
-            if (medico.EspecialidadId == null)
+            // Regla: debe tener una especialidad asignada
+            if (medico.EspecialidadId == null || medico.EspecialidadId <= 0)
                 throw new InvalidOperationException(
-                    "El médico debe tener una especialidad asignada.");
+                    "El medico debe tener una especialidad asignada.");
         }
     }
 }

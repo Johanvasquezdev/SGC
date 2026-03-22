@@ -21,10 +21,12 @@ namespace SGC.Domain.Interfaces.Repository
 
         
         // Marca una entidad existente para ser actualizada de forma asincrona.
+        // Las validaciones de negocio deben ocurrir en la capa de Application antes de llamar a este método.
         Task UpdateAsync(T entity);
 
 
-        // Marca una entidad para ser eliminada de la persistencia de forma asincrona
+        // Marca una entidad para ser eliminada de la persistencia de forma asincrona.
+        // Para el SGCM se recomienda usar borrado lógico (cambiar estado a Inactivo) 
         Task DeleteAsync(T entity);
     }
 }

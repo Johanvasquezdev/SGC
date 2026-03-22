@@ -1,30 +1,32 @@
-﻿using SGC.Domain.Entities.Medical;
+using SGC.Domain.Entities.Medical;
 
 namespace SGC.Domain.Validators
 {
-    // Valida los datos de un paciente antes de crear o actualizar su registro
+    // Valida las reglas de negocio para la creacion o actualizacion de un paciente
     public class PacienteValidator
     {
-        // Valida que el nombre, email y fecha de nacimiento del paciente sean correctos
         public void Validar(Paciente paciente)
         {
+            // Regla: el nombre es obligatorio
             if (string.IsNullOrWhiteSpace(paciente.Nombre))
                 throw new InvalidOperationException(
-                    "El nombre del paciente es requerido.");
+                    "El nombre del paciente es obligatorio.");
 
+            // Regla: el email es obligatorio
             if (string.IsNullOrWhiteSpace(paciente.Email))
                 throw new InvalidOperationException(
-                    "El email del paciente es requerido.");
+                    "El email del paciente es obligatorio.");
 
-            if (!paciente.Email.Contains("@"))
+            // Regla: la cedula es obligatoria
+            if (string.IsNullOrWhiteSpace(paciente.Cedula))
                 throw new InvalidOperationException(
-                    "El email no tiene un formato válido.");
+                    "La cedula del paciente es obligatoria.");
 
-            if (paciente.FechaNacimiento.HasValue &&
-                paciente.FechaNacimiento.Value >
-                DateOnly.FromDateTime(DateTime.UtcNow))
+            // Regla: la fecha de nacimiento no puede ser futura
+            if (paciente.FechaNacimiento != null &&
+                paciente.FechaNacimiento > DateOnly.FromDateTime(DateTime.UtcNow))
                 throw new InvalidOperationException(
-                    "La fecha de nacimiento no puede ser en el futuro.");
+                    "La fecha de nacimiento no puede ser una fecha futura.");
         }
     }
 }

@@ -9,22 +9,22 @@ namespace SGC.Domain.Validators
         {
             // Regla: no se puede agendar en el pasado
             if (cita.FechaHora < DateTime.UtcNow)
-                throw new InvalidOperationException(
+                throw new CitaConflictoException(
                     "No se puede agendar una cita en el pasado.");
 
             // Regla: horario permitido entre 6am y 10pm
             if (cita.FechaHora.Hour < 6 || cita.FechaHora.Hour > 22)
-                throw new InvalidOperationException(
+                throw new HorarioNoDisponibleException(
                     cita.MedicoId, cita.FechaHora);
 
             // Regla: paciente y médico no pueden ser la misma persona
             if (cita.PacienteId == cita.MedicoId)
-                throw new InvalidOperationException(
+                throw new CitaConflictoException(
                     "El paciente y el médico no pueden ser la misma persona.");
 
             // Regla: debe tener disponibilidad asignada
             if (cita.DisponibilidadId == null)
-                throw new InvalidOperationException(
+                throw new HorarioNoDisponibleException(
                     cita.MedicoId, cita.FechaHora);
         }
     }
