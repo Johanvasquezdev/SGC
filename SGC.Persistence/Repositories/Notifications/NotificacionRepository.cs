@@ -6,12 +6,12 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Notifications
 {
-    // Repositorio de notificaciones, con metodos personalizados para obtener notificaciones por usuario y estado de lectura
+    // Repositorio para operaciones de persistencia de notificaciones
     public class NotificacionRepository : BaseRepository<Notificacion>, INotificacionRepository
     {
         public NotificacionRepository(SGCDbContext context) : base(context) { }
 
-        // Obtiene todas las notificaciones de un usuario, ordenadas por fecha de envio descendente
+        // Obtiene todas las notificaciones de un usuario ordenadas por fecha de envio
         public async Task<IEnumerable<Notificacion>> GetByUsuarioIdAsync(int usuarioId)
         {
             return await Context.Notificaciones
@@ -20,7 +20,7 @@ namespace SGC.Persistence.Repositories.Notifications
                 .ToListAsync();
         }
 
-        // Obtiene solo las notificaciones no leidas de un usuario, ordenadas por fecha de envio descendente
+        // Obtiene solo las notificaciones no leidas de un usuario
         public async Task<IEnumerable<Notificacion>> GetNoLeidasAsync(int usuarioId)
         {
             return await Context.Notificaciones

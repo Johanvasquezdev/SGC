@@ -6,18 +6,17 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Medical
 {
-    // Implementación del repositorio para la entidad Paciente, con métodos específicos para consultas por cédula
+    // Repositorio para operaciones de persistencia de pacientes
     public class PacienteRepository : BaseRepository<Paciente>, IPacienteRepository
     {
         public PacienteRepository(SGCDbContext context) : base(context) { }
 
-        // Obtiene un paciente por su cédula, lanzando una excepción si no se encuentra
+        // Busca un paciente por su numero de cedula
         public async Task<Paciente> GetByCedulaAsync(string cedula)
         {
             return await Context.Pacientes
-                       .FirstOrDefaultAsync(p => p.Cedula == cedula)
-                   ?? throw new KeyNotFoundException(
-                       $"No se encontró paciente con cédula {cedula}.");
+                .FirstOrDefaultAsync(p => p.Cedula == cedula)
+                ?? throw new KeyNotFoundException($"No se encontro un paciente con cedula {cedula}.");
         }
     }
 }

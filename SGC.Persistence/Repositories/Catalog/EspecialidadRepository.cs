@@ -6,17 +6,16 @@ using SGC.Persistence.Context;
 
 namespace SGC.Persistence.Repositories.Catalog
 {
-    // Repositorio para la entidad Especialidad, con metodos personalizados
+    // Repositorio para operaciones de persistencia de especialidades medicas
     public class EspecialidadRepository : BaseRepository<Especialidad>, IEspecialidadRepository
     {
         public EspecialidadRepository(SGCDbContext context) : base(context) { }
 
-        // Obtiene todas las especialidades activas, ordenadas por nombre
+        // Obtiene solo las especialidades que estan activas en el sistema
         public async Task<IEnumerable<Especialidad>> GetActivasAsync()
         {
             return await Context.Especialidades
                 .Where(e => e.Activo)
-                .OrderBy(e => e.Nombre)
                 .ToListAsync();
         }
     }
