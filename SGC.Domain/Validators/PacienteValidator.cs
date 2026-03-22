@@ -17,6 +17,11 @@ namespace SGC.Domain.Validators
                 throw new InvalidOperationException(
                     "El email del paciente es obligatorio.");
 
+            // Regla: el email debe tener formato valido
+            if (!paciente.Email.Contains("@"))
+                throw new InvalidOperationException(
+                    "El email no tiene un formato valido.");
+
             // Regla: la cedula es obligatoria
             if (string.IsNullOrWhiteSpace(paciente.Cedula))
                 throw new InvalidOperationException(

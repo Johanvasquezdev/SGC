@@ -17,6 +17,11 @@ namespace SGC.Domain.Validators
                 throw new InvalidOperationException(
                     "El email del medico es obligatorio.");
 
+            // Regla: el email debe tener formato valido
+            if (!medico.Email.Contains("@"))
+                throw new InvalidOperationException(
+                    "El email no tiene un formato valido.");
+
             // Regla: el exequatur es obligatorio para ejercer
             if (string.IsNullOrWhiteSpace(medico.Exequatur))
                 throw new InvalidOperationException(
