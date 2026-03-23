@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+node_modules/
+.vs/
+bin/
+obj/
+SGC.Web/sgc.web.client/sgc-medagenda/node_modules/
