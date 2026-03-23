@@ -4,7 +4,7 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace SGC.Infrastructure.Cache
+namespace SGC.Infraestructure.Cache
 {
     // Implementación concreta del servicio de caché utilizando Redis
     public class RedisCacheService : ICacheService
@@ -29,7 +29,13 @@ namespace SGC.Infrastructure.Cache
             TimeSpan? expiration = null)
         {
             var json = JsonSerializer.Serialize(value);
-            await _db.StringSetAsync(key, json, expiration);
+            await _db.StringSetAsync(
+                key,
+                json,
+                expiration,
+                false,
+                When.Always,
+                CommandFlags.None);
         }
 
         // Elimina un valor del caché por su clave

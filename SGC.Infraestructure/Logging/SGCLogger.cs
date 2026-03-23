@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using SGC.Domain.Interfaces.ILogger;
 
 namespace SGC.Infraestructure.Logging

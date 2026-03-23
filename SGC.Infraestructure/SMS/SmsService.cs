@@ -3,7 +3,7 @@ using SGC.Domain.Interfaces;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 
-namespace SGC.Infrastructure.SMS
+namespace SGC.Infraestructure.SMS
 {
     // Servicio de SMS para enviar notificaciones a los pacientes utilizando Twilio
     public class SmsService : ISmsService
