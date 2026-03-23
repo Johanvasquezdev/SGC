@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 // Repositorios - Interfaces
 using SGC.Domain.Interfaces.Repository;
 using SGC.Domain.Interfaces;
 using SGC.Domain.Interfaces.ILogger;
+
 // Repositorios - Implementaciones
 using SGC.Persistence.Context;
 using SGC.Persistence.Repositories.Appointments;
@@ -14,20 +16,19 @@ using SGC.Persistence.Repositories.Medical;
 using SGC.Persistence.Repositories.Notifications;
 using SGC.Persistence.Repositories.Payments;
 using SGC.Persistence.Repositories.Security;
+
 // Servicios - Contratos
 using SGC.Application.Contracts;
+
 // Servicios - Implementaciones
 using SGC.Application.Services;
+
 // Domain Services y Validators
 using SGC.Domain.Services;
 using SGC.Domain.Validators;
-// Infrastructure
-using SGC.Infrastructure.Email;
-using SGC.Infrastructure.SMS;
-using SGC.Infrastructure.Logging;
-using SGC.Infrastructure.Payments;
-using SGC.Infrastructure.AI;
-using SGC.Infrastructure.Cache;
+
+// Infrastructure (registro centralizado)
+using SGC.Infrastructure;
 
 namespace SGC.IOC
 {
@@ -39,6 +40,9 @@ namespace SGC.IOC
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            // Fix para timestamps sin timezone con Npgsql y PostgreSQL
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
             // ============================================================
             // 1. DbContext — PostgreSQL via Supabase
             // ============================================================
@@ -71,6 +75,7 @@ namespace SGC.IOC
             services.AddScoped<DisponibilidadValidator>();
             services.AddScoped<ProveedorSaludValidator>();
             services.AddScoped<PrefNotificacionValidator>();
+            services.AddScoped<UsuarioValidator>();
 
             // ============================================================
             // 4. Domain Services
@@ -78,7 +83,12 @@ namespace SGC.IOC
             services.AddScoped<CitaDomainService>();
 
             // ============================================================
-            // 5. Application Services
+            // 5. Infrastructure
+            // ============================================================
+            services.AddInfrastructure(configuration);
+
+            // ============================================================
+            // 6. Application Services
             // ============================================================
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
@@ -94,30 +104,6 @@ namespace SGC.IOC
             services.AddScoped<IPagoService, PagoService>();
             services.AddScoped<IChatbotAppService, ChatbotAppService>();
             services.AddScoped<IAuditoriaService, AuditoriaService>();
-
-            // ============================================================
-            // 6. Infrastructure
-            // ============================================================
-            services.AddScoped<ISGCLogger, SGCLogger>();
-            services.AddScoped<IEmailService, EmailService>();
-            services.AddScoped<ISmsService, SmsService>();
-            services.AddScoped<IPaymentService, StripePaymentService>();
-            services.AddHttpClient<IChatbotService, AnthropicChatService>();
-
-            // ============================================================
-            // 7. Redis Cache
-            // ============================================================
-            services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = configuration
-                    .GetConnectionString("Redis");
-            });
-            services.AddScoped<ICacheService, RedisCacheService>();
-
-            // ============================================================
-            // 8. SignalR
-            // ============================================================
-            services.AddSignalR();
 
             return services;
         }
