@@ -1,144 +1,121 @@
-# 🏥 MedAgenda — Sistema de Gestión de Citas Médicas (SGCM)
+﻿# MedAgenda - Sistema de Gestion de Citas Medicas (SGCM)
 
-> Proyecto académico desarrollado para la asignatura **Programación II** — ITLA  
-> Profesor: Francis Ramirez
+Proyecto academico para Programacion II (ITLA)
+Profesor: Francis Ramirez
 
----
+## Nota importante sobre ramas
+Las ramas sin matricula fueron trabajadas en conjunto por Johan y Gregori.
 
-## 📋 Descripción del Proyecto
-
-**MedAgenda** es un sistema de software diseñado para gestionar de forma integral el ciclo de vida de las citas médicas en clínicas y centros de salud. El sistema centraliza la información de pacientes, médicos y citas, eliminando los procesos manuales que generan errores, duplicidad de información y mala comunicación entre los actores del sistema.
+## Descripcion del proyecto
+MedAgenda es un sistema para gestionar el ciclo de vida de las citas medicas. Centraliza pacientes, medicos y citas, reduciendo errores, duplicidad y mala comunicacion.
 
 ### Problema que resuelve
-
-Actualmente muchos centros médicos gestionan sus citas de forma manual o con herramientas no especializadas, lo que genera:
-
-- Conflictos de horarios y doble asignación de citas
-- Falta de notificaciones oportunas a pacientes y médicos
+- Conflictos de horarios y doble asignacion de citas
+- Falta de notificaciones oportunas
 - Ausencia de trazabilidad y control centralizado
-- Carga administrativa excesiva que afecta la calidad del servicio
+- Carga administrativa excesiva
 
-### Actores del sistema
-
-| Actor | Descripción |
-|---|---|
-| **Paciente** | Busca médicos, programa, consulta y cancela sus citas |
-| **Médico** | Gestiona su agenda, disponibilidad e historial de pacientes |
-| **Administrador** | Gestiona usuarios, roles, especialidades y catálogos del sistema |
+### Actores
+- Paciente: busca medicos, programa, consulta y cancela citas
+- Medico: gestiona agenda, disponibilidad e historial de pacientes
+- Administrador: gestiona usuarios, roles, especialidades y catalogos
 
 ### Alcance
+Incluye:
+- Gestion completa del ciclo de vida de citas
+- Disponibilidad de medicos
+- Gestion de pacientes, medicos y especialidades
+- Gestion de proveedores de salud
+- Notificaciones y recordatorios (Email, SMS, Push)
+- Auditoria
 
-✅ El sistema cubre:
-- Gestión completa del ciclo de vida de citas médicas
-- Gestión de disponibilidad de médicos
-- Gestión de pacientes, médicos y especialidades
-- Gestión de proveedores de salud
-- Envío de notificaciones y recordatorios (Email, SMS, Push)
-- Registro histórico y auditoría de operaciones
+Fuera de alcance:
+- Expedientes clinicos completos
 
-❌ Fuera de alcance:
-- Facturación médica y pagos en línea
-- Expedientes clínicos completos
-- Diagnósticos automatizados o soporte médico con IA
+## Arquitectura
+Arquitectura en capas con Clean Architecture en el backend.
 
----
+### Stack tecnologico
+- Backend: .NET 8 Web API
+- Web: Next.js (React)
+- Desktop: .NET MAUI
+- DB: PostgreSQL (Supabase solo hosting)
+- ORM: Entity Framework Core
+- Auth: JWT
+- Real-time: SignalR
+- Pagos: Stripe
+- Chatbot: Claude (Anthropic)
+- Cache: Redis
+- Notificaciones: SMTP (MailKit) y Twilio
+- Logging: Serilog via ISGCLogger
 
-## 🏗️ Arquitectura
+### Estructura de la solucion
+SGC Solution/
+- SGC.Domain
+- SGC.Application
+- SGC.Persistence
+- SGC.Infraestructure
+- SGC.IOC
+- SGC.API
+- SGC.Web (Next.js)
+- SGC.Desktop (MAUI)
+- SGC.ApplicationTest
 
-MedAgenda está construido bajo una **Arquitectura en Capas (Layering)** con **Clean Architecture** en el backend, garantizando separación de responsabilidades, mantenibilidad y escalabilidad.
+### Capas del backend
+- API: Controllers y middleware
+- Application: Servicios, DTOs, Mappers
+- Domain: Entidades, reglas, interfaces
+- Persistence: EF Core y repositorios
+- Infrastructure: Email, SMS, Stripe, Redis, SignalR, Claude
+- IOC: DependencyContainer
 
-### Stack tecnológico
+## Division de trabajo (para evaluacion)
+**Johan Vasquez (2025-1235)**
+Portal Paciente:
+- Registro y Login
+- Busqueda de Medicos
+- Agendamiento de Citas
+- Mis Citas
+- Pagos
+- Notificaciones
+- Chatbot
 
-| Capa | Tecnología |
-|---|---|
-| Portal Web (Pacientes/Admin) | Next.js (React) |
-| App de Escritorio (Médicos) | .NET MAUI |
-| Backend API | .NET 8 Web API |
-| Base de Datos | PostgreSQL (Supabase Cloud) |
-| ORM | Entity Framework Core |
-| Autenticación | JWT (JSON Web Token) |
-| Tiempo Real | SignalR (WebSockets) |
-| Notificaciones Email | SMTP |
-| Notificaciones SMS | Twilio API |
-| Caché | Redis |
-| CI/CD | GitHub Actions |
+Panel Administrador:
+- Gestion de Usuarios
+- Gestion de Medicos
+- Gestion de Especialidades
+- Gestion de Proveedores
+- Auditoria
 
-### Estructura de la solución
+Capas y entregables:
+- SGC.Web (Next.js)
+- 6 Controllers API
+- DTOs y Mappers
 
-```
-SGC Solution
-├── Core/
-│   ├── SGC.Domain          ← Entidades, interfaces y reglas de negocio
-│   └── SGC.Application     ← Servicios de casos de uso y DTOs
-├── Infrastructure/
-│   ├── SGC.Infrastructure  ← Email, SMS, SignalR Hubs
-│   └── SGC.Persistence     ← EF Core, repositorios y migraciones
-├── API/
-│   └── SGC.API             ← Controllers, JWT Auth, Swagger
-├── IOC/
-│   └── SGC.IOC             ← Inyección de dependencias
-├── Web/
-│   ├── sgc.web.client      ← Next.js (portal paciente y panel admin)
-│   └── SGC.Web.Server      ← BFF / Proxy, SSR, Middleware
-├── Desktop/
-│   └── SGC.Desktop         ← .NET MAUI (gestión médica)
-└── ApplicationTest/
-    └── SGC.ApplicationTest ← Pruebas unitarias e integración
-```
+**Gregori Evangelista (2025-1232)**
+App Medico:
+- Agenda Medica
+- Gestion de Citas
+- Disponibilidad
+- Historial de Pacientes
+- Seguridad JWT
 
-### Capas del Backend
+Capas y entregables:
+- SGC.Desktop (.NET MAUI)
+- 6 Controllers API
+- Middleware
+- Infrastructure
+- ApplicationTest
+- Program.cs
+- Contracts
 
-```
-┌─────────────────────────────────┐
-│     Capa de Presentación        │  Next.js + .NET MAUI
-├─────────────────────────────────┤
-│     Capa de API (Controllers)   │  .NET 8 Web API
-├─────────────────────────────────┤
-│     Capa de Aplicación          │  Servicios y casos de uso
-├─────────────────────────────────┤
-│     Capa de Dominio (Core)      │  Entidades y reglas de negocio
-├─────────────────────────────────┤
-│     Capa de Infraestructura     │  EF Core, Email, SMS, SignalR
-└─────────────────────────────────┘
-```
+## Ramas por modulo
+- feature/web-20251235 (Web - Johan)
+- feature/desktop-20251232 (Desktop - Gregori)
+- feature/api, feature/ioc, feature/infraestructure, feature/dominio, feature/persistencia, feature/application (trabajo conjunto)
 
-### Principios aplicados
+## Documentacion
+- SRS MedAgenda
+- SAD MedAgenda
 
-- **Clean Architecture** — El núcleo del sistema es independiente de frameworks y tecnologías externas
-- **Principio de Inversión de Dependencia (DIP)** — Las capas superiores dependen de abstracciones, no de implementaciones
-- **Patrón Repository** — Abstracción del acceso a datos mediante interfaces definidas en el dominio
-- **MVVM** — Patrón aplicado en la aplicación de escritorio (.NET MAUI)
-- **MVC** — Patrón aplicado en el portal web (Next.js)
-
-### Decisión sobre Supabase
-
-Se utiliza **Supabase exclusivamente como proveedor de hosting para PostgreSQL**, sin uso de sus servicios de Auth ni Realtime. Esta decisión no afecta la integridad de la arquitectura limpia, ya que el acceso a datos se realiza mediante el patrón Repository. El core del sistema (`SGC.Domain`) permanece agnóstico al proveedor, cumpliendo con el Principio de Inversión de Dependencia.
-
-### Comunicación en tiempo real
-
-Se utiliza **SignalR** para:
-- Actualización automática de disponibilidad médica en tiempo real
-- Notificaciones push de nuevas citas al médico en la app de escritorio
-- Sincronización de estados de citas entre plataformas
-
----
-
-## 👥 Equipo
-
-| Nombre | Matrícula | Responsabilidad |
-|---|---|---|
-| **Johan Vasquez** | 2025-1235 | SGC.Web (Next.js), SGC.API, Capas compartidas |
-| **Gregori Evangelista** | 2025-1232 | SGC.Desktop (.NET MAUI), Capas compartidas |
-
----
-
-## 📄 Documentación
-
-| Documento | Descripción |
-|---|---|
-| SRS MedAgenda | Especificación de Requisitos de Software |
-| SAD MedAgenda | Documento de Arquitectura de Software |
-
----
-
-*ITLA — Instituto Tecnológico de las Américas · 2026*
+ITLA - 2026
