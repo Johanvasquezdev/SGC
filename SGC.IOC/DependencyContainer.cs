@@ -24,9 +24,9 @@ using SGC.Application.Contracts;
 
 // Servicios - Implementaciones (Application Services)
 using SGC.Application.Services;
-using SGC.Infraestructure.IA;
-using SGC.Infraestructure.Logging;
-using SGC.Infraestructure.Pagos;
+
+// Infraestructura (registro centralizado)
+using SGC.Infrastructure;
 
 namespace SGC.IOC
 {
@@ -91,11 +91,9 @@ namespace SGC.IOC
             services.AddScoped<UsuarioValidator>();
 
             // ============================================================
-            // 4. Infrastructure — registrar ANTES que los servicios
+            // 4. Infrastructure (Cache, Email, SMS, SignalR, Webhook, etc.)
             // ============================================================
-            services.AddScoped<ISGCLogger, SGCLogger>();
-            services.AddScoped<IChatbotService, AnthropicChatService>();
-            services.AddScoped<IPaymentService, StripePaymentService>();
+            services.AddInfrastructure(configuration);
 
             // ============================================================
             // 5. Application Services
