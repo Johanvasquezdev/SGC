@@ -65,7 +65,7 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> GuardarPreferencias( // POST api/notificaciones/preferencias - Guarda las preferencias de notificaciones de un usuario, accesible para el usuario propietario de las preferencias
             [FromBody] Application.DTOs.Notifications.PrefNotificacionRequest request)
         {
-            var preferencias = await _prefService.GuardarAsync(request); / / Guarda las preferencias de notificaciones y devuelve el resultado
+            var preferencias = await _prefService.GuardarAsync(request); // Guarda las preferencias de notificaciones y devuelve el resultado
             return Ok(preferencias);
         }
     }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using SGC.Infrastructure.SignalR.Hubs;
+using SGC.Infraestructure.SignalR.Hubs;
 using System.Threading.Tasks;
 
-namespace SGC.Infrastructure.SignalR.Services
+namespace SGC.Infraestructure.SignalR.Services
 {
     // Servicio para enviar notificaciones en tiempo real a través de SignalR
     public class SignalRNotificacionService

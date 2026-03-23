@@ -26,7 +26,7 @@ using SGC.Application.Contracts;
 using SGC.Application.Services;
 
 // Infraestructura (registro centralizado)
-using SGC.Infrastructure;
+using SGC.Infraestructure;
 
 namespace SGC.IOC
 {

@@ -2,7 +2,7 @@
 using SGC.Domain.Interfaces;
 using Stripe;
 
-namespace SGC.Infrastructure.Pagos
+namespace SGC.Infraestructure.Pagos
 {
     // Servicio de pago utilizando Stripe para procesar pagos de citas médicas
     public class StripePaymentService : IPaymentService

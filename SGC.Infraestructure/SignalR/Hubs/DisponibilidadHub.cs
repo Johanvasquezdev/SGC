@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 
-namespace SGC.Infrastructure.SignalR.Hubs
+namespace SGC.Infraestructure.SignalR.Hubs
 {
     // Hub para notificar cambios de disponibilidad de los médicos a los pacientes en tiempo real
     public class DisponibilidadHub : Hub

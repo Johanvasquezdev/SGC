@@ -2,17 +2,17 @@
 using Microsoft.Extensions.DependencyInjection;
 using SGC.Domain.Interfaces;
 using SGC.Domain.Interfaces.ILogger;
-using SGC.Infrastructure.Cache;
-using SGC.Infrastructure.Email;
-using SGC.Infrastructure.IA;
-using SGC.Infrastructure.Logging;
-using SGC.Infrastructure.Pagos;
-using SGC.Infrastructure.SignalR.Hubs;
-using SGC.Infrastructure.SignalR.Services;
-using SGC.Infrastructure.SMS;
+using SGC.Infraestructure.Cache;
+using SGC.Infraestructure.Email;
+using SGC.Infraestructure.IA;
+using SGC.Infraestructure.Logging;
+using SGC.Infraestructure.Pagos;
+using SGC.Infraestructure.SignalR.Hubs;
+using SGC.Infraestructure.SignalR.Services;
+using SGC.Infraestructure.SMS;
 using StackExchange.Redis;
 
-namespace SGC.Infrastructure
+namespace SGC.Infraestructure
 {
     public static class DependencyInjection
     {

@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using SGC.Domain.Interfaces.ILogger;
 
-namespace SGC.Infrastructure.Logging
+namespace SGC.Infraestructure.Logging
 {
     // Implementación concreta del logger usando el sistema de logging de .NET.
     public class SGCLogger : ISGCLogger

@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using SGC.Domain.Interfaces;
+using System.Net.Http.Json;
 using System.Text.Json;
 
-namespace SGC.Infrastructure.IA
+namespace SGC.Infraestructure.IA
 {
     // Servicio de chatbot utilizando la API de Anthropic para responder consultas de los pacientes sobre citas médicas
     public class AnthropicChatService : IChatbotService

@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System;
-using System.Runtime.Remoting.Contexts;
 using System.Threading.Tasks;
 
-namespace SGC.Infrastructure.SignalR.Hubs
+namespace SGC.Infraestructure.SignalR.Hubs
 {
     // Hub para notificar a médicos y pacientes sobre nuevas citas, cambios de estado de citas y actualizaciones en tiempo real
     public class CitaHub : Hub

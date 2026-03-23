@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Stripe;
 
-namespace SGC.Infrastructure.Pagos
+namespace SGC.Infraestructure.Pagos
 {
     // Servicio para validar los webhooks de Stripe y procesar eventos relacionados con los pagos de citas médicas
     public class StripeWebhookService

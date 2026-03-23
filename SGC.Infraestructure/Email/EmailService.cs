@@ -1,12 +1,12 @@
-using MailKit.Net.Smtp;
+ï»¿using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 using Microsoft.Extensions.Configuration;
 using SGC.Domain.Interfaces;
 
-namespace SGC.Infrastructure.Email
+namespace SGC.Infraestructure.Email
 {
-    // Servicio de correo electrónico para enviar notificaciones a los pacientes
+    // Servicio de correo electrï¿½nico para enviar notificaciones a los pacientes
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _config;
@@ -16,7 +16,7 @@ namespace SGC.Infrastructure.Email
             _config = config;
         }
 
-        // Método privado para enviar un correo electrónico genérico
+        // Mï¿½todo privado para enviar un correo electrï¿½nico genï¿½rico
         private async Task EnviarAsync(string destinatario,
             string asunto, string cuerpo)
         {
@@ -39,11 +39,11 @@ namespace SGC.Infrastructure.Email
             await smtp.DisconnectAsync(true);
         }
 
-        // Métodos para enviar confirmaciones, recordatorios de cita y cancelaciones de cita a los pacientes
+        // Mï¿½todos para enviar confirmaciones, recordatorios de cita y cancelaciones de cita a los pacientes
         public async Task EnviarConfirmacionCitaAsync(string email,
             string nombrePaciente, DateTime fechaCita)
         {
-            var asunto = "Confirmación de Cita — MedAgenda";
+            var asunto = "Confirmaciï¿½n de Cita ï¿½ MedAgenda";
             var cuerpo = $@"
                 <h2>Hola {nombrePaciente}</h2>
                 <p>Tu cita ha sido confirmada para el 
@@ -56,10 +56,10 @@ namespace SGC.Infrastructure.Email
         public async Task EnviarRecordatorioCitaAsync(string email,
             string nombrePaciente, DateTime fechaCita)
         {
-            var asunto = "Recordatorio de Cita — MedAgenda";
+            var asunto = "Recordatorio de Cita ï¿½ MedAgenda";
             var cuerpo = $@"
                 <h2>Hola {nombrePaciente}</h2>
-                <p>Te recordamos que tienes una cita mañana 
+                <p>Te recordamos que tienes una cita maï¿½ana 
                    <strong>{fechaCita:dd/MM/yyyy HH:mm}</strong></p>
                 <p>Gracias por usar MedAgenda.</p>";
             await EnviarAsync(email, asunto, cuerpo);
@@ -68,7 +68,7 @@ namespace SGC.Infrastructure.Email
         public async Task EnviarCancelacionCitaAsync(string email,
             string nombrePaciente, DateTime fechaCita)
         {
-            var asunto = "Cancelación de Cita — MedAgenda";
+            var asunto = "Cancelaciï¿½n de Cita ï¿½ MedAgenda";
             var cuerpo = $@"
                 <h2>Hola {nombrePaciente}</h2>
                 <p>Tu cita del 

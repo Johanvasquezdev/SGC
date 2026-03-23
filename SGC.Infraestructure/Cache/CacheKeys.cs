@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SGC.Infrastructure.Cache
+namespace SGC.Infraestructure.Cache
 {
     // Clase estática para definir las claves de caché utilizadas en la aplicación
     public static class CacheKeys
