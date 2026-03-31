@@ -9,14 +9,25 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.1.6",
+    "@microsoft/signalr": "^10.0.0",
+    "@stripe/stripe-js": "^9.0.0",
+    "axios": "^1.14.0",
+    "js-cookie": "^3.0.5",
+    "next": "^16.2.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/js-cookie": "^3.0.6",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.27",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4"
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3"
   }
 }
