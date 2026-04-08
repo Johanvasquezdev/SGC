@@ -1,0 +1,15 @@
+<Solution>
+  <Project Path="DoctorApp/DoctorApp.Droid/DoctorApp.Droid.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="DoctorApp/DoctorApp.iOS/DoctorApp.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="DoctorApp/DoctorApp.Mac/DoctorApp.Mac.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="DoctorApp/DoctorApp.WinUI/DoctorApp.WinUI.csproj">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="DoctorApp/DoctorApp/DoctorApp.csproj" />
+</Solution>
