@@ -1,8 +1,4 @@
-¡Entendido! Vamos a crear un README.md con el mismo nivel de detalle, profesionalismo y diseño visual que hicimos para la aplicación de escritorio, pero esta vez enfocado 100% en tu arquitectura web con Next.js 14.
 
-Copia el siguiente bloque y pégalo en el archivo README.md de la raíz de tu proyecto web (en la rama feature/web-20251235):
-
-Markdown
 # 🌐 Arquitectura del Frontend Web SGCM (MedAgenda)
 
 Bienvenido a la documentación arquitectónica de la aplicación web cliente **MedAgenda**, desarrollada con **Next.js 14 (App Router)** y **React**. Este documento detalla los patrones de diseño, flujos de integración y la estricta separación de responsabilidades implementada en la capa de presentación.
