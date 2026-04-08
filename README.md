@@ -32,7 +32,9 @@ Bienvenido a la documentación arquitectónica de la aplicación web cliente **M
 ┌──────────────────▼──────────────────────────────────────────┐
 │             API REST BACKEND (.NET 8)                       │
 └─────────────────────────────────────────────────────────────┘
-🛠️ Stack Tecnológico
+
+
+## 🛠️ Stack Tecnológico
 Framework: Next.js 14 (App Router)
 
 Librería UI: React 18 + TypeScript
@@ -47,7 +49,9 @@ Iconografía: Lucide React
 
 Pagos: Stripe (Stripe.js)
 
-🔄 Flujo de Datos y Separación de Responsabilidades
+---
+
+## 🔄 Flujo de Datos y Separación de Responsabilidades
 El proyecto prohíbe estrictamente realizar llamadas directas a la API (fetch o axios) desde los componentes visuales. Se utiliza un flujo unidireccional de 3 capas:
 
 1. Componente UI (Vistas)
@@ -120,7 +124,9 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
-📂 Estructura de Carpetas
+
+
+## 📂 Estructura de Carpetas
 Plaintext
 src/
 ├── app/                  # App Router: Rutas, Layouts y Páginas
@@ -143,14 +149,16 @@ src/
     ├── cita.dto.ts
     ├── usuario.dto.ts
     └── respuestas.ts
-🔐 Manejo de Errores y Experiencia de Usuario (UX)
+    
+## 🔐 Manejo de Errores y Experiencia de Usuario (UX)
 Validación en Doble Capa: Formularios controlados en React previenen envíos nulos, respaldados por la validación del dominio en el backend.
 
 Feedback Inmediato: Uso de Sonner para mostrar Toasts elegantes (éxito, advertencia o error) interpretando los códigos HTTP (400, 401, 500) que retorna el backend.
 
 Estados Asíncronos: Toda petición a la red bloquea botones dinámicamente y despliega Spinners o Skeletons para evitar clics duplicados y mejorar la percepción de velocidad.
 
-🎯 Flujos Funcionales Implementados
+
+##🎯 Flujos Funcionales Implementados
 🏥 Perfil Paciente
 Autenticación y registro seguro.
 
@@ -177,7 +185,7 @@ Proveedores de Salud (ARS/Hospitales)
 
 Registro de Auditoría del Sistema.
 
-🚀 Instalación y Ejecución Local
+## 🚀 Instalación y Ejecución Local
 Clonar el repositorio y entrar a la rama correcta:
 
 Bash
