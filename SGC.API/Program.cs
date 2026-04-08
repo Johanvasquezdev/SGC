@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SGC.API.Middleware;
 using SGC.IOC;
+using SGC.Infraestructure.SignalR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +73,7 @@ builder.Services.AddCors(options =>
 // 4. Controllers y Swagger con JWT
 // ============================================================
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -134,6 +136,8 @@ app.UseCors("SGCPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<CitaHub>("/citahub");
+app.MapHub<DisponibilidadHub>("/disponibilidadhub");
 
 // ============================================================
 // Health Check endpoint

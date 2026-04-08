@@ -1,0 +1,22 @@
+import api from '@/lib/api';
+import { CrearPagoRequest, PagoResponse } from '@/types/api.types';
+
+export class PagoService {
+  static async crearIntento(request: CrearPagoRequest): Promise<string> {
+    const response = await api.post<{ clientSecret: string }>('/api/pagos/crear-intento', request);
+    return response.data.clientSecret;
+  }
+  static async confirmarPago(stripePaymentIntentId: string): Promise<boolean> {
+    const response = await api.post<{ confirmado: boolean }>('/api/pagos/confirmar', `"${stripePaymentIntentId}"`, { headers: { 'Content-Type': 'application/json' } });
+    return response.data.confirmado;
+  }
+  static async obtenerPorPaciente(pacienteId: number): Promise<PagoResponse[]> {
+    const response = await api.get<PagoResponse[]>(`/api/pagos/paciente/${pacienteId}`);
+    return response.data;
+  }
+
+  static async reembolsar(id: number): Promise<boolean> {
+    const response = await api.post<{ reembolsado: boolean }>(`/api/pagos/reembolsar/${id}`);
+    return response.data.reembolsado;
+  }
+}

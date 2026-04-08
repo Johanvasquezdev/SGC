@@ -1,0 +1,368 @@
+﻿"use client";
+
+import { useState, useEffect } from "react";
+import { Stethoscope, Search, Plus, CheckCircle2, XCircle, Loader2, Phone, X } from "lucide-react";
+import { MedicoDTO, CreateMedicoRequest, UpdateMedicoRequest } from "@/types/medico.types";
+import { MedicoService } from "@/services/medico.service";
+import { EspecialidadService, EspecialidadDTO } from "@/services/especialidad.service";
+import { ProveedorSaludService, ProveedorSaludDTO } from "@/services/proveedor.service";
+
+export default function AdminMedicosPage() {
+  const [medicos, setMedicos] = useState<MedicoDTO[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [especialidades, setEspecialidades] = useState<EspecialidadDTO[]>([]);
+  const [proveedores, setProveedores] = useState<ProveedorSaludDTO[]>([]);
+  const [formData, setFormData] = useState<CreateMedicoRequest>({
+    nombre: "",
+    email: "",
+    password: "",
+    exequatur: "",
+    especialidadId: null,
+    proveedorSaludId: null,
+    telefonoConsultorio: "",
+    foto: "",
+  });
+  const [medicoSeleccionado, setMedicoSeleccionado] = useState<MedicoDTO | null>(null);
+
+  const cargarMedicos = async () => {
+    setIsLoading(true);
+    try {
+      // Reutilizamos el servicio que creamos para el paciente, 
+      // pero el admin necesita ver a todos (activos e inactivos)
+      const data = await MedicoService.obtenerTodos();
+      setMedicos(data);
+    } catch (error) {
+      console.error("Error cargando médicos:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarMedicos();
+    const cargarCatalogos = async () => {
+      const [esp, prov] = await Promise.all([
+        EspecialidadService.obtenerTodas(),
+        ProveedorSaludService.obtenerTodos(),
+      ]);
+      setEspecialidades(esp.filter((e) => e.activo));
+      setProveedores(prov.filter((p) => p.activo));
+    };
+    cargarCatalogos();
+  }, []);
+
+  // Filtrado dinámico en el cliente
+  const medicosFiltrados = medicos.filter(m => 
+    m.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
+    m.especialidadNombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    m.exequatur.toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const abrirCrear = () => {
+    setModoEdicion(false);
+    setMedicoSeleccionado(null);
+    setFormData({
+      nombre: "",
+      email: "",
+      password: "",
+      exequatur: "",
+      especialidadId: null,
+      proveedorSaludId: null,
+      telefonoConsultorio: "",
+      foto: "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const abrirEditar = (medico: MedicoDTO) => {
+    setModoEdicion(true);
+    setMedicoSeleccionado(medico);
+    setFormData({
+      nombre: medico.nombre,
+      email: medico.email,
+      password: "",
+      exequatur: medico.exequatur,
+      especialidadId: medico.especialidadId ?? null,
+      proveedorSaludId: medico.proveedorSaludId ?? null,
+      telefonoConsultorio: medico.telefonoConsultorio || "",
+      foto: medico.foto || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const cerrarModal = () => {
+    setIsModalOpen(false);
+    setMedicoSeleccionado(null);
+  };
+
+  const guardarMedico = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (modoEdicion && medicoSeleccionado) {
+      const updateData: UpdateMedicoRequest = {
+        nombre: formData.nombre,
+        email: formData.email,
+        exequatur: formData.exequatur,
+        especialidadId: formData.especialidadId,
+        proveedorSaludId: formData.proveedorSaludId,
+        telefonoConsultorio: formData.telefonoConsultorio,
+        foto: formData.foto,
+      };
+      await MedicoService.actualizar(medicoSeleccionado.id, updateData);
+    } else {
+      await MedicoService.crear(formData);
+    }
+    await cargarMedicos();
+    cerrarModal();
+  };
+
+  const toggleActivo = async (medico: MedicoDTO) => {
+    if (medico.activo) {
+      await MedicoService.desactivar(medico.id);
+    } else {
+      await MedicoService.activar(medico.id);
+    }
+    await cargarMedicos();
+  };
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+      
+      {/* Cabecera */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <Stethoscope className="w-7 h-7 text-indigo-500" />
+            Directorio de Médicos
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            Administra el personal médico, sus especialidades y estados en el sistema.
+          </p>
+        </div>
+        <button
+          onClick={abrirCrear}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-colors text-sm font-medium shadow-sm shadow-indigo-200 dark:shadow-none"
+        >
+          <Plus className="w-4 h-4" /> Registrar Médico
+        </button>
+      </header>
+
+      <div className="bg-slate-900/60 rounded-xl shadow-sm border border-slate-800/80 overflow-hidden">
+        
+        {/* Barra de Herramientas */}
+        <div className="p-4 border-b border-slate-800/80 flex justify-between items-center bg-slate-950/70">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+              type="text"
+              placeholder="Buscar por nombre, especialidad o exequatur..."
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-800 bg-slate-950/70 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-white"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Tabla de Datos */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-slate-400 uppercase bg-slate-950/70 border-b border-slate-800/80">
+              <tr>
+                <th className="px-6 py-4 font-medium">Médico</th>
+                <th className="px-6 py-4 font-medium">Especialidad</th>
+                <th className="px-6 py-4 font-medium">Credenciales</th>
+                <th className="px-6 py-4 font-medium text-center">Estado</th>
+                <th className="px-6 py-4 font-medium text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-indigo-400 mx-auto" />
+                    <p className="text-slate-400 mt-2">Cargando directorio...</p>
+                  </td>
+                </tr>
+              ) : medicosFiltrados.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                    No se encontraron médicos registrados.
+                  </td>
+                </tr>
+              ) : (
+                medicosFiltrados.map((medico) => (
+                  <tr key={medico.id} className="hover:bg-slate-950/60 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={medico.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(medico.nombre)}&background=e0e7ff&color=4338ca`} 
+                          alt="Avatar" 
+                          className="w-10 h-10 rounded-full object-cover border border-slate-700"
+                        />
+                        <div>
+                          <div className="font-semibold text-white">{medico.nombre}</div>
+                          <div className="text-slate-400 text-xs mt-0.5">{medico.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="bg-emerald-500/10 text-emerald-300 px-2.5 py-1 rounded-md text-xs font-medium border border-emerald-500/30">
+                        {medico.especialidadNombre || "No asignada"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-white text-xs font-mono font-medium mb-1">
+                        Exq: {medico.exequatur}
+                      </div>
+                      <div className="text-slate-400 text-xs flex items-center gap-1">
+                        <Phone className="w-3 h-3" /> {medico.telefonoConsultorio}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                          medico.activo 
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' 
+                            : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                        }`}>
+                        {medico.activo ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                        {medico.activo ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => abrirEditar(medico)}
+                          className="px-3 py-1.5 rounded-lg text-xs border border-slate-700 text-slate-200 hover:bg-slate-800"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => toggleActivo(medico)}
+                          className={`px-3 py-1.5 rounded-lg text-xs border ${
+                            medico.activo
+                              ? "border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
+                              : "border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
+                          }`}
+                        >
+                          {medico.activo ? "Desactivar" : "Activar"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+              <h2 className="text-lg font-semibold text-white">
+                {modoEdicion ? "Editar Médico" : "Registrar Médico"}
+              </h2>
+              <button onClick={cerrarModal} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={guardarMedico} className="p-5 space-y-4 text-slate-200">
+              <div className="grid gap-4">
+                <input
+                  required
+                  placeholder="Nombre completo"
+                  className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                />
+                <input
+                  required
+                  type="email"
+                  placeholder="Email"
+                  className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+                {!modoEdicion && (
+                  <input
+                    required
+                    type="password"
+                    placeholder="Contraseña"
+                    className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                )}
+                <input
+                  placeholder="Exequatur"
+                  className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  value={formData.exequatur || ""}
+                  onChange={(e) => setFormData({ ...formData, exequatur: e.target.value })}
+                />
+                <select
+                  className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100"
+                  value={formData.especialidadId ?? ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, especialidadId: e.target.value ? Number(e.target.value) : null })
+                  }
+                >
+                  <option value="">Selecciona especialidad</option>
+                  {especialidades.map((esp) => (
+                    <option key={esp.id} value={esp.id}>
+                      {esp.nombre}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100"
+                  value={formData.proveedorSaludId ?? ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, proveedorSaludId: e.target.value ? Number(e.target.value) : null })
+                  }
+                >
+                  <option value="">Selecciona proveedor</option>
+                  {proveedores.map((prov) => (
+                    <option key={prov.id} value={prov.id}>
+                      {prov.nombre}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  placeholder="Teléfono consultorio"
+                  className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  value={formData.telefonoConsultorio || ""}
+                  onChange={(e) => setFormData({ ...formData, telefonoConsultorio: e.target.value })}
+                />
+                <input
+                  placeholder="Foto (URL)"
+                  className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  value={formData.foto || ""}
+                  onChange={(e) => setFormData({ ...formData, foto: e.target.value })}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={cerrarModal}
+                  className="px-4 py-2 rounded-xl border border-slate-700 text-slate-200 hover:bg-slate-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white"
+                >
+                  {modoEdicion ? "Guardar Cambios" : "Registrar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
