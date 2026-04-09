@@ -1,14 +1,4 @@
-# 🚀 INICIO RÁPIDO - Frontend SGCM Doctor
 
-## ¿Qué tenemos?
-
-✅ **Interfaz gráfica completa** para gestión de citas médicas  
-✅ **3 secciones principales**: Dashboard, Disponibilidad, Citas  
-✅ **Datos simulados** para demostración  
-✅ **Compilación exitosa** - Proyecto listo  
-✅ **Arquitectura MVVM** profesional  
-
----
 
 ## 📲 Las 3 Pantallas Principales
 
