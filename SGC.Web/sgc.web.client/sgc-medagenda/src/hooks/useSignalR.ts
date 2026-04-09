@@ -10,10 +10,20 @@ interface UseSignalROptions {
 
 export function useSignalR({ hubUrl, onNuevaCita }: UseSignalROptions) {
   useEffect(() => {
-    // Inicializa la conexion con reconexion automatica.
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5189";
+    const normalizedBase = baseUrl.replace(/\/$/, "");
+    const rawHubUrl = hubUrl || `${normalizedBase}/citahub`;
+    const resolvedHubUrl =
+      rawHubUrl.replace("http://localhost:5189", "https://localhost:7224")
+               .replace("http://127.0.0.1:5189", "https://127.0.0.1:7224");
+
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl)
+      .withUrl(resolvedHubUrl, {
+        accessTokenFactory: () =>
+          (typeof window !== "undefined" && localStorage.getItem("medagenda_token")) || "",
+      })
       .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.Warning)
       .build();
 
     if (onNuevaCita) {
