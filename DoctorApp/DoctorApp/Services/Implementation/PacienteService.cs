@@ -40,4 +40,28 @@ public class PacienteService : IPacienteService
             throw new ConnectionException($"Error al buscar paciente: {ex.Message}", ex);
         }
     }
+
+    public async Task<PacienteResponseDto?> ObtenerPorIdAsync(int id)
+    {
+        if (id <= 0)
+            throw new Exceptions.ValidationException("El ID del paciente es requerido");
+
+        try
+        {
+            var endpoint = $"/api/pacientes/{id}";
+            return await _apiClient.GetAsync<PacienteResponseDto>(endpoint);
+        }
+        catch (AppException ex) when (ex.Code == "NOT_FOUND")
+        {
+            return null;
+        }
+        catch (AppException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new ConnectionException($"Error al buscar paciente por ID: {ex.Message}", ex);
+        }
+    }
 }

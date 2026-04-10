@@ -86,6 +86,10 @@
                                             <Label Text="📱" FontSize="12" VerticalOptions="Center"/>
                                             <Label Text="{Binding Telefono}" FontSize="11" TextColor="#1F2937" VerticalOptions="Center" HorizontalOptions="FillAndExpand"/>
                                         </HorizontalStackLayout>
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Label Text="📧" FontSize="12" VerticalOptions="Center"/>
+                                            <Label Text="{Binding Email}" FontSize="11" TextColor="#1F2937" VerticalOptions="Center" HorizontalOptions="FillAndExpand" LineBreakMode="TailTruncation"/>
+                                        </HorizontalStackLayout>
                                         <VerticalStackLayout>
                                             <Label Text="⚕️ Antecedentes Relevantes" FontSize="10" FontAttributes="Bold" TextColor="#6B7280"/>
                                             <Label Text="{Binding AntecedentesRelevantes}" FontSize="11" TextColor="#374151" LineBreakMode="WordWrap"/>

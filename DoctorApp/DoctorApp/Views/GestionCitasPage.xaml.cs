@@ -7,7 +7,9 @@ public partial class GestionCitasPage : ContentPage
     public GestionCitasPage()
     {
         InitializeComponent();
-        var citasService = Application.Current!.Handler.MauiContext!.Services.GetRequiredService<DoctorApp.Services.Interfaces.ICitasService>();
-        BindingContext = new GestionCitasViewModel(citasService);
+        var services = Application.Current!.Handler.MauiContext!.Services;
+        var citasService = services.GetRequiredService<DoctorApp.Services.Interfaces.ICitasService>();
+        var pacienteService = services.GetRequiredService<DoctorApp.Services.Interfaces.IPacienteService>();
+        BindingContext = new GestionCitasViewModel(citasService, pacienteService);
     }
 }

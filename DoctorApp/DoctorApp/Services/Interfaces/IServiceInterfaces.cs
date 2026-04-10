@@ -11,6 +11,7 @@ public interface ICitasService
     Task<ObtenerAgendaResponse> ObtenerAgendaAsync(DateTime fecha);
     Task<List<CitaResponseDto>> ObtenerCitasMedicoAsync();
     Task<CitaResponseDto> ConfirmarCitaAsync(int citaId, bool confirmada, string? notas = null);
+    Task<CitaResponseDto> CancelarCitaAsync(int citaId, string? motivo = null);
     Task<CitaResponseDto> IniciarConsultaAsync(int citaId);
     Task<CitaResponseDto> MarcarAsistenciaAsync(int citaId, bool asistio, string? observaciones = null);
     Task<List<CitaResponseDto>> ObtenerCitasDelDiaAsync();
@@ -92,5 +93,6 @@ public interface IDoctorService
 /// </summary>
 public interface IPacienteService
 {
+    Task<PacienteResponseDto?> ObtenerPorIdAsync(int id);
     Task<PacienteResponseDto?> ObtenerPorCedulaAsync(string cedula);
 }

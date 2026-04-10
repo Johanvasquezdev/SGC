@@ -13,6 +13,7 @@ public class PacienteConsultaModel
     public EstadoConsulta Estado { get; set; } = EstadoConsulta.Esperando;
     public string Cedula { get; set; } = string.Empty;
     public string Telefono { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
     public string Edad { get; set; } = string.Empty;
     public string AntecedentesRelevantes { get; set; } = string.Empty;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;

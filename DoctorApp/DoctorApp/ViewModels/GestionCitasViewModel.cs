@@ -4,6 +4,7 @@ using DoctorApp.Models;
 using DoctorApp.Services.Interfaces;
 using DoctorApp.DTOs.Responses;
 using DoctorApp.Exceptions;
+using System.Collections.Concurrent;
 
 namespace DoctorApp.ViewModels;
 
@@ -138,10 +139,13 @@ public class GestionCitasViewModel : BaseViewModel
     public ICommand ActualizarEstadoCommand { get; }
 
     private readonly ICitasService _citasService;
+    private readonly IPacienteService _pacienteService;
+    private readonly ConcurrentDictionary<int, PacienteResponseDto> _pacientesCache = new();
 
-    public GestionCitasViewModel(ICitasService citasService)
+    public GestionCitasViewModel(ICitasService citasService, IPacienteService pacienteService)
     {
         _citasService = citasService ?? throw new ArgumentNullException(nameof(citasService));
+        _pacienteService = pacienteService ?? throw new ArgumentNullException(nameof(pacienteService));
         Title = "Gestión de Citas";
 
         CargarCitasCommand = new Command(async () => await CargarCitas());
@@ -160,30 +164,28 @@ public class GestionCitasViewModel : BaseViewModel
         {
             var citasDto = await _citasService.ObtenerCitasMedicoAsync();
             System.Diagnostics.Debug.WriteLine($"[GestionCitas] API citas recibidas: {citasDto?.Count ?? 0}");
-            await Application.Current!.MainPage!.DisplayAlert(
-                "Debug Citas",
-                $"Citas recibidas desde API: {citasDto?.Count ?? 0}",
-                "OK");
 
             Citas.Clear();
             foreach (var dto in citasDto)
             {
-                Citas.Add(MapearCita(dto));
-            }
+            Citas.Add(MapearCita(dto));
+        }
+
+            await EnriquecerPacientesAsync();
 
             AplicarFiltros();
         }
         catch (UnauthorizedException)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error", "No autenticado. Inicie sesión nuevamente.", "OK");
+            await ShowAlertAsync("Error", "No autenticado. Inicie sesión nuevamente.");
         }
         catch (ConnectionException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error de Conexión", ex.Message, "OK");
+            await ShowAlertAsync("Error de Conexión", ex.Message);
         }
         catch (Exception ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+            await ShowAlertAsync("Error", ex.Message);
         }
         finally
         {
@@ -203,15 +205,15 @@ public class GestionCitasViewModel : BaseViewModel
         }
         catch (ValidationException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Validacion", ex.Message, "OK");
+            await ShowAlertAsync("Validación", ex.Message);
         }
         catch (ConnectionException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error de Conexion", ex.Message, "OK");
+            await ShowAlertAsync("Error de Conexión", ex.Message);
         }
         catch (Exception ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+            await ShowAlertAsync("Error", ex.Message);
         }
     }
 
@@ -222,20 +224,38 @@ public class GestionCitasViewModel : BaseViewModel
 
         try
         {
+            if (citaObjetivo.Estado == EstadoCita.Completada)
+            {
+                await ShowAlertAsync("Aviso", "La cita ya está completada.");
+                return;
+            }
+
+            if (citaObjetivo.Estado is EstadoCita.Cancelada or EstadoCita.NoAsistio)
+            {
+                await ShowAlertAsync("Aviso", "No se puede completar una cita cancelada o no asistida.");
+                return;
+            }
+
+            if (citaObjetivo.Estado == EstadoCita.Confirmada)
+            {
+                await _citasService.IniciarConsultaAsync(citaObjetivo.Id);
+            }
+
             await _citasService.MarcarAsistenciaAsync(citaObjetivo.Id, true);
             await CargarCitas();
+            await ShowAlertAsync("Éxito", "Cita completada.");
         }
         catch (ValidationException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Validacion", ex.Message, "OK");
+            await ShowAlertAsync("Validación", ex.Message);
         }
         catch (ConnectionException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error de Conexion", ex.Message, "OK");
+            await ShowAlertAsync("Error de Conexión", ex.Message);
         }
         catch (Exception ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+            await ShowAlertAsync("Error", ex.Message);
         }
     }
 
@@ -246,20 +266,32 @@ public class GestionCitasViewModel : BaseViewModel
 
         try
         {
-            await _citasService.MarcarAsistenciaAsync(citaObjetivo.Id, false);
+            if (citaObjetivo.Estado == EstadoCita.Completada)
+            {
+                await ShowAlertAsync("Aviso", "No se puede cancelar una cita completada.");
+                return;
+            }
+
+            if (citaObjetivo.Estado == EstadoCita.Cancelada)
+            {
+                await ShowAlertAsync("Aviso", "La cita ya está cancelada.");
+                return;
+            }
+
+            await _citasService.CancelarCitaAsync(citaObjetivo.Id);
             await CargarCitas();
         }
         catch (ValidationException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Validacion", ex.Message, "OK");
+            await ShowAlertAsync("Validación", ex.Message);
         }
         catch (ConnectionException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error de Conexion", ex.Message, "OK");
+            await ShowAlertAsync("Error de Conexión", ex.Message);
         }
         catch (Exception ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+            await ShowAlertAsync("Error", ex.Message);
         }
     }
 
@@ -286,15 +318,15 @@ public class GestionCitasViewModel : BaseViewModel
         }
         catch (ValidationException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Validacion", ex.Message, "OK");
+            await ShowAlertAsync("Validación", ex.Message);
         }
         catch (ConnectionException ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error de Conexion", ex.Message, "OK");
+            await ShowAlertAsync("Error de Conexión", ex.Message);
         }
         catch (Exception ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+            await ShowAlertAsync("Error", ex.Message);
         }
     }
 
@@ -318,13 +350,19 @@ public class GestionCitasViewModel : BaseViewModel
     private static Cita MapearCita(CitaResponseDto dto)
     {
         System.Diagnostics.Debug.WriteLine($"[GestionCitas] Mapeando cita {dto.Id} paciente {dto.PacienteNombre} fecha {dto.FechaHora}");
-        var estado = dto.Estado.ToLower() switch
+        var estadoNormalizado = (dto.Estado ?? string.Empty).Trim().ToLowerInvariant();
+        var estado = estadoNormalizado switch
         {
             "confirmada" => EstadoCita.Confirmada,
+            "encurso" => EstadoCita.EnCurso,
+            "en_curso" => EstadoCita.EnCurso,
+            "enprogreso" => EstadoCita.EnCurso,
+            "en_progreso" => EstadoCita.EnCurso,
             "completada" => EstadoCita.Completada,
             "cancelada" => EstadoCita.Cancelada,
             "rechazada" => EstadoCita.Cancelada,
             "noasistio" => EstadoCita.NoAsistio,
+            "no_asistio" => EstadoCita.NoAsistio,
             _ => EstadoCita.Pendiente
         };
 
@@ -339,9 +377,69 @@ public class GestionCitasViewModel : BaseViewModel
             Paciente = new Paciente
             {
                 Id = dto.PacienteId,
-                Nombre = dto.PacienteNombre,
-                Cedula = string.Empty
+                Nombre = string.IsNullOrWhiteSpace(dto.PacienteNombre) ? "Paciente" : dto.PacienteNombre,
+                Cedula = "N/D",
+                Telefono = "N/D",
+                Email = "N/D"
             }
         };
+    }
+
+    private async Task EnriquecerPacientesAsync()
+    {
+        var pacientesIds = Citas
+            .Select(c => c.Paciente?.Id ?? 0)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        foreach (var pacienteId in pacientesIds)
+        {
+            try
+            {
+                if (!_pacientesCache.ContainsKey(pacienteId))
+                {
+                    var dto = await _pacienteService.ObtenerPorIdAsync(pacienteId);
+                    if (dto != null)
+                    {
+                        _pacientesCache[pacienteId] = dto;
+                    }
+                }
+            }
+            catch
+            {
+                // Se mantiene la UI con valores por defecto si falla un paciente.
+            }
+        }
+
+        foreach (var cita in Citas)
+        {
+            var paciente = cita.Paciente;
+            if (paciente == null || paciente.Id <= 0) continue;
+
+            if (_pacientesCache.TryGetValue(paciente.Id, out var dto))
+            {
+                if (!string.IsNullOrWhiteSpace(dto.Nombre))
+                    paciente.Nombre = dto.Nombre;
+                if (!string.IsNullOrWhiteSpace(dto.Cedula))
+                    paciente.Cedula = dto.Cedula;
+                if (!string.IsNullOrWhiteSpace(dto.Telefono))
+                    paciente.Telefono = dto.Telefono;
+                if (!string.IsNullOrWhiteSpace(dto.Email))
+                    paciente.Email = dto.Email;
+            }
+        }
+    }
+
+    private static Task ShowAlertAsync(string title, string message)
+    {
+        return MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                await page.DisplayAlert(title, message, "OK");
+            }
+        });
     }
 }

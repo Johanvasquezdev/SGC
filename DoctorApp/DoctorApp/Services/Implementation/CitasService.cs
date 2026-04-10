@@ -117,6 +117,34 @@ public class CitasService : ICitasService
         }
     }
 
+    public async Task<CitaResponseDto> CancelarCitaAsync(int citaId, string? motivo = null)
+    {
+        if (citaId <= 0)
+            throw new Exceptions.ValidationException("El ID de la cita es requerido");
+
+        var payload = new
+        {
+            motivo = string.IsNullOrWhiteSpace(motivo) ? "Cancelada por el medico" : motivo.Trim()
+        };
+
+        try
+        {
+            var endpoint = $"/api/citas/{citaId}/cancelar";
+            await _apiClient.PutAsync<object>(endpoint, payload);
+
+            var actualizada = await ObtenerCitaPorIdAsync(citaId);
+            return actualizada ?? new CitaResponseDto { Id = citaId, Estado = "Cancelada" };
+        }
+        catch (AppException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new ConnectionException($"Error al cancelar cita: {ex.Message}", ex);
+        }
+    }
+
     public async Task<CitaResponseDto> IniciarConsultaAsync(int citaId)
     {
         var request = new IniciarConsultaRequest { CitaId = citaId };
@@ -166,9 +194,18 @@ public class CitasService : ICitasService
 
         try
         {
-            var endpoint = $"/api/citas/{citaId}/asistencia?asistio={asistio}";
-            var response = await _apiClient.PutAsync<CitaResponseDto>(endpoint, request);
-            return response ?? new CitaResponseDto { Id = citaId, Estado = asistio ? "Completada" : "NoAsistio" };
+            await EjecutarMarcarAsistenciaAsync(citaId, request);
+
+            var actualizada = await ObtenerCitaPorIdAsync(citaId);
+            return actualizada ?? new CitaResponseDto { Id = citaId, Estado = asistio ? "Completada" : "NoAsistio" };
+        }
+        catch (ConflictException) when (asistio)
+        {
+            await IniciarConsultaAsync(citaId);
+            await EjecutarMarcarAsistenciaAsync(citaId, request);
+
+            var actualizada = await ObtenerCitaPorIdAsync(citaId);
+            return actualizada ?? new CitaResponseDto { Id = citaId, Estado = "Completada" };
         }
         catch (AppException)
         {
@@ -178,6 +215,12 @@ public class CitasService : ICitasService
         {
             throw new ConnectionException($"Error al marcar asistencia: {ex.Message}", ex);
         }
+    }
+
+    private async Task EjecutarMarcarAsistenciaAsync(int citaId, MarcarAsistenciaRequest request)
+    {
+        var endpoint = $"/api/citas/{citaId}/asistencia?asistio={request.Asistio}";
+        await _apiClient.PutAsync<object>(endpoint, request);
     }
 
     public async Task<List<CitaResponseDto>> ObtenerCitasDelDiaAsync()

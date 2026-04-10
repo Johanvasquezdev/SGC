@@ -4,6 +4,7 @@ using DoctorApp.Models;
 using DoctorApp.Services.Interfaces;
 using DoctorApp.Security;
 using DoctorApp.DTOs.Responses;
+using System.Collections.Concurrent;
 
 namespace DoctorApp.ViewModels;
 
@@ -27,6 +28,8 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
     private readonly IDoctorService _doctorService;
     private readonly ITokenManager _tokenManager;
     private readonly ICitasService _citasService;
+    private readonly IPacienteService _pacienteService;
+    private readonly ConcurrentDictionary<int, PacienteResponseDto> _pacientesCache = new();
 
     public ObservableCollection<PacienteConsultaModel> ConsultasFiltradas
     {
@@ -175,12 +178,14 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
     public PanelConsultasDelDiaViewModel(
         IDoctorService doctorService,
         ITokenManager tokenManager,
-        ICitasService citasService)
+        ICitasService citasService,
+        IPacienteService pacienteService)
     {
         Title = "Panel de Consultas del Dia";
         _doctorService = doctorService ?? throw new ArgumentNullException(nameof(doctorService));
         _tokenManager = tokenManager ?? throw new ArgumentNullException(nameof(tokenManager));
         _citasService = citasService ?? throw new ArgumentNullException(nameof(citasService));
+        _pacienteService = pacienteService ?? throw new ArgumentNullException(nameof(pacienteService));
 
         IniciarConsultaCommand = new Command<PacienteConsultaModel>(async (paciente) => await IniciarConsulta(paciente));
         CompletarConsultaCommand = new Command<PacienteConsultaModel>(async (paciente) => await CompletarConsulta(paciente));
@@ -244,6 +249,8 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
                 Consultasdeldia.Add(MapearCitaAConsulta(cita));
             }
 
+            await EnriquecerPacientesAsync();
+
             ActualizarEstadisticas();
         }
         catch (Exception ex)
@@ -303,12 +310,37 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
 
         try
         {
+            if (consulta.Estado == EstadoConsulta.Completada)
+            {
+                await Application.Current!.MainPage!.DisplayAlert(
+                    "Aviso",
+                    "La consulta ya está completada.",
+                    "OK"
+                );
+                return;
+            }
+
+            if (consulta.Estado is EstadoConsulta.NoPresento or EstadoConsulta.Reprogramada)
+            {
+                await Application.Current!.MainPage!.DisplayAlert(
+                    "Aviso",
+                    "No se puede completar una consulta en estado No Presentó o Reprogramada.",
+                    "OK"
+                );
+                return;
+            }
+
+            if (consulta.Estado == EstadoConsulta.Esperando)
+            {
+                await _citasService.IniciarConsultaAsync(consulta.Id);
+            }
+
             await _citasService.MarcarAsistenciaAsync(consulta.Id, true);
             await CargarConsultasDelDia();
 
             await Application.Current!.MainPage!.DisplayAlert(
-                "Exito",
-                $"Consulta completada para {consulta.NombreCompleto}",
+                "Éxito",
+                "Cita completada",
                 "OK"
             );
         }
@@ -326,6 +358,36 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
     {
         var consulta = paciente ?? PacienteSeleccionado;
         if (consulta == null) return;
+
+        if (consulta.Estado == EstadoConsulta.Completada)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Aviso",
+                "No se puede marcar No Presentó en una consulta completada.",
+                "OK"
+            );
+            return;
+        }
+
+        if (consulta.Estado == EstadoConsulta.NoPresento)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Aviso",
+                "La consulta ya está marcada como No Presentó.",
+                "OK"
+            );
+            return;
+        }
+
+        if (consulta.Estado == EstadoConsulta.Reprogramada)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Aviso",
+                "No se puede marcar No Presentó en una consulta reprogramada.",
+                "OK"
+            );
+            return;
+        }
 
         bool confirmado = await Application.Current!.MainPage!.DisplayAlert(
             "Confirmar",
@@ -433,10 +495,58 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
             Estado = MapearEstadoConsulta(dto.Estado),
             Cedula = "N/D",
             Telefono = "No disponible",
+            Email = "No disponible",
             Edad = "N/D",
             AntecedentesRelevantes = string.IsNullOrWhiteSpace(dto.Notas) ? "Sin antecedentes registrados" : dto.Notas,
             FechaCreacion = dto.FechaCreacion
         };
+    }
+
+    private async Task EnriquecerPacientesAsync()
+    {
+        var ids = Consultasdeldia
+            .Select(c => c.Id)
+            .Where(id => id > 0)
+            .ToList();
+
+        var citasPorId = (await _citasService.ObtenerCitasMedicoAsync())
+            .ToDictionary(c => c.Id, c => c);
+
+        foreach (var consulta in Consultasdeldia)
+        {
+            if (!citasPorId.TryGetValue(consulta.Id, out var citaDto))
+                continue;
+
+            var pacienteId = citaDto.PacienteId;
+            if (pacienteId <= 0)
+                continue;
+
+            try
+            {
+                if (!_pacientesCache.ContainsKey(pacienteId))
+                {
+                    var pacienteDto = await _pacienteService.ObtenerPorIdAsync(pacienteId);
+                    if (pacienteDto != null)
+                    {
+                        _pacientesCache[pacienteId] = pacienteDto;
+                    }
+                }
+
+                if (_pacientesCache.TryGetValue(pacienteId, out var p))
+                {
+                    consulta.Cedula = string.IsNullOrWhiteSpace(p.Cedula) ? consulta.Cedula : p.Cedula;
+                    consulta.Telefono = string.IsNullOrWhiteSpace(p.Telefono) ? consulta.Telefono : p.Telefono;
+                    consulta.Email = string.IsNullOrWhiteSpace(p.Email) ? consulta.Email : p.Email;
+                    consulta.Edad = p.Edad.HasValue ? p.Edad.Value.ToString() : consulta.Edad;
+                }
+            }
+            catch
+            {
+                // Mantener datos parciales si falla un paciente.
+            }
+        }
+
+        OnPropertyChanged(nameof(ConsultasFiltradas));
     }
 
     private static EstadoConsulta MapearEstadoConsulta(string? estado)
@@ -450,8 +560,10 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
             "solicitada" => EstadoConsulta.Esperando,
             "encurso" => EstadoConsulta.EnConsulta,
             "enprogreso" => EstadoConsulta.EnConsulta,
+            "en_progreso" => EstadoConsulta.EnConsulta,
             "completada" => EstadoConsulta.Completada,
             "noasistio" => EstadoConsulta.NoPresento,
+            "no_asistio" => EstadoConsulta.NoPresento,
             "cancelada" => EstadoConsulta.Reprogramada,
             "rechazada" => EstadoConsulta.Reprogramada,
             "reprogramada" => EstadoConsulta.Reprogramada,
