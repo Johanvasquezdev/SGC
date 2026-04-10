@@ -107,7 +107,8 @@ public class TokenManager : ITokenManager
 
         var value = GetClaimValue(token, "nameid")
             ?? GetClaimValue(token, "nameidentifier")
-            ?? GetClaimValue(token, "sub");
+            ?? GetClaimValue(token, "sub")
+            ?? GetClaimValue(token, "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
 
         if (int.TryParse(value, out var id))
             return id;
@@ -124,6 +125,7 @@ public class TokenManager : ITokenManager
         return GetClaimValue(token, "unique_name")
             ?? GetClaimValue(token, "name")
             ?? GetClaimValue(token, "given_name")
+            ?? GetClaimValue(token, "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")
             ?? Preferences.Get(USER_NAME_KEY, null);
     }
 

@@ -233,10 +233,13 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var citas = await _citasService.ObtenerCitasDelDiaAsync();
+            var todas = await _citasService.ObtenerCitasMedicoAsync();
+            var citas = (todas ?? new List<CitaResponseDto>())
+                .OrderBy(c => c.FechaHora)
+                .ToList();
 
             Consultasdeldia.Clear();
-            foreach (var cita in citas.OrderBy(c => c.FechaHora))
+            foreach (var cita in citas)
             {
                 Consultasdeldia.Add(MapearCitaAConsulta(cita));
             }

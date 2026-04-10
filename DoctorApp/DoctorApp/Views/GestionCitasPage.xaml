@@ -36,6 +36,10 @@
                     <DatePicker Date="{Binding FechaFiltro}"
                                BackgroundColor="#F3F4F6"
                                Format="dd/MM/yyyy"/>
+                    <HorizontalStackLayout Spacing="8" Margin="0,6,0,0">
+                        <Label Text="Filtrar por fecha" FontSize="11" TextColor="#6B7280" VerticalOptions="Center"/>
+                        <Switch IsToggled="{Binding UsarFechaFiltro}" HorizontalOptions="EndAndExpand"/>
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
 
                 <!-- Búsqueda de Paciente -->

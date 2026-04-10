@@ -14,6 +14,7 @@ public class GestionCitasViewModel : BaseViewModel
     private Cita? _citaSeleccionada;
     private EstadoCita _estadoFiltro = EstadoCita.Todos;
     private DateTime _fechaFiltro = DateTime.Today;
+    private bool _usarFechaFiltro;
     private string _busquedaPaciente = string.Empty;
     private bool _mostrarCancelar;
 
@@ -83,6 +84,21 @@ public class GestionCitasViewModel : BaseViewModel
             {
                 _fechaFiltro = value;
                 OnPropertyChanged();
+                if (UsarFechaFiltro)
+                    AplicarFiltros();
+            }
+        }
+    }
+
+    public bool UsarFechaFiltro
+    {
+        get => _usarFechaFiltro;
+        set
+        {
+            if (_usarFechaFiltro != value)
+            {
+                _usarFechaFiltro = value;
+                OnPropertyChanged();
                 AplicarFiltros();
             }
         }
@@ -143,6 +159,11 @@ public class GestionCitasViewModel : BaseViewModel
         try
         {
             var citasDto = await _citasService.ObtenerCitasMedicoAsync();
+            System.Diagnostics.Debug.WriteLine($"[GestionCitas] API citas recibidas: {citasDto?.Count ?? 0}");
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Debug Citas",
+                $"Citas recibidas desde API: {citasDto?.Count ?? 0}",
+                "OK");
 
             Citas.Clear();
             foreach (var dto in citasDto)
@@ -175,8 +196,23 @@ public class GestionCitasViewModel : BaseViewModel
         var citaObjetivo = cita ?? CitaSeleccionada;
         if (citaObjetivo == null) return;
 
-        await _citasService.ConfirmarCitaAsync(citaObjetivo.Id, true);
-        await CargarCitas();
+        try
+        {
+            await _citasService.ConfirmarCitaAsync(citaObjetivo.Id, true);
+            await CargarCitas();
+        }
+        catch (ValidationException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Validacion", ex.Message, "OK");
+        }
+        catch (ConnectionException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error de Conexion", ex.Message, "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+        }
     }
 
     private async Task CompletarCita(Cita? cita)
@@ -184,8 +220,23 @@ public class GestionCitasViewModel : BaseViewModel
         var citaObjetivo = cita ?? CitaSeleccionada;
         if (citaObjetivo == null) return;
 
-        await _citasService.MarcarAsistenciaAsync(citaObjetivo.Id, true);
-        await CargarCitas();
+        try
+        {
+            await _citasService.MarcarAsistenciaAsync(citaObjetivo.Id, true);
+            await CargarCitas();
+        }
+        catch (ValidationException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Validacion", ex.Message, "OK");
+        }
+        catch (ConnectionException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error de Conexion", ex.Message, "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+        }
     }
 
     private async Task CancelarCitaSeleccionada(Cita? cita)
@@ -193,35 +244,65 @@ public class GestionCitasViewModel : BaseViewModel
         var citaObjetivo = cita ?? CitaSeleccionada;
         if (citaObjetivo == null) return;
 
-        await _citasService.MarcarAsistenciaAsync(citaObjetivo.Id, false);
-        await CargarCitas();
+        try
+        {
+            await _citasService.MarcarAsistenciaAsync(citaObjetivo.Id, false);
+            await CargarCitas();
+        }
+        catch (ValidationException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Validacion", ex.Message, "OK");
+        }
+        catch (ConnectionException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error de Conexion", ex.Message, "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+        }
     }
 
     private async Task ActualizarEstadoCita(EstadoCita nuevoEstado)
     {
         if (CitaSeleccionada == null) return;
 
-        if (nuevoEstado == EstadoCita.Confirmada)
+        try
         {
-            await _citasService.ConfirmarCitaAsync(CitaSeleccionada.Id, true);
-        }
-        else if (nuevoEstado == EstadoCita.Completada)
-        {
-            await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, true);
-        }
-        else if (nuevoEstado == EstadoCita.Cancelada)
-        {
-            await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, false);
-        }
+            if (nuevoEstado == EstadoCita.Confirmada)
+            {
+                await _citasService.ConfirmarCitaAsync(CitaSeleccionada.Id, true);
+            }
+            else if (nuevoEstado == EstadoCita.Completada)
+            {
+                await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, true);
+            }
+            else if (nuevoEstado == EstadoCita.Cancelada)
+            {
+                await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, false);
+            }
 
-        await CargarCitas();
+            await CargarCitas();
+        }
+        catch (ValidationException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Validacion", ex.Message, "OK");
+        }
+        catch (ConnectionException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error de Conexion", ex.Message, "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
+        }
     }
 
     private void AplicarFiltros()
     {
         var filtradas = Citas.Where(c =>
             (EstadoFiltro == EstadoCita.Todos || c.Estado == EstadoFiltro) &&
-            c.FechaHora.Date == FechaFiltro.Date &&
+            (!UsarFechaFiltro || c.FechaHora.Date == FechaFiltro.Date) &&
             (string.IsNullOrEmpty(BusquedaPaciente) ||
              c.Paciente?.NombreCompleto?.Contains(BusquedaPaciente, StringComparison.OrdinalIgnoreCase) == true ||
              c.Paciente?.Cedula?.Contains(BusquedaPaciente) == true)
@@ -236,6 +317,7 @@ public class GestionCitasViewModel : BaseViewModel
 
     private static Cita MapearCita(CitaResponseDto dto)
     {
+        System.Diagnostics.Debug.WriteLine($"[GestionCitas] Mapeando cita {dto.Id} paciente {dto.PacienteNombre} fecha {dto.FechaHora}");
         var estado = dto.Estado.ToLower() switch
         {
             "confirmada" => EstadoCita.Confirmada,
