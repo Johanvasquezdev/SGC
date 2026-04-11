@@ -15,8 +15,11 @@ export default function MisCitasPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Escucha eventos del hub para notificar cambios en tiempo real.
+  const signalRBaseUrl =
+    process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useSignalR({
-    hubUrl: `${(process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5189").replace(/\/$/, "")}/citahub`,
+    hubUrl: signalRBaseUrl ? `${signalRBaseUrl.replace(/\/$/, "")}/citahub` : "",
     onNuevaCita: () => {
       toast.info("Nueva cita registrada");
     },

@@ -12,8 +12,10 @@ export function useSignalR({ hubUrl, onNuevaCita }: UseSignalROptions) {
   useEffect(() => {
     const baseUrl =
       process.env.NEXT_PUBLIC_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://localhost:5189";
+      process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+      return;
+    }
     const normalizedBase = baseUrl.replace(/\/$/, "");
     const resolvedHubUrl = hubUrl || `${normalizedBase}/citahub`;
 

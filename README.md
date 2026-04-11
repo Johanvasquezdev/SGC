@@ -80,6 +80,22 @@ Fuera de alcance:
 
 Swagger UI local: `http://localhost:5189/swagger`
 
+## Docker quickstart
+
+1. Copy `.env.example` to `.env` and set real values.
+2. Start API container:
+
+```bash
+docker compose up --build -d
+```
+
+3. Verify API is up at `http://localhost:5189/swagger`.
+
+Notes:
+
+- `docker-compose.yml` maps container port `8080` to host `5189`.
+- Database/Redis in `.env.example` use `host.docker.internal` so local services can be used from container.
+
 ## Documentacion
 
 - SRS MedAgenda
