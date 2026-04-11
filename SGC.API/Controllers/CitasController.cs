@@ -47,6 +47,16 @@ namespace SGC.API.Controllers
             return Ok(citasFecha);
         }
 
+        [HttpGet("medico")]
+        [Authorize(Roles = "Medico,Administrador")]
+        // GET api/citas/medico - Obtiene todas las citas del medico autenticado
+        public async Task<IActionResult> GetCitasMedico()
+        {
+            var medicoId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var citas = await _citaService.GetByMedicoAsync(medicoId);
+            return Ok(citas);
+        }
+
         [HttpPost]
         // POST api/citas - Crea una nueva cita, solo para pacientes
         public async Task<IActionResult> Crear(

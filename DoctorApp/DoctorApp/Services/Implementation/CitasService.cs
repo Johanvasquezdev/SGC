@@ -65,6 +65,24 @@ public class CitasService : ICitasService
         }
     }
 
+    public async Task<List<CitaResponseDto>> ObtenerCitasMedicoAsync()
+    {
+        try
+        {
+            const string endpoint = "/api/citas/medico";
+            var citas = await _apiClient.GetAsync<List<CitaResponseDto>>(endpoint);
+            return citas ?? new List<CitaResponseDto>();
+        }
+        catch (AppException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new ConnectionException($"Error al obtener citas del medico: {ex.Message}", ex);
+        }
+    }
+
     public async Task<CitaResponseDto> ConfirmarCitaAsync(int citaId, bool confirmada, string? notas = null)
     {
         var request = new ConfirmarCitaRequest

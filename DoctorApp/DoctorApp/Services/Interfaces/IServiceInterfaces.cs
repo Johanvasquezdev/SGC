@@ -9,6 +9,7 @@ namespace DoctorApp.Services.Interfaces;
 public interface ICitasService
 {
     Task<ObtenerAgendaResponse> ObtenerAgendaAsync(DateTime fecha);
+    Task<List<CitaResponseDto>> ObtenerCitasMedicoAsync();
     Task<CitaResponseDto> ConfirmarCitaAsync(int citaId, bool confirmada, string? notas = null);
     Task<CitaResponseDto> IniciarConsultaAsync(int citaId);
     Task<CitaResponseDto> MarcarAsistenciaAsync(int citaId, bool asistio, string? observaciones = null);
