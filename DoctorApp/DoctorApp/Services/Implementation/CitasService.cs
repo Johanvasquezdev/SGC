@@ -166,9 +166,25 @@ public class CitasService : ICitasService
 
         try
         {
-            var endpoint = $"/api/citas/{citaId}/asistencia?asistio={asistio}";
-            var response = await _apiClient.PutAsync<CitaResponseDto>(endpoint, request);
-            return response ?? new CitaResponseDto { Id = citaId, Estado = asistio ? "Completada" : "NoAsistio" };
+            await EjecutarMarcarAsistenciaAsync(citaId, request);
+
+            var actualizada = await ObtenerCitaPorIdAsync(citaId);
+            return actualizada ?? new CitaResponseDto { Id = citaId, Estado = asistio ? "Completada" : "NoAsistio" };
+        }
+        catch (ConflictException) when (asistio)
+        {
+            await IntentarCompletarConTransicionesAsync(citaId, request);
+
+            var actualizada = await ObtenerCitaPorIdAsync(citaId);
+            return actualizada ?? new CitaResponseDto { Id = citaId, Estado = "Completada" };
+        }
+        }
+        catch (ConflictException) when (!asistio)
+        {
+            await IntentarMarcarNoAsistioConTransicionesAsync(citaId, request);
+
+            var actualizada = await ObtenerCitaPorIdAsync(citaId);
+            return actualizada ?? new CitaResponseDto { Id = citaId, Estado = "NoAsistio" };
         }
         catch (AppException)
         {
@@ -180,6 +196,48 @@ public class CitasService : ICitasService
         }
     }
 
+    private async Task EjecutarMarcarAsistenciaAsync(int citaId, MarcarAsistenciaRequest request)
+    {
+        var endpoint = $"/api/citas/{citaId}/asistencia?asistio={request.Asistio}";
+        await _apiClient.PutAsync<object>(endpoint, request);
+    }
+
+    private async Task IntentarCompletarConTransicionesAsync(int citaId, MarcarAsistenciaRequest request)
+    {
+        try
+        {
+            await IniciarConsultaAsync(citaId);
+        }
+        catch (ConflictException)
+        {
+            try
+            {
+                await ConfirmarCitaAsync(citaId, true);
+            }
+            catch (ConflictException)
+            {
+                // Puede estar ya confirmada o en otro estado.
+            }
+
+            await IniciarConsultaAsync(citaId);
+        }
+
+        await EjecutarMarcarAsistenciaAsync(citaId, request);
+    }
+
+    private async Task IntentarMarcarNoAsistioConTransicionesAsync(int citaId, MarcarAsistenciaRequest request)
+    {
+        try
+        {
+            await ConfirmarCitaAsync(citaId, true);
+        }
+        catch (ConflictException)
+        {
+            // Puede estar ya confirmada o en estado no apto.
+        }
+
+        await EjecutarMarcarAsistenciaAsync(citaId, request);
+    }
     public async Task<List<CitaResponseDto>> ObtenerCitasDelDiaAsync()
     {
         try
