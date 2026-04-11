@@ -142,8 +142,7 @@ public class GestionCitasViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var agenda = await _citasService.ObtenerAgendaAsync(FechaFiltro);
-            var citasDto = agenda.Citas ?? new List<CitaResponseDto>();
+            var citasDto = await _citasService.ObtenerCitasMedicoAsync();
 
             Citas.Clear();
             foreach (var dto in citasDto)
@@ -219,7 +218,6 @@ public class GestionCitasViewModel : BaseViewModel
     {
         var filtradas = Citas.Where(c =>
             c.Estado == EstadoFiltro &&
-            c.FechaHora.Date == FechaFiltro.Date &&
             (string.IsNullOrEmpty(BusquedaPaciente) ||
              c.Paciente?.NombreCompleto?.Contains(BusquedaPaciente, StringComparison.OrdinalIgnoreCase) == true ||
              c.Paciente?.Cedula?.Contains(BusquedaPaciente) == true)

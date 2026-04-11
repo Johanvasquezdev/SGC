@@ -432,6 +432,16 @@ public class GestionDisponibilidadViewModel : BaseViewModel
             return;
         }
 
+        if (MedicoActual.Id <= 0)
+        {
+            await InicializarMedicoAsync();
+            if (MedicoActual.Id <= 0)
+            {
+                MensajeConfirmacion = "No se encontro el medico autenticado";
+                return;
+            }
+        }
+
         IsBusy = true;
         try
         {

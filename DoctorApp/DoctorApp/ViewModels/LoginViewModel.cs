@@ -101,6 +101,12 @@ public class LoginViewModel : BaseViewModel
 
             if (respuesta != null && !string.IsNullOrEmpty(respuesta.Token))
             {
+                if (!string.Equals(respuesta.Rol, "Medico", StringComparison.OrdinalIgnoreCase))
+                {
+                    await MostrarErrorAsync("Este usuario no es medico. Usa una cuenta de medico.");
+                    return;
+                }
+
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     Application.Current!.MainPage = new AppShell();
