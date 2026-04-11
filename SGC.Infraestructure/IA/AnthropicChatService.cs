@@ -1,58 +1,68 @@
 ﻿using Microsoft.Extensions.Configuration;
 using SGC.Domain.Interfaces;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace SGC.Infraestructure.IA
 {
-    // Servicio de chatbot utilizando la API de Anthropic para responder consultas de los pacientes sobre citas médicas
+    // Servicio de chatbot utilizando la API de Groq (OpenAI-compatible).
     public class AnthropicChatService : IChatbotService
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
         private readonly string _model;
+        private readonly string _baseUrl;
+        private readonly int _maxTokens;
+        private readonly decimal _temperature;
 
         public AnthropicChatService(HttpClient httpClient,
             IConfiguration config)
         {
             _httpClient = httpClient;
-            _apiKey = config["AI:ApiKey"]!;
+            _apiKey = config["AI:ApiKey"]
+                ?? throw new InvalidOperationException("AI:ApiKey no configurado");
             _model = config["AI:Model"]
-                ?? "claude-sonnet-4-20250514";
+                ?? "llama-3.1-8b-instant";
+            _baseUrl = config["AI:BaseUrl"]
+                ?? "https://api.groq.com/openai/v1";
+            _maxTokens = int.TryParse(config["AI:MaxTokens"], out var mt) ? mt : 1000;
+            _temperature = decimal.TryParse(config["AI:Temperature"], out var t) ? t : 0.2m;
         }
 
-        //  Método privado para enviar la solicitud a la API de Anthropic y obtener la respuesta
+        // Método privado para enviar la solicitud a la API de Groq y obtener la respuesta
         private async Task<string> EnviarRequestAsync(
             string mensaje, string sistema)
         {
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders
-                .Add("x-api-key", _apiKey);
-            _httpClient.DefaultRequestHeaders
-                .Add("anthropic-version", "2023-06-01");
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", _apiKey);
 
             var request = new
             {
                 model = _model,
-                max_tokens = 1000,
-                system = sistema,
+                max_tokens = _maxTokens,
+                temperature = _temperature,
                 messages = new[]
                 {
+                    new { role = "system", content = sistema },
                     new { role = "user", content = mensaje }
                 }
             };
 
             var response = await _httpClient.PostAsJsonAsync(
-                "https://api.anthropic.com/v1/messages", request);
+                $"{_baseUrl.TrimEnd('/')}/chat/completions", request);
 
             var json = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
+
             var result = JsonSerializer.Deserialize<AnthropicResponse>(
                 json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
 
-            return result?.Content?[0]?.Text
+            return result?.Choices?.FirstOrDefault()?.Message?.Content
                 ?? "No pude procesar tu consulta.";
         }
 
@@ -89,10 +99,16 @@ namespace SGC.Infraestructure.IA
         // Consulta general sobre cómo usar el sistema, formateando el mensaje con la pregunta del paciente para que el chatbot pueda proporcionar una respuesta útil y orientativa
         private class AnthropicResponse
         {
-            public List<ContentBlock>? Content { get; set; }
-            public class ContentBlock
+            public List<Choice>? Choices { get; set; }
+
+            public class Choice
             {
-                public string? Text { get; set; }
+                public MessageBlock? Message { get; set; }
+            }
+
+            public class MessageBlock
+            {
+                public string? Content { get; set; }
             }
         }
     }
