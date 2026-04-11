@@ -56,7 +56,7 @@ Fuera de alcance:
 - `SGC.IOC`
 - `SGC.API`
 - `SGC.Web`
-- `SGC.Desktop`
+- `DoctorApp`
 - `SGC.ApplicationTest`
 
 ## Division de trabajo (evaluacion)
