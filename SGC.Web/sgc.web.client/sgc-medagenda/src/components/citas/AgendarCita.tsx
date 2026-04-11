@@ -7,10 +7,12 @@ import {
 } from "lucide-react";
 import { MedicoDTO } from "@/types/api.types";
 import { CitaService } from "@/services/cita.service";
+import { PagoService } from "@/services/pago.service";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { UsuarioService } from "@/services/usuario.service";
 import { DisponibilidadService } from "@/services/disponibilidad.service";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Props {
   medico: MedicoDTO | null;
@@ -26,8 +28,16 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [citaCreadaId, setCitaCreadaId] = useState<number | null>(null);
+  const [pagoLoading, setPagoLoading] = useState(false);
+  const [pagoCreado, setPagoCreado] = useState(false);
+  const [pacienteActualId, setPacienteActualId] = useState<number | null>(null);
+  const router = useRouter();
 
   if (!isOpen || !medico) return null;
+
+  const toLocalIso = (value: string) => (value.length === 16 ? `${value}:00` : value);
+  const toLocalDate = (value: string) => value.split("T")[0];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +69,7 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
     setIsLoading(true);
     setError(null);
     try {
-      const fecha = new Date(fechaHora);
-      const fechaParam = fecha.toISOString().split("T")[0];
+      const fechaParam = toLocalDate(fechaHora);
       const disponibilidades = await DisponibilidadService.obtenerPorMedico(
         medico.id,
         fechaParam
@@ -70,22 +79,17 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
         return;
       }
       const disponibilidadId = disponibilidades[0].id;
-      await CitaService.crearCita({
+      const citaCreada = await CitaService.crearCita({
         pacienteId,
         medicoId: medico.id,
-        fechaHora: new Date(fechaHora).toISOString(),
+        fechaHora: toLocalIso(fechaHora),
         disponibilidadId,
         motivo,
         notas,
       });
+      setPacienteActualId(pacienteId);
+      setCitaCreadaId(citaCreada.id);
       setIsSuccess(true);
-      setTimeout(() => {
-        setIsSuccess(false);
-        onClose();
-        setMotivo("");
-        setNotas("");
-        setFechaHora("");
-      }, 2000);
     } catch (err: any) {
       const mensaje =
         err?.response?.data?.mensaje ||
@@ -111,6 +115,44 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
             <div className="text-center py-8">
               <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
               <h3 className="text-lg font-semibold text-white">Cita Agendada</h3>
+              <p className="text-slate-400 text-sm mt-2">
+                Puedes crear el pago ahora o verlo luego en Pagos.
+              </p>
+              <div className="mt-6 flex flex-col gap-3">
+                <button
+                  disabled={pagoLoading || pagoCreado || !citaCreadaId || !pacienteActualId}
+                  onClick={async () => {
+                    if (!citaCreadaId || !pacienteActualId) return;
+                    try {
+                      setPagoLoading(true);
+                      await PagoService.crearIntento({
+                        citaId: citaCreadaId,
+                        pacienteId: pacienteActualId,
+                        monto: 1000,
+                        moneda: "DOP",
+                      });
+                      setPagoCreado(true);
+                      toast.success("Intento de pago creado.");
+                    } catch (e: any) {
+                      toast.error("No se pudo crear el pago.");
+                    } finally {
+                      setPagoLoading(false);
+                    }
+                  }}
+                  className="w-full bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-500 transition-colors disabled:opacity-60"
+                >
+                  {pagoLoading ? "Creando pago..." : pagoCreado ? "Pago creado" : "Pagar ahora"}
+                </button>
+                <button
+                  onClick={() => {
+                    onClose();
+                    router.push("/paciente/pagos");
+                  }}
+                  className="w-full bg-slate-800 text-slate-200 py-3 rounded-xl hover:bg-slate-700 transition-colors"
+                >
+                  Ver mis pagos
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

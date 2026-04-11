@@ -25,6 +25,15 @@ export interface DisponibilidadDTO {
   esRecurrente: boolean;
 }
 
+export interface CreateDisponibilidadRequest {
+  medicoId: number;
+  diaSemana: number;
+  horaInicio: string;
+  horaFin: string;
+  duracionCitaMin: number;
+  esRecurrente: boolean;
+}
+
 export interface CitaDTO { id: number; pacienteId: number; medicoId: number; disponibilidadId?: number | null; fechaHora: string; estado: EstadoCita; motivo?: string | null; notas?: string | null; fechaCreacion: string; }
 export interface CreateCitaDTO { pacienteId: number; medicoId: number; disponibilidadId?: number | null; fechaHora: string; motivo?: string; notas?: string; }
 
