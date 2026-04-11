@@ -110,6 +110,35 @@ public class EstadoCitaColorConverter : IValueConverter
     }
 }
 
+public class EstadoCitaTextoConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is DoctorApp.Models.EstadoCita estado)
+        {
+            return estado switch
+            {
+                DoctorApp.Models.EstadoCita.Pendiente => "Pendiente",
+                DoctorApp.Models.EstadoCita.Confirmada => "Confirmada",
+                DoctorApp.Models.EstadoCita.EnCurso => "En curso",
+                DoctorApp.Models.EstadoCita.Completada => "Completada",
+                DoctorApp.Models.EstadoCita.Cancelada => "Cancelada",
+                DoctorApp.Models.EstadoCita.Reprogramada => "Reprogramada",
+                DoctorApp.Models.EstadoCita.NoAsistio => "No asistio",
+                DoctorApp.Models.EstadoCita.Todos => "Todos",
+                _ => "N/A"
+            };
+        }
+
+        return "N/A";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 public class NullToBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

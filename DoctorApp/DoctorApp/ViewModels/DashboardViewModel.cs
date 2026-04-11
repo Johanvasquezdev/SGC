@@ -20,6 +20,7 @@ public class DashboardViewModel : BaseViewModel
     private int _totalCitasHoy;
     private int _citasConfirmadas;
     private int _citasPendientes;
+    private int _citasCanceladas;
     private DateTime _fechaSeleccionada = DateTime.Today;
     private string _busquedaCedula = string.Empty;
     private Paciente? _pacienteBuscado;
@@ -111,6 +112,19 @@ public class DashboardViewModel : BaseViewModel
             if (_citasPendientes != value)
             {
                 _citasPendientes = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public int CitasCanceladas
+    {
+        get => _citasCanceladas;
+        set
+        {
+            if (_citasCanceladas != value)
+            {
+                _citasCanceladas = value;
                 OnPropertyChanged();
             }
         }
@@ -278,18 +292,18 @@ public class DashboardViewModel : BaseViewModel
 
             var agenda = await _citasService.ObtenerAgendaAsync(FechaSeleccionada);
             var citas = agenda.Citas ?? new List<CitaResponseDto>();
+            var citasMapeadas = citas.Select(MapearCitaDtoACita).ToList();
+            var fechaBase = FechaSeleccionada.Date;
 
             CitasHoy = new ObservableCollection<Cita>(
-                citas
-                    .Where(c => c.FechaHora.Date == DateTime.Today)
-                    .Select(MapearCitaDtoACita)
+                citasMapeadas
+                    .Where(c => c.FechaHora.Date == fechaBase)
                     .ToList()
             );
 
             CitasProximas = new ObservableCollection<Cita>(
-                citas
-                    .Where(c => c.FechaHora.Date > DateTime.Today && !c.Confirmada)
-                    .Select(MapearCitaDtoACita)
+                citasMapeadas
+                    .Where(c => c.FechaHora.Date > fechaBase && c.Estado is not EstadoCita.Cancelada and not EstadoCita.NoAsistio)
                     .ToList()
             );
 
@@ -440,8 +454,9 @@ public class DashboardViewModel : BaseViewModel
     private void ActualizarEstadisticas()
     {
         TotalCitasHoy = CitasHoy.Count;
-        CitasConfirmadas = CitasHoy.Count(c => c.Confirmada);
-        CitasPendientes = CitasHoy.Count(c => !c.Confirmada);
+        CitasConfirmadas = CitasHoy.Count(c => c.Estado is EstadoCita.Confirmada or EstadoCita.EnCurso or EstadoCita.Completada);
+        CitasPendientes = CitasHoy.Count(c => c.Estado is EstadoCita.Pendiente or EstadoCita.Reprogramada);
+        CitasCanceladas = CitasHoy.Count(c => c.Estado is EstadoCita.Cancelada or EstadoCita.NoAsistio);
     }
 
     private static Medico MapearDoctorDto(DoctorResponseDto dto)
@@ -478,20 +493,42 @@ public class DashboardViewModel : BaseViewModel
 
     private Cita MapearCitaDtoACita(CitaResponseDto citaDto)
     {
+        var estado = MapearEstado(citaDto.Estado);
         return new Cita
         {
             Id = citaDto.Id,
             FechaHora = citaDto.FechaHora,
             Motivo = citaDto.Motivo,
-            Confirmada = citaDto.Confirmada,
+            Confirmada = estado is EstadoCita.Confirmada or EstadoCita.EnCurso or EstadoCita.Completada,
             Paciente = new Paciente
             {
                 Id = citaDto.PacienteId,
                 Nombre = citaDto.PacienteNombre,
                 Cedula = string.Empty
             },
-            Estado = citaDto.Confirmada ? EstadoCita.Confirmada : EstadoCita.Pendiente,
+            Estado = estado,
             DuracionMinutos = citaDto.DuracionMinutos
+        };
+    }
+
+    private static EstadoCita MapearEstado(string? estado)
+    {
+        return (estado ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "confirmada" => EstadoCita.Confirmada,
+            "solicitada" => EstadoCita.Pendiente,
+            "pendiente" => EstadoCita.Pendiente,
+            "enprogreso" => EstadoCita.EnCurso,
+            "en_progreso" => EstadoCita.EnCurso,
+            "encurso" => EstadoCita.EnCurso,
+            "en_curso" => EstadoCita.EnCurso,
+            "completada" => EstadoCita.Completada,
+            "cancelada" => EstadoCita.Cancelada,
+            "rechazada" => EstadoCita.Cancelada,
+            "reprogramada" => EstadoCita.Reprogramada,
+            "noasistio" => EstadoCita.NoAsistio,
+            "no_asistio" => EstadoCita.NoAsistio,
+            _ => EstadoCita.Pendiente
         };
     }
 

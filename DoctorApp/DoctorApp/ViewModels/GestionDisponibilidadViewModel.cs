@@ -202,12 +202,22 @@ public class GestionDisponibilidadViewModel : BaseViewModel
         _disponibilidadHubClient.OnDisponibilidadActualizada += OnDisponibilidadActualizada;
         _disponibilidadHubClient.OnDisponibilidadEliminada += OnDisponibilidadEliminada;
 
-        // Cargar datos iniciales
-        _ = InicializarMedicoAsync();
-        _ = CargarDisponibilidades();
+        // Inicializacion secuencial para evitar condiciones de carrera
+        _ = InicializarAsync();
+    }
 
-        // Conectar al hub SignalR
-        _ = ConectarAlHub();
+    private async Task InicializarAsync()
+    {
+        try
+        {
+            await InicializarMedicoAsync();
+            await CargarDisponibilidades();
+            await ConectarAlHub();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[GestionDisponibilidadViewModel] Error inicializando: {ex}");
+        }
     }
 
     private async Task ConectarAlHub()
@@ -253,65 +263,6 @@ public class GestionDisponibilidadViewModel : BaseViewModel
     }
 
     // Métodos Privados
-
-    /// <summary>
-    /// Carga datos simulados de horarios disponibles (Patrón Idempotente)
-    /// </summary>
-    private void CargarDatosSimulados()
-    {
-        var horariosLunes = GenerarHorariosParaDia(DiaSemana.Lunes, new(08, 0), new(17, 0), 30);
-        var horariosMartes = GenerarHorariosParaDia(DiaSemana.Martes, new(08, 0), new(17, 0), 30);
-        var horariosMiercoles = GenerarHorariosParaDia(DiaSemana.Miercoles, new(09, 0), new(14, 0), 30);
-        var horariosJueves = GenerarHorariosParaDia(DiaSemana.Jueves, new(08, 0), new(17, 0), 30);
-        var horariosViernes = GenerarHorariosParaDia(DiaSemana.Viernes, new(08, 0), new(16, 0), 30);
-
-        HorariosDisponibles.Clear(); // Idempotencia: limpiar antes de agregar
-
-        foreach (var horario in horariosLunes.Concat(horariosMartes).Concat(horariosMiercoles)
-                                           .Concat(horariosJueves).Concat(horariosViernes))
-        {
-            HorariosDisponibles.Add(horario);
-        }
-    }
-
-    /// <summary>
-    /// Genera horarios para un día específico
-    /// </summary>
-    private List<DisponibilidadHoraria> GenerarHorariosParaDia(DiaSemana dia, TimeOnly inicio, TimeOnly fin, int duracionMinutos)
-    {
-        var horarios = new List<DisponibilidadHoraria>();
-        var horaActual = inicio;
-
-        while (horaActual < fin)
-        {
-            horarios.Add(new DisponibilidadHoraria
-            {
-                Id = GenerarIdIdempotente(dia, horaActual),
-                Dia = dia,
-                Hora = horaActual.ToString("HH:mm"),
-                HoraInicio = horaActual,
-                HoraFin = horaActual.AddMinutes(duracionMinutos),
-                EstaDisponible = true,
-                DuracionMinutos = duracionMinutos,
-                FechaRegistro = DateTime.Now,
-                Activo = true
-            });
-
-            horaActual = horaActual.AddMinutes(duracionMinutos);
-        }
-
-        return horarios;
-    }
-
-    /// <summary>
-    /// Genera un ID idempotente basado en día + hora (no cambia aunque se regenere)
-    /// </summary>
-    private int GenerarIdIdempotente(DiaSemana dia, TimeOnly hora)
-    {
-        var diaValue = (int)dia;
-        var horaValue = hora.Hour * 100 + hora.Minute;
-        return (diaValue * 10000) + horaValue;
-    }
 
     private void ActualizarBotones()
     {

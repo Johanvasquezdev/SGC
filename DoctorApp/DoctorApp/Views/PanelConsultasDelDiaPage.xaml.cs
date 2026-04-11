@@ -15,7 +15,8 @@ public partial class PanelConsultasDelDiaPage : ContentPage
         {
             var doctorService = services.GetRequiredService<IDoctorService>();
             var tokenManager = services.GetRequiredService<ITokenManager>();
-            BindingContext = new PanelConsultasDelDiaViewModel(doctorService, tokenManager);
+            var citasService = services.GetRequiredService<ICitasService>();
+            BindingContext = new PanelConsultasDelDiaViewModel(doctorService, tokenManager, citasService);
         }
     }
 }

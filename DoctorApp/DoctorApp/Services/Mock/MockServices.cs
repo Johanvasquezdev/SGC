@@ -42,6 +42,11 @@ public class MockCitasService : ICitasService
         return Task.FromResult(new List<CitaResponseDto>());
     }
 
+    public Task<List<CitaResponseDto>> ObtenerCitasMedicoAsync()
+    {
+        return Task.FromResult(new List<CitaResponseDto>());
+    }
+
     public Task<CitaResponseDto?> ObtenerCitaPorIdAsync(int citaId)
     {
         return Task.FromResult<CitaResponseDto?>(new CitaResponseDto { Id = citaId });

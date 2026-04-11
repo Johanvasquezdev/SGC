@@ -8,8 +8,8 @@ using DoctorApp.DTOs.Responses;
 namespace DoctorApp.ViewModels;
 
 /// <summary>
-/// ViewModel para el Panel de Consultas del Dia
-/// Carga el medico desde token/API y muestra consultas simuladas por ahora.
+/// ViewModel para el Panel de Consultas del Dia.
+/// Carga medico y consultas reales desde la API.
 /// </summary>
 public class PanelConsultasDelDiaViewModel : BaseViewModel
 {
@@ -26,6 +26,7 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
     // Servicios
     private readonly IDoctorService _doctorService;
     private readonly ITokenManager _tokenManager;
+    private readonly ICitasService _citasService;
 
     public ObservableCollection<PacienteConsultaModel> ConsultasFiltradas
     {
@@ -171,20 +172,29 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
     public ICommand ReprogramarConsultaCommand { get; }
     public ICommand CargarConsultasCommand { get; }
 
-    public PanelConsultasDelDiaViewModel(IDoctorService doctorService, ITokenManager tokenManager)
+    public PanelConsultasDelDiaViewModel(
+        IDoctorService doctorService,
+        ITokenManager tokenManager,
+        ICitasService citasService)
     {
         Title = "Panel de Consultas del Dia";
         _doctorService = doctorService ?? throw new ArgumentNullException(nameof(doctorService));
         _tokenManager = tokenManager ?? throw new ArgumentNullException(nameof(tokenManager));
+        _citasService = citasService ?? throw new ArgumentNullException(nameof(citasService));
 
-        IniciarConsultaCommand = new Command(async () => await IniciarConsulta());
-        CompletarConsultaCommand = new Command(async () => await CompletarConsulta());
-        MarcarNoPrestoCommand = new Command(async () => await MarcarNoPresentado());
-        ReprogramarConsultaCommand = new Command(async () => await ReprogramarConsulta());
+        IniciarConsultaCommand = new Command<PacienteConsultaModel>(async (paciente) => await IniciarConsulta(paciente));
+        CompletarConsultaCommand = new Command<PacienteConsultaModel>(async (paciente) => await CompletarConsulta(paciente));
+        MarcarNoPrestoCommand = new Command<PacienteConsultaModel>(async (paciente) => await MarcarNoPresentado(paciente));
+        ReprogramarConsultaCommand = new Command<PacienteConsultaModel>(async (paciente) => await ReprogramarConsulta(paciente));
         CargarConsultasCommand = new Command(async () => await CargarConsultasDelDia());
 
-        _ = InicializarMedicoAsync();
-        CargarDatosSimulados();
+        _ = InicializarAsync();
+    }
+
+    private async Task InicializarAsync()
+    {
+        await InicializarMedicoAsync();
+        await CargarConsultasDelDia();
     }
 
     private async Task InicializarMedicoAsync()
@@ -218,52 +228,28 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         }
     }
 
-    private void CargarDatosSimulados()
-    {
-        var ahora = DateTime.Now;
-
-        var consultasSimuladas = new List<PacienteConsultaModel>
-        {
-            new PacienteConsultaModel
-            {
-                Id = 1,
-                Nombre = "Carlos",
-                Apellido = "Lopez Martinez",
-                Cedula = "12345678",
-                Telefono = "+34 600 123 456",
-                HoraConsulta = ahora.AddMinutes(5),
-                Motivo = "Revision general",
-                Estado = EstadoConsulta.Esperando,
-                Edad = "45",
-                AntecedentesRelevantes = "Hipertension, Diabetes tipo 2"
-            },
-            new PacienteConsultaModel
-            {
-                Id = 2,
-                Nombre = "Maria",
-                Apellido = "Gonzalez Rodriguez",
-                Cedula = "87654321",
-                Telefono = "+34 601 234 567",
-                HoraConsulta = ahora.AddMinutes(35),
-                Motivo = "Seguimiento cardiaco",
-                Estado = EstadoConsulta.Esperando,
-                Edad = "52",
-                AntecedentesRelevantes = "Arritmia cardiaca"
-            }
-        };
-
-        foreach (var consulta in consultasSimuladas)
-            Consultasdeldia.Add(consulta);
-
-        ActualizarEstadisticas();
-    }
-
     private async Task CargarConsultasDelDia()
     {
         IsBusy = true;
         try
         {
-            await Task.Delay(200);
+            var citas = await _citasService.ObtenerCitasDelDiaAsync();
+
+            Consultasdeldia.Clear();
+            foreach (var cita in citas.OrderBy(c => c.FechaHora))
+            {
+                Consultasdeldia.Add(MapearCitaAConsulta(cita));
+            }
+
+            ActualizarEstadisticas();
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Error",
+                $"No se pudieron cargar las consultas del dia: {ex.Message}",
+                "OK"
+            );
         }
         finally
         {
@@ -271,11 +257,12 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         }
     }
 
-    private async Task IniciarConsulta()
+    private async Task IniciarConsulta(PacienteConsultaModel? paciente)
     {
-        if (PacienteSeleccionado == null) return;
+        var consulta = paciente ?? PacienteSeleccionado;
+        if (consulta == null) return;
 
-        if (PacienteSeleccionado.Estado != EstadoConsulta.Esperando)
+        if (consulta.Estado != EstadoConsulta.Esperando)
         {
             await Application.Current!.MainPage!.DisplayAlert(
                 "Aviso",
@@ -285,65 +272,99 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
             return;
         }
 
-        PacienteSeleccionado.Estado = EstadoConsulta.EnConsulta;
-        PacienteSeleccionado.FechaCreacion = DateTime.Now;
+        try
+        {
+            await _citasService.IniciarConsultaAsync(consulta.Id);
+            await CargarConsultasDelDia();
 
-        await Application.Current!.MainPage!.DisplayAlert(
-            "Consulta Iniciada",
-            $"Iniciada consulta con {PacienteSeleccionado.NombreCompleto}",
-            "OK"
-        );
-
-        ActualizarEstadisticas();
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Consulta Iniciada",
+                $"Iniciada consulta con {consulta.NombreCompleto}",
+                "OK"
+            );
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Error",
+                $"No se pudo iniciar la consulta: {ex.Message}",
+                "OK"
+            );
+        }
     }
 
-    private async Task CompletarConsulta()
+    private async Task CompletarConsulta(PacienteConsultaModel? paciente)
     {
-        if (PacienteSeleccionado == null) return;
+        var consulta = paciente ?? PacienteSeleccionado;
+        if (consulta == null) return;
 
-        PacienteSeleccionado.Estado = EstadoConsulta.Completada;
+        try
+        {
+            await _citasService.MarcarAsistenciaAsync(consulta.Id, true);
+            await CargarConsultasDelDia();
 
-        await Application.Current!.MainPage!.DisplayAlert(
-            "Exito",
-            $"Consulta completada para {PacienteSeleccionado.NombreCompleto}",
-            "OK"
-        );
-
-        ActualizarEstadisticas();
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Exito",
+                $"Consulta completada para {consulta.NombreCompleto}",
+                "OK"
+            );
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Error",
+                $"No se pudo completar la consulta: {ex.Message}",
+                "OK"
+            );
+        }
     }
 
-    private async Task MarcarNoPresentado()
+    private async Task MarcarNoPresentado(PacienteConsultaModel? paciente)
     {
-        if (PacienteSeleccionado == null) return;
+        var consulta = paciente ?? PacienteSeleccionado;
+        if (consulta == null) return;
 
         bool confirmado = await Application.Current!.MainPage!.DisplayAlert(
             "Confirmar",
-            $"Marcar a {PacienteSeleccionado.NombreCompleto} como no presentado?",
+            $"Marcar a {consulta.NombreCompleto} como no presentado?",
             "Si",
             "No"
         );
 
         if (confirmado)
         {
-            PacienteSeleccionado.Estado = EstadoConsulta.NoPresento;
-            await Application.Current!.MainPage!.DisplayAlert(
-                "Registrado",
-                "Paciente marcado como no presentado",
-                "OK"
-            );
-            ActualizarEstadisticas();
+            try
+            {
+                await _citasService.MarcarAsistenciaAsync(consulta.Id, false);
+                await CargarConsultasDelDia();
+
+                await Application.Current!.MainPage!.DisplayAlert(
+                    "Registrado",
+                    "Paciente marcado como no presentado",
+                    "OK"
+                );
+            }
+            catch (Exception ex)
+            {
+                await Application.Current!.MainPage!.DisplayAlert(
+                    "Error",
+                    $"No se pudo marcar la asistencia: {ex.Message}",
+                    "OK"
+                );
+            }
         }
     }
 
-    private async Task ReprogramarConsulta()
+    private async Task ReprogramarConsulta(PacienteConsultaModel? paciente)
     {
-        if (PacienteSeleccionado == null) return;
+        var consulta = paciente ?? PacienteSeleccionado;
+        if (consulta == null) return;
 
-        PacienteSeleccionado.Estado = EstadoConsulta.Reprogramada;
+        consulta.Estado = EstadoConsulta.Reprogramada;
 
         await Application.Current!.MainPage!.DisplayAlert(
             "Reprogramada",
-            $"Consulta de {PacienteSeleccionado.NombreCompleto} marcada para reprogramacion",
+            $"Consulta de {consulta.NombreCompleto} marcada para reprogramacion",
             "OK"
         );
 
@@ -393,5 +414,58 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         var nombre = partes[0];
         var apellido = partes.Length > 1 ? string.Join(" ", partes.Skip(1)) : string.Empty;
         return (nombre, apellido);
+    }
+
+    private static PacienteConsultaModel MapearCitaAConsulta(CitaResponseDto dto)
+    {
+        var (nombre, apellido) = SepararNombrePaciente(dto.PacienteNombre);
+
+        return new PacienteConsultaModel
+        {
+            Id = dto.Id,
+            Nombre = nombre,
+            Apellido = apellido,
+            HoraConsulta = dto.FechaHora,
+            Motivo = string.IsNullOrWhiteSpace(dto.Motivo) ? "Consulta general" : dto.Motivo,
+            Estado = MapearEstadoConsulta(dto.Estado),
+            Cedula = "N/D",
+            Telefono = "No disponible",
+            Edad = "N/D",
+            AntecedentesRelevantes = string.IsNullOrWhiteSpace(dto.Notas) ? "Sin antecedentes registrados" : dto.Notas,
+            FechaCreacion = dto.FechaCreacion
+        };
+    }
+
+    private static EstadoConsulta MapearEstadoConsulta(string? estado)
+    {
+        var normalizado = (estado ?? string.Empty).Trim().ToLowerInvariant().Replace(" ", string.Empty);
+
+        return normalizado switch
+        {
+            "confirmada" => EstadoConsulta.Esperando,
+            "pendiente" => EstadoConsulta.Esperando,
+            "solicitada" => EstadoConsulta.Esperando,
+            "encurso" => EstadoConsulta.EnConsulta,
+            "enprogreso" => EstadoConsulta.EnConsulta,
+            "completada" => EstadoConsulta.Completada,
+            "noasistio" => EstadoConsulta.NoPresento,
+            "cancelada" => EstadoConsulta.Reprogramada,
+            "rechazada" => EstadoConsulta.Reprogramada,
+            "reprogramada" => EstadoConsulta.Reprogramada,
+            _ => EstadoConsulta.Esperando
+        };
+    }
+
+    private static (string nombre, string apellido) SepararNombrePaciente(string nombreCompleto)
+    {
+        var limpio = (nombreCompleto ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(limpio))
+            return ("Paciente", string.Empty);
+
+        var partes = limpio.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length == 1)
+            return (partes[0], string.Empty);
+
+        return (partes[0], string.Join(" ", partes.Skip(1)));
     }
 }

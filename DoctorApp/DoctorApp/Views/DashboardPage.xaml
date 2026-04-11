@@ -28,11 +28,11 @@
         <ScrollView>
             <VerticalStackLayout Padding="20" Spacing="15">
                 <!-- Estadísticas Cards -->
-                <HorizontalStackLayout Spacing="12">
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
                     <!-- Card Citas Hoy -->
-                    <Frame CornerRadius="12" Padding="15" HasShadow="True"
-                           BackgroundColor="White"
-                           WidthRequest="120" HeightRequest="100">
+                    <Frame Grid.Row="0" Grid.Column="0"
+                           CornerRadius="12" Padding="15" HasShadow="True"
+                           BackgroundColor="White" HeightRequest="100">
                         <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
                             <Label Text="{Binding TotalCitasHoy, StringFormat='{0}'}"
                                    FontSize="28" FontAttributes="Bold"
@@ -46,9 +46,9 @@
                     </Frame>
 
                     <!-- Card Confirmadas -->
-                    <Frame CornerRadius="12" Padding="15" HasShadow="True"
-                           BackgroundColor="White"
-                           WidthRequest="120" HeightRequest="100">
+                    <Frame Grid.Row="0" Grid.Column="1"
+                           CornerRadius="12" Padding="15" HasShadow="True"
+                           BackgroundColor="White" HeightRequest="100">
                         <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
                             <Label Text="{Binding CitasConfirmadas, StringFormat='{0}'}"
                                    FontSize="28" FontAttributes="Bold"
@@ -62,9 +62,9 @@
                     </Frame>
 
                     <!-- Card Pendientes -->
-                    <Frame CornerRadius="12" Padding="15" HasShadow="True"
-                           BackgroundColor="White"
-                           WidthRequest="120" HeightRequest="100">
+                    <Frame Grid.Row="1" Grid.Column="0"
+                           CornerRadius="12" Padding="15" HasShadow="True"
+                           BackgroundColor="White" HeightRequest="100">
                         <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
                             <Label Text="{Binding CitasPendientes, StringFormat='{0}'}"
                                    FontSize="28" FontAttributes="Bold"
@@ -76,7 +76,23 @@
                                    HorizontalOptions="Center"/>
                         </VerticalStackLayout>
                     </Frame>
-                </HorizontalStackLayout>
+
+                    <!-- Card Canceladas / No Asistio -->
+                    <Frame Grid.Row="1" Grid.Column="1"
+                           CornerRadius="12" Padding="15" HasShadow="True"
+                           BackgroundColor="White" HeightRequest="100">
+                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
+                            <Label Text="{Binding CitasCanceladas, StringFormat='{0}'}"
+                                   FontSize="28" FontAttributes="Bold"
+                                   TextColor="#EF4444"
+                                   HorizontalOptions="Center"/>
+                            <Label Text="Canceladas"
+                                   FontSize="12"
+                                   TextColor="#6B7280"
+                                   HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
 
                 <!-- Selector de Fecha -->
                 <Frame CornerRadius="12" Padding="15" HasShadow="True" BackgroundColor="White">
@@ -120,11 +136,11 @@
                                     </VerticalStackLayout>
 
                                     <!-- Estado Badge -->
-                                    <Frame CornerRadius="6" Padding="8,4"
-                                           BackgroundColor="{Binding Confirmada, Converter={StaticResource EstadoColorConverter}}"
-                                           WidthRequest="80"
-                                           HasShadow="False">
-                                        <Label Text="{Binding Confirmada, Converter={StaticResource EstadoTextoConverter}}"
+                                     <Frame CornerRadius="6" Padding="8,4"
+                                            BackgroundColor="{Binding Estado, Converter={StaticResource EstadoCitaColorConverter}}"
+                                            WidthRequest="80"
+                                            HasShadow="False">
+                                        <Label Text="{Binding Estado, Converter={StaticResource EstadoCitaTextoConverter}}"
                                                FontSize="11" FontAttributes="Bold"
                                                TextColor="White"
                                                HorizontalOptions="Center" VerticalOptions="Center"/>

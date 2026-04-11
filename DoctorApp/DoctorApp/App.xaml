@@ -29,6 +29,7 @@
             <converters:EstadoColorConverter x:Key="EstadoColorConverter" />
             <converters:EstadoTextoConverter x:Key="EstadoTextoConverter" />
             <converters:EstadoCitaColorConverter x:Key="EstadoCitaColorConverter" />
+            <converters:EstadoCitaTextoConverter x:Key="EstadoCitaTextoConverter" />
             <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
             <converters:IntToNegativeBoolConverter x:Key="IntToNegativeBoolConverter" />
             <converters:SelectionColorConverter x:Key="SelectionColorConverter" />
