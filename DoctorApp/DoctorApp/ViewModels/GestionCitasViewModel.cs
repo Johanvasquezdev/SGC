@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using DoctorApp.Models;
+using DoctorApp.Services.Interfaces;
+using DoctorApp.DTOs.Responses;
+using DoctorApp.Exceptions;
 
 namespace DoctorApp.ViewModels;
 
@@ -80,7 +83,7 @@ public class GestionCitasViewModel : BaseViewModel
             {
                 _fechaFiltro = value;
                 OnPropertyChanged();
-                AplicarFiltros();
+                _ = CargarCitas();
             }
         }
     }
@@ -118,82 +121,20 @@ public class GestionCitasViewModel : BaseViewModel
     public ICommand CancelarCitaCommand { get; }
     public ICommand ActualizarEstadoCommand { get; }
 
-    public GestionCitasViewModel()
+    private readonly ICitasService _citasService;
+
+    public GestionCitasViewModel(ICitasService citasService)
     {
+        _citasService = citasService ?? throw new ArgumentNullException(nameof(citasService));
         Title = "Gestión de Citas";
+
         CargarCitasCommand = new Command(async () => await CargarCitas());
         ConfirmarCitaCommand = new Command(async () => await ConfirmarCita());
         CompletarCitaCommand = new Command(async () => await CompletarCita());
         CancelarCitaCommand = new Command(async () => await CancelarCitaSeleccionada());
         ActualizarEstadoCommand = new Command<EstadoCita>(async (estado) => await ActualizarEstadoCita(estado));
 
-        CargarDatosSimulados();
-    }
-
-    private void CargarDatosSimulados()
-    {
-        var citasSimuladas = new List<Cita>
-        {
-            new Cita
-            {
-                Id = 1,
-                FechaHora = DateTime.Today.AddHours(9),
-                Motivo = "Revisión general",
-                DuracionMinutos = 30,
-                Estado = EstadoCita.Confirmada,
-                Confirmada = true,
-                FechaConfirmacion = DateTime.Now.AddDays(-1),
-                Paciente = new Paciente { Id = 1, Nombre = "Carlos", Apellido = "López Martínez", Cedula = "12345678", Email = "carlos@email.com" }
-            },
-            new Cita
-            {
-                Id = 2,
-                FechaHora = DateTime.Today.AddHours(10),
-                Motivo = "Seguimiento cardiaco",
-                DuracionMinutos = 45,
-                Estado = EstadoCita.Pendiente,
-                Confirmada = false,
-                Paciente = new Paciente { Id = 2, Nombre = "María", Apellido = "González Rodríguez", Cedula = "87654321", Email = "maria@email.com" }
-            },
-            new Cita
-            {
-                Id = 3,
-                FechaHora = DateTime.Today.AddHours(11),
-                Motivo = "Electrocardiograma",
-                DuracionMinutos = 20,
-                Estado = EstadoCita.Confirmada,
-                Confirmada = true,
-                FechaConfirmacion = DateTime.Now.AddDays(-2),
-                Paciente = new Paciente { Id = 3, Nombre = "Juan", Apellido = "Ramírez Santos", Cedula = "11111111", Email = "juan@email.com" }
-            },
-            new Cita
-            {
-                Id = 4,
-                FechaHora = DateTime.Today.AddHours(14),
-                Motivo = "Consulta general",
-                DuracionMinutos = 30,
-                Estado = EstadoCita.Pendiente,
-                Confirmada = false,
-                Paciente = new Paciente { Id = 4, Nombre = "Ana", Apellido = "Fernández López", Cedula = "22222222", Email = "ana@email.com" }
-            },
-            new Cita
-            {
-                Id = 5,
-                FechaHora = DateTime.Today.AddDays(1).AddHours(9),
-                Motivo = "Control de presión",
-                DuracionMinutos = 30,
-                Estado = EstadoCita.Confirmada,
-                Confirmada = true,
-                Paciente = new Paciente { Id = 5, Nombre = "Pedro", Apellido = "Diaz Gómez", Cedula = "33333333", Email = "pedro@email.com" }
-            }
-        };
-
-        foreach (var cita in citasSimuladas)
-        {
-            Citas.Add(cita);
-        }
-
-        AplicarFiltros();
+        _ = CargarCitas();
     }
 
     private async Task CargarCitas()
@@ -201,7 +142,28 @@ public class GestionCitasViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            await Task.Delay(500); // Simular carga desde BD
+            var agenda = await _citasService.ObtenerAgendaAsync(FechaFiltro);
+            var citasDto = agenda.Citas ?? new List<CitaResponseDto>();
+
+            Citas.Clear();
+            foreach (var dto in citasDto)
+            {
+                Citas.Add(MapearCita(dto));
+            }
+
+            AplicarFiltros();
+        }
+        catch (UnauthorizedException)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", "No autenticado. Inicie sesión nuevamente.", "OK");
+        }
+        catch (ConnectionException ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error de Conexión", ex.Message, "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", ex.Message, "OK");
         }
         finally
         {
@@ -213,55 +175,44 @@ public class GestionCitasViewModel : BaseViewModel
     {
         if (CitaSeleccionada == null) return;
 
-        CitaSeleccionada.Estado = EstadoCita.Confirmada;
-        CitaSeleccionada.Confirmada = true;
-        CitaSeleccionada.FechaConfirmacion = DateTime.Now;
-        CitaSeleccionada.FechaUltimaModificacion = DateTime.Now;
-
-        await Application.Current!.MainPage!.DisplayAlert("Éxito", "Cita confirmada correctamente", "OK");
-        AplicarFiltros();
+        await _citasService.ConfirmarCitaAsync(CitaSeleccionada.Id, true);
+        await CargarCitas();
     }
 
     private async Task CompletarCita()
     {
         if (CitaSeleccionada == null) return;
 
-        CitaSeleccionada.Estado = EstadoCita.Completada;
-        CitaSeleccionada.FechaUltimaModificacion = DateTime.Now;
-
-        await Application.Current!.MainPage!.DisplayAlert("Éxito", "Cita marcada como completada", "OK");
-        AplicarFiltros();
+        await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, true);
+        await CargarCitas();
     }
 
     private async Task CancelarCitaSeleccionada()
     {
         if (CitaSeleccionada == null) return;
 
-        bool confirmado = await Application.Current!.MainPage!.DisplayAlert(
-            "Confirmar cancelación",
-            $"¿Cancelar la cita de {CitaSeleccionada.Paciente?.NombreCompleto}?",
-            "Sí",
-            "No"
-        );
-
-        if (confirmado)
-        {
-            CitaSeleccionada.Estado = EstadoCita.Cancelada;
-            CitaSeleccionada.FechaUltimaModificacion = DateTime.Now;
-            await Application.Current!.MainPage!.DisplayAlert("Éxito", "Cita cancelada correctamente", "OK");
-            AplicarFiltros();
-        }
+        await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, false);
+        await CargarCitas();
     }
 
     private async Task ActualizarEstadoCita(EstadoCita nuevoEstado)
     {
         if (CitaSeleccionada == null) return;
 
-        CitaSeleccionada.Estado = nuevoEstado;
-        CitaSeleccionada.FechaUltimaModificacion = DateTime.Now;
+        if (nuevoEstado == EstadoCita.Confirmada)
+        {
+            await _citasService.ConfirmarCitaAsync(CitaSeleccionada.Id, true);
+        }
+        else if (nuevoEstado == EstadoCita.Completada)
+        {
+            await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, true);
+        }
+        else if (nuevoEstado == EstadoCita.Cancelada)
+        {
+            await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, false);
+        }
 
-        await Task.Delay(300);
-        AplicarFiltros();
+        await CargarCitas();
     }
 
     private void AplicarFiltros()
@@ -279,5 +230,34 @@ public class GestionCitasViewModel : BaseViewModel
         {
             CitasFiltradas.Add(cita);
         }
+    }
+
+    private static Cita MapearCita(CitaResponseDto dto)
+    {
+        var estado = dto.Estado.ToLower() switch
+        {
+            "confirmada" => EstadoCita.Confirmada,
+            "completada" => EstadoCita.Completada,
+            "cancelada" => EstadoCita.Cancelada,
+            "rechazada" => EstadoCita.Cancelada,
+            "noasistio" => EstadoCita.Cancelada,
+            _ => EstadoCita.Pendiente
+        };
+
+        return new Cita
+        {
+            Id = dto.Id,
+            FechaHora = dto.FechaHora,
+            Motivo = dto.Motivo ?? string.Empty,
+            Confirmada = dto.Confirmada,
+            Estado = estado,
+            DuracionMinutos = dto.DuracionMinutos,
+            Paciente = new Paciente
+            {
+                Id = dto.PacienteId,
+                Nombre = dto.PacienteNombre,
+                Cedula = string.Empty
+            }
+        };
     }
 }

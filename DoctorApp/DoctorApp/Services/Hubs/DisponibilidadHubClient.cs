@@ -13,7 +13,7 @@ namespace DoctorApp.Services.Hubs
     {
         private HubConnection? _hubConnection;
         private readonly ITokenManager _tokenManager;
-        private const string HubEndpoint = "https://localhost:5001/hubs/disponibilidad-hub";
+        private const string HubEndpoint = "http://localhost:5189/disponibilidadhub";
 
         public event EventHandler<DisponibilidadHubEventArgs>? OnDisponibilidadCreada;
         public event EventHandler<DisponibilidadHubEventArgs>? OnDisponibilidadActualizada;

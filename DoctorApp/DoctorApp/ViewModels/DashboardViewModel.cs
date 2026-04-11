@@ -1,16 +1,15 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using DoctorApp.Models;
-using DoctorApp.Services.Interfaces;
-using DoctorApp.Services.Hubs;
-using DoctorApp.Exceptions;
 using DoctorApp.DTOs.Responses;
+using DoctorApp.Exceptions;
+using DoctorApp.Models;
+using DoctorApp.Services.Hubs;
+using DoctorApp.Services.Interfaces;
 
 namespace DoctorApp.ViewModels;
 
 /// <summary>
-/// ViewModel del Dashboard - Gestión de doctores, citas y búsqueda de pacientes
-/// Implementa cambio dinámico de doctor, carga de citas reales y búsqueda por cédula
+/// Dashboard ViewModel - doctor data, agenda and patient search
 /// </summary>
 public class DashboardViewModel : BaseViewModel
 {
@@ -26,7 +25,6 @@ public class DashboardViewModel : BaseViewModel
     private Paciente? _pacienteBuscado;
     private string _mensajeBusqueda = string.Empty;
 
-    // Propiedades del ViewModel
     public Medico MedicoActual
     {
         get => _medicoActual;
@@ -171,115 +169,101 @@ public class DashboardViewModel : BaseViewModel
         }
     }
 
-    // Commands
     public ICommand CargarDashboardCommand { get; }
     public ICommand RefrescarCommand { get; }
     public ICommand SeleccionarDoctorCommand { get; }
     public ICommand BuscarPacientePorCedulaCommand { get; }
     public ICommand LimpiarBusquedaCommand { get; }
 
-    // Servicios
     private readonly ICitasService _citasService;
     private readonly IDoctorService _doctorService;
+    private readonly IPacienteService _pacienteService;
     private readonly ICitasHubClient _citasHubClient;
+    private readonly DoctorApp.Security.ITokenManager _tokenManager;
 
     public DashboardViewModel(
         ICitasService citasService,
         IDoctorService doctorService,
-        ICitasHubClient citasHubClient)
+        IPacienteService pacienteService,
+        ICitasHubClient citasHubClient,
+        DoctorApp.Security.ITokenManager tokenManager)
     {
         Title = "Panel de Control";
 
         _citasService = citasService ?? throw new ArgumentNullException(nameof(citasService));
         _doctorService = doctorService ?? throw new ArgumentNullException(nameof(doctorService));
+        _pacienteService = pacienteService ?? throw new ArgumentNullException(nameof(pacienteService));
         _citasHubClient = citasHubClient ?? throw new ArgumentNullException(nameof(citasHubClient));
+        _tokenManager = tokenManager ?? throw new ArgumentNullException(nameof(tokenManager));
 
-        // Inicializar commands
         CargarDashboardCommand = new Command(async () => await CargarDashboard());
         RefrescarCommand = new Command(async () => await CargarDashboard());
         SeleccionarDoctorCommand = new Command<Medico>(async (doctor) => await SeleccionarDoctor(doctor));
         BuscarPacientePorCedulaCommand = new Command(async () => await BuscarPacientePorCedula());
         LimpiarBusquedaCommand = new Command(LimpiarBusqueda);
 
-        // Suscribirse a eventos del hub
         _citasHubClient.OnNuevaEnCita += OnNuevaEnCita;
         _citasHubClient.OnCitaConfirmada += OnCitaConfirmada;
 
-        // Cargar datos iniciales
         _ = CargarDatosIniciales();
-
-        // Conectar al hub SignalR
         _ = ConectarAlHub();
     }
 
-    /// <summary>
-    /// Carga los datos iniciales: lista de doctores y selecciona el primero
-    /// </summary>
     private async Task CargarDatosIniciales()
     {
-        InicializarDoctoresDisponibles();
+        await InicializarDoctorDesdeTokenAsync();
+    }
 
-        if (DoctoresDisponibles.Count > 0)
+    private async Task InicializarDoctorDesdeTokenAsync()
+    {
+        var medicoId = await _tokenManager.GetUserIdAsync();
+        if (!medicoId.HasValue)
         {
-            await SeleccionarDoctor(DoctoresDisponibles[0]);
+            await MostrarNoAutenticado();
+            return;
+        }
+
+        // Usa el nombre del token como fallback visual inmediato.
+        await CargarNombreDesdeTokenAsync(medicoId.Value);
+
+        try
+        {
+            _doctorService.EstablecerDoctorId(medicoId.Value);
+            var doctorDto = await _doctorService.ObtenerDoctorActualAsync();
+            var doctor = MapearDoctorDto(doctorDto);
+
+            DoctoresDisponibles.Clear();
+            DoctoresDisponibles.Add(doctor);
+            await SeleccionarDoctor(doctor);
+        }
+        catch (UnauthorizedException)
+        {
+            await MostrarNoAutenticado();
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Error",
+                $"No se pudo cargar el perfil del doctor: {ex.Message}",
+                "OK");
         }
     }
 
-    /// <summary>
-    /// Inicializa la lista de doctores disponibles (Dr. Carlos García, Dr. Manuel Gómez, Dra. Maria Fernández)
-    /// </summary>
-    private void InicializarDoctoresDisponibles()
+    private async Task CargarNombreDesdeTokenAsync(int medicoId)
     {
-        DoctoresDisponibles.Clear();
+        var nombreToken = await _tokenManager.GetUserNameAsync();
+        if (string.IsNullOrWhiteSpace(nombreToken))
+            return;
 
-        DoctoresDisponibles.Add(new Medico
+        var (nombre, apellido) = SepararNombre(nombreToken);
+        MedicoActual = new Medico
         {
-            Id = 1,
-            Nombre = "Carlos",
-            Apellido = "García",
-            Especialidad = "Cardiología",
-            Consultorio = "201",
-            Email = "carlos.garcia@hospital.com",
-            Telefono = "+34 600 111 222",
-            NumeroLicencia = "LIC001",
-            Activo = true,
-            FechaRegistro = DateTime.Now
-        });
-
-        DoctoresDisponibles.Add(new Medico
-        {
-            Id = 2,
-            Nombre = "Manuel",
-            Apellido = "Gómez",
-            Especialidad = "Neurología",
-            Consultorio = "202",
-            Email = "manuel.gomez@hospital.com",
-            Telefono = "+34 600 333 444",
-            NumeroLicencia = "LIC002",
-            Activo = true,
-            FechaRegistro = DateTime.Now
-        });
-
-        DoctoresDisponibles.Add(new Medico
-        {
-            Id = 3,
-            Nombre = "Maria",
-            Apellido = "Fernández",
-            Especialidad = "Pediatría",
-            Consultorio = "203",
-            Email = "maria.fernandez@hospital.com",
-            Telefono = "+34 600 555 666",
-            NumeroLicencia = "LIC003",
-            Activo = true,
-            FechaRegistro = DateTime.Now
-        });
-
-        System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Doctores inicializados: 3 doctores cargados");
+            Id = medicoId,
+            Nombre = nombre,
+            Apellido = apellido
+        };
     }
 
-    /// <summary>
-    /// Selecciona un doctor y carga sus citas reales desde la API
-    /// </summary>
     private async Task SeleccionarDoctor(Medico doctor)
     {
         if (doctor == null)
@@ -288,65 +272,38 @@ public class DashboardViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            // Establecer el doctor seleccionado
             MedicoActual = doctor;
-            _doctorService.EstablecerDoctorId(doctor.Id);
+            if (doctor.Id > 0)
+                _doctorService.EstablecerDoctorId(doctor.Id);
 
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Doctor seleccionado: {doctor.NombreCompleto} (ID: {doctor.Id})");
+            var agenda = await _citasService.ObtenerAgendaAsync(FechaSeleccionada);
+            var citas = agenda.Citas ?? new List<CitaResponseDto>();
 
-            // Cargar citas reales del doctor desde la API usando DoctorService
-            var citas = await _doctorService.GetCitasByDoctorIdAsync(doctor.Id);
+            CitasHoy = new ObservableCollection<Cita>(
+                citas
+                    .Where(c => c.FechaHora.Date == DateTime.Today)
+                    .Select(MapearCitaDtoACita)
+                    .ToList()
+            );
 
-            if (citas != null && citas.Count > 0)
-            {
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Citas cargadas: {citas.Count} total");
+            CitasProximas = new ObservableCollection<Cita>(
+                citas
+                    .Where(c => c.FechaHora.Date > DateTime.Today && !c.Confirmada)
+                    .Select(MapearCitaDtoACita)
+                    .ToList()
+            );
 
-                // Separar citas de hoy
-                CitasHoy = new ObservableCollection<Cita>(
-                    citas
-                        .Where(c => c.FechaHora.Date == DateTime.Today)
-                        .Select(MapearCitaDtoACita)
-                        .ToList()
-                );
-
-                // Separar citas próximas no confirmadas
-                CitasProximas = new ObservableCollection<Cita>(
-                    citas
-                        .Where(c => c.FechaHora.Date > DateTime.Today && !c.Confirmada)
-                        .Select(MapearCitaDtoACita)
-                        .ToList()
-                );
-
-                System.Diagnostics.Debug.WriteLine(
-                    $"[DashboardViewModel] Citas de hoy: {CitasHoy.Count}, Próximas: {CitasProximas.Count}");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] No hay citas para el doctor {doctor.NombreCompleto}");
-                CitasHoy.Clear();
-                CitasProximas.Clear();
-            }
-
-            // Actualizar estadísticas
             ActualizarEstadisticas();
         }
-        catch (AppException ex) when (ex.Code == "DOCTOR_NOT_FOUND")
+        catch (UnauthorizedException)
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Doctor no encontrado en BD: ID {doctor.Id}");
-            await Application.Current!.MainPage!.DisplayAlert(
-                "Error",
-                $"El doctor {doctor.NombreCompleto} no fue encontrado en el sistema",
-                "OK");
-            CitasHoy.Clear();
-            CitasProximas.Clear();
-            ActualizarEstadisticas();
+            await MostrarNoAutenticado();
         }
-        catch (ConnectionException ex)
+        catch (ConnectionException)
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error de conexión: {ex.Message}");
             await Application.Current!.MainPage!.DisplayAlert(
-                "Error de Conexión",
-                "No se pudo obtener las citas del doctor. Intenta más tarde.",
+                "Error de Conexion",
+                "No se pudo obtener las citas del doctor. Intenta mas tarde.",
                 "Reintentar");
             CitasHoy.Clear();
             CitasProximas.Clear();
@@ -354,10 +311,9 @@ public class DashboardViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error inesperado: {ex.Message}");
             await Application.Current!.MainPage!.DisplayAlert(
                 "Error",
-                $"Ocurrió un error: {ex.Message}",
+                $"Ocurrio un error: {ex.Message}",
                 "OK");
         }
         finally
@@ -366,15 +322,11 @@ public class DashboardViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Busca un paciente por cédula invocando el endpoint correspondiente
-    /// Asigna el correo electrónico del paciente al campo PacienteBuscado mediante Data Binding
-    /// </summary>
     private async Task BuscarPacientePorCedula()
     {
         if (string.IsNullOrWhiteSpace(BusquedaCedula))
         {
-            MensajeBusqueda = "Por favor ingresa una cédula";
+            MensajeBusqueda = "Por favor ingresa una cedula";
             PacienteBuscado = null;
             return;
         }
@@ -384,35 +336,30 @@ public class DashboardViewModel : BaseViewModel
 
         try
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Buscando paciente con cédula: {BusquedaCedula}");
-
-            // Buscar paciente en la API (simulado por ahora, en tu API real sería un endpoint GET /api/pacientes/cedula/{cedula})
-            PacienteBuscado = await BuscarPacienteEnAPI(BusquedaCedula);
-
-            if (PacienteBuscado != null)
+            var pacienteDto = await _pacienteService.ObtenerPorCedulaAsync(BusquedaCedula);
+            if (pacienteDto != null)
             {
-                MensajeBusqueda = $"✓ Paciente encontrado: {PacienteBuscado.NombreCompleto}";
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Paciente encontrado - Email: {PacienteBuscado.Email}");
+                PacienteBuscado = MapearPacienteDto(pacienteDto);
+                MensajeBusqueda = $"Paciente encontrado: {PacienteBuscado.NombreCompleto}";
             }
             else
             {
-                MensajeBusqueda = "✗ No se encontró paciente con esa cédula";
+                MensajeBusqueda = "Paciente no encontrado";
                 PacienteBuscado = null;
             }
         }
-        catch (AppException ex) when (ex.Code == "NOT_FOUND")
+        catch (UnauthorizedException)
         {
-            MensajeBusqueda = "✗ Paciente no encontrado";
-            PacienteBuscado = null;
+            await MostrarNoAutenticado();
         }
-        catch (ConnectionException ex)
+        catch (ConnectionException)
         {
-            MensajeBusqueda = "✗ Error de conexión. Intenta más tarde.";
+            MensajeBusqueda = "Error de conexion. Intenta mas tarde.";
             PacienteBuscado = null;
         }
         catch (Exception ex)
         {
-            MensajeBusqueda = $"✗ Error: {ex.Message}";
+            MensajeBusqueda = $"Error: {ex.Message}";
             PacienteBuscado = null;
         }
         finally
@@ -421,65 +368,6 @@ public class DashboardViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Simula la búsqueda de paciente por cédula en la API
-    /// En tu backend, este sería un endpoint: GET /api/pacientes/cedula/{cedula}
-    /// </summary>
-    private async Task<Paciente?> BuscarPacienteEnAPI(string cedula)
-    {
-        // NOTA: Esto es un mock para demostración
-        // En tu API real, reemplaza esto con:
-        // return await _apiClient.GetAsync<Paciente>($"/api/pacientes/cedula/{cedula}");
-
-        var pacientesMock = new List<Paciente>
-        {
-            new Paciente
-            {
-                Id = 101,
-                Nombre = "Juan",
-                Apellido = "Pérez",
-                Cedula = "1234567890",
-                Email = "juan.perez@email.com",
-                Telefono = "+34 600 123 456",
-                FechaNacimiento = new DateTime(1990, 5, 15),
-                Genero = "M",
-                Direccion = "Calle Principal 123"
-            },
-            new Paciente
-            {
-                Id = 102,
-                Nombre = "María",
-                Apellido = "González",
-                Cedula = "0987654321",
-                Email = "maria.gonzalez@email.com",
-                Telefono = "+34 600 987 654",
-                FechaNacimiento = new DateTime(1992, 8, 22),
-                Genero = "F",
-                Direccion = "Avenida Central 456"
-            },
-            new Paciente
-            {
-                Id = 103,
-                Nombre = "Carlos",
-                Apellido = "López",
-                Cedula = "5555555555",
-                Email = "carlos.lopez@email.com",
-                Telefono = "+34 600 555 999",
-                FechaNacimiento = new DateTime(1988, 3, 10),
-                Genero = "M",
-                Direccion = "Pasaje Este 789"
-            }
-        };
-
-        // Simular latencia de red
-        await Task.Delay(500);
-
-        return pacientesMock.FirstOrDefault(p => p.Cedula == cedula);
-    }
-
-    /// <summary>
-    /// Limpia los campos de búsqueda
-    /// </summary>
     private void LimpiarBusqueda()
     {
         BusquedaCedula = string.Empty;
@@ -487,9 +375,6 @@ public class DashboardViewModel : BaseViewModel
         MensajeBusqueda = string.Empty;
     }
 
-    /// <summary>
-    /// Conecta al hub SignalR para actualizaciones en tiempo real
-    /// </summary>
     private async Task ConectarAlHub()
     {
         try
@@ -498,23 +383,15 @@ public class DashboardViewModel : BaseViewModel
         }
         catch (UnauthorizedException)
         {
-            // Token inválido o no autenticado
-            await Application.Current!.MainPage!.DisplayAlert(
-                "Error",
-                "No autenticado. Inicie sesión nuevamente.",
-                "OK");
+            await MostrarNoAutenticado();
         }
-        catch (ConnectionException ex)
+        catch (ConnectionException)
         {
-            // Conexión fallo, intentaremos reconectar automáticamente
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] SignalR connection failed: {ex.Message}");
+            // ignore, se reintentara luego
         }
     }
 
-    /// <summary>
-    /// Evento cuando hay una nueva cita (SignalR)
-    /// </summary>
-    private void OnNuevaEnCita(object? sender, Services.Hubs.CitaHubEventArgs e)
+    private void OnNuevaEnCita(object? sender, CitaHubEventArgs e)
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
@@ -525,10 +402,7 @@ public class DashboardViewModel : BaseViewModel
         });
     }
 
-    /// <summary>
-    /// Evento cuando se confirma una cita (SignalR)
-    /// </summary>
-    private void OnCitaConfirmada(object? sender, Services.Hubs.CitaHubEventArgs e)
+    private void OnCitaConfirmada(object? sender, CitaHubEventArgs e)
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
@@ -539,9 +413,6 @@ public class DashboardViewModel : BaseViewModel
         });
     }
 
-    /// <summary>
-    /// Carga las citas del día cuando cambia la fecha seleccionada
-    /// </summary>
     private void CargarCitasDelDia()
     {
         if (MedicoActual != null && MedicoActual.Id > 0)
@@ -550,9 +421,6 @@ public class DashboardViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Carga el dashboard completo (método legacy, mantenido por compatibilidad)
-    /// </summary>
     private async Task CargarDashboard()
     {
         IsBusy = true;
@@ -569,9 +437,6 @@ public class DashboardViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Actualiza las estadísticas de citas (Total, Confirmadas, Pendientes)
-    /// </summary>
     private void ActualizarEstadisticas()
     {
         TotalCitasHoy = CitasHoy.Count;
@@ -579,9 +444,38 @@ public class DashboardViewModel : BaseViewModel
         CitasPendientes = CitasHoy.Count(c => !c.Confirmada);
     }
 
-    /// <summary>
-    /// Mapea un CitaResponseDto a un modelo Cita para la UI
-    /// </summary>
+    private static Medico MapearDoctorDto(DoctorResponseDto dto)
+    {
+        var (nombre, apellido) = SepararNombre(dto.Nombre);
+        return new Medico
+        {
+            Id = dto.Id,
+            Nombre = nombre,
+            Apellido = apellido,
+            Especialidad = dto.Especialidad ?? dto.NombreEspecialidad ?? string.Empty,
+            Consultorio = dto.ProveedorSalud ?? string.Empty,
+            Email = dto.Email ?? string.Empty,
+            Telefono = dto.TelefonoConsultorio ?? string.Empty,
+            NumeroLicencia = dto.Exequatur ?? string.Empty,
+            Activo = dto.Activo,
+            FechaRegistro = DateTime.Now
+        };
+    }
+
+    private static Paciente MapearPacienteDto(PacienteResponseDto dto)
+    {
+        var (nombre, apellido) = SepararNombre(dto.Nombre);
+        return new Paciente
+        {
+            Id = dto.Id,
+            Nombre = nombre,
+            Apellido = apellido,
+            Cedula = dto.Cedula ?? string.Empty,
+            Email = dto.Email ?? string.Empty,
+            Telefono = dto.Telefono ?? string.Empty
+        };
+    }
+
     private Cita MapearCitaDtoACita(CitaResponseDto citaDto)
     {
         return new Cita
@@ -594,16 +488,46 @@ public class DashboardViewModel : BaseViewModel
             {
                 Id = citaDto.PacienteId,
                 Nombre = citaDto.PacienteNombre,
-                Cedula = citaDto.PacienteCedula
+                Cedula = string.Empty
             },
             Estado = citaDto.Confirmada ? EstadoCita.Confirmada : EstadoCita.Pendiente,
             DuracionMinutos = citaDto.DuracionMinutos
         };
     }
 
-    /// <summary>
-    /// Desconecta del hub SignalR cuando el ViewModel se destruye
-    /// </summary>
+    private static (string nombre, string apellido) SepararNombre(string nombreCompleto)
+    {
+        var limpio = (nombreCompleto ?? string.Empty).Trim();
+        if (limpio.StartsWith("Dr. ", StringComparison.OrdinalIgnoreCase))
+            limpio = limpio.Substring(4).Trim();
+        if (limpio.StartsWith("Dra. ", StringComparison.OrdinalIgnoreCase))
+            limpio = limpio.Substring(5).Trim();
+
+        var partes = limpio.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length == 0)
+            return ("Medico", string.Empty);
+
+        var nombre = partes[0];
+        var apellido = partes.Length > 1 ? string.Join(" ", partes.Skip(1)) : string.Empty;
+        return (nombre, apellido);
+    }
+
+    private static Task MostrarNoAutenticado()
+    {
+        if (Application.Current?.Dispatcher == null || Application.Current.MainPage == null)
+            return Task.CompletedTask;
+
+        return Application.Current.Dispatcher.DispatchAsync(async () =>
+        {
+            await Application.Current.MainPage.DisplayAlert(
+                "Error",
+                "No autenticado. Inicie sesion nuevamente.",
+                "OK");
+
+            Application.Current.MainPage = new DoctorApp.Views.LoginPage();
+        });
+    }
+
     public async Task OnDisappearing()
     {
         try
@@ -611,6 +535,9 @@ public class DashboardViewModel : BaseViewModel
             if (_citasHubClient.IsConnected)
                 await _citasHubClient.DisconnectAsync();
         }
-        catch { /* Ignore */ }
+        catch
+        {
+            // ignore
+        }
     }
 }

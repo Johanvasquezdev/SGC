@@ -5,8 +5,8 @@ using DoctorApp.Exceptions;
 namespace DoctorApp.ViewModels;
 
 /// <summary>
-/// ViewModel para la página de login
-/// Maneja la autenticación del usuario
+/// ViewModel para la página de login.
+/// Maneja la autenticación del usuario.
 /// </summary>
 public class LoginViewModel : BaseViewModel
 {
@@ -80,15 +80,14 @@ public class LoginViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Realiza el login del usuario
+    /// Realiza el login del usuario.
     /// </summary>
     private async Task RealizarLogin()
     {
-        // Validar campos vacíos
+        // Validar campos vacíos.
         if (string.IsNullOrWhiteSpace(Usuario) || string.IsNullOrWhiteSpace(Contrasena))
         {
-            MensajeEstado = "Usuario y contraseña son requeridos";
-            MostrarMensaje = true;
+            await MostrarErrorAsync("Usuario y contraseña son requeridos");
             return;
         }
 
@@ -97,42 +96,53 @@ public class LoginViewModel : BaseViewModel
 
         try
         {
-            // Intentar login
+            // Intentar login.
             var respuesta = await _authService.LoginAsync(Usuario, Contrasena);
 
-            if (respuesta != null && !string.IsNullOrEmpty(respuesta.AccessToken))
+            if (respuesta != null && !string.IsNullOrEmpty(respuesta.Token))
             {
-                // Login exitoso, navegar al dashboard
-                await Shell.Current.GoToAsync("DashboardPage");
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Application.Current!.MainPage = new AppShell();
+                });
 
-                // Limpiar campos
                 Usuario = string.Empty;
                 Contrasena = string.Empty;
             }
             else
             {
-                MensajeEstado = "Credenciales inválidas";
-                MostrarMensaje = true;
+                await MostrarErrorAsync("Credenciales inválidas");
             }
         }
         catch (UnauthorizedException)
         {
-            MensajeEstado = "Usuario o contraseña incorrectos";
-            MostrarMensaje = true;
+            await MostrarErrorAsync("Usuario o contraseña incorrectos");
         }
         catch (ConnectionException ex)
         {
-            MensajeEstado = $"Error de conexión: {ex.Message}";
-            MostrarMensaje = true;
+            await MostrarErrorAsync($"Error de conexión: {ex.Message}");
         }
         catch (Exception ex)
         {
-            MensajeEstado = $"Error: {ex.Message}";
-            MostrarMensaje = true;
+            await MostrarErrorAsync($"Error: {ex.Message}");
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    private async Task MostrarErrorAsync(string mensaje)
+    {
+        MensajeEstado = mensaje;
+        MostrarMensaje = true;
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            if (Application.Current?.MainPage != null)
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", mensaje, "OK");
+            }
+        });
     }
 }

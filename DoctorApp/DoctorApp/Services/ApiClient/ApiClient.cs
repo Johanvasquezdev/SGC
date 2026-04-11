@@ -1,14 +1,11 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using DoctorApp.Exceptions;
-using DoctorApp.Security;
 
 namespace DoctorApp.Services.ApiClient;
 
 /// <summary>
-/// Cliente genérico para consumir APIs
-/// Implementa manejo robusto de errores, retry y serialización JSON
+/// Generic API client with JSON serialization and error handling
 /// </summary>
 public interface IApiClient
 {
@@ -27,8 +24,6 @@ public class ApiClient : IApiClient
     public ApiClient(HttpClient httpClient)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-
-        // Configurar opciones JSON (case-insensitive para compatibilidad)
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
@@ -55,7 +50,6 @@ public class ApiClient : IApiClient
         try
         {
             HttpContent? content = null;
-
             if (data != null)
             {
                 content = new StringContent(
@@ -79,7 +73,6 @@ public class ApiClient : IApiClient
         try
         {
             HttpContent? content = null;
-
             if (data != null)
             {
                 content = new StringContent(
@@ -103,7 +96,6 @@ public class ApiClient : IApiClient
         try
         {
             var response = await _httpClient.DeleteAsync(endpoint);
-
             if (!response.IsSuccessStatusCode)
             {
                 await HandleErrorResponse(response);
@@ -115,9 +107,9 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<HttpResponseMessage> GetRawAsync(string endpoint)
+    public Task<HttpResponseMessage> GetRawAsync(string endpoint)
     {
-        return await _httpClient.GetAsync(endpoint);
+        return _httpClient.GetAsync(endpoint);
     }
 
     private async Task<T> HandleResponse<T>(HttpResponseMessage response)
@@ -127,8 +119,11 @@ public class ApiClient : IApiClient
             try
             {
                 var json = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<T>(json, _jsonOptions) 
-                    ?? throw new AppException("Respuesta vacía del servidor");
+                if (string.IsNullOrWhiteSpace(json))
+                    return default!;
+
+                return JsonSerializer.Deserialize<T>(json, _jsonOptions)
+                    ?? throw new AppException("Respuesta vacia del servidor");
             }
             catch (JsonException ex)
             {
@@ -147,28 +142,20 @@ public class ApiClient : IApiClient
         switch (response.StatusCode)
         {
             case HttpStatusCode.Unauthorized:
-                // 401: Token expirado o inválido
                 throw new UnauthorizedException();
 
             case HttpStatusCode.NotFound:
-                // 404: Recurso no encontrado
-                throw new AppException(
-                    content ?? "El recurso solicitado no fue encontrado",
-                    "NOT_FOUND",
-                    404
-                );
+                throw new AppException(content ?? "El recurso solicitado no fue encontrado", "NOT_FOUND", 404);
 
             case HttpStatusCode.Conflict:
-                // 409: Conflicto (ej: recurso duplicado)
                 throw new ConflictException(content);
 
             case HttpStatusCode.BadRequest:
-                // 400: Datos inválidos
                 try
                 {
                     var problemDetails = JsonSerializer.Deserialize<ValidationProblemDetails>(content, _jsonOptions);
                     var errors = problemDetails?.Errors ?? new Dictionary<string, string[]>();
-                    throw new Exceptions.ValidationException("Error de validación en el servidor", errors);
+                    throw new Exceptions.ValidationException("Error de validacion en el servidor", errors);
                 }
                 catch (Exceptions.ValidationException)
                 {
@@ -176,23 +163,19 @@ public class ApiClient : IApiClient
                 }
                 catch
                 {
-                    throw new Exceptions.ValidationException(content ?? "Datos inválidos");
+                    throw new Exceptions.ValidationException(content ?? "Datos invalidos");
                 }
 
             case HttpStatusCode.InternalServerError:
-                // 500: Error interno del servidor
                 throw new ConnectionException($"Error interno del servidor (500): {content}");
 
             case HttpStatusCode.ServiceUnavailable:
-                // 503: Servicio no disponible
-                throw new ConnectionException("El servidor no está disponible (503). Intenta más tarde.");
+                throw new ConnectionException("El servidor no esta disponible (503). Intenta mas tarde.");
 
             case HttpStatusCode.GatewayTimeout:
-                // 504: Gateway timeout
-                throw new ConnectionException("El servidor tardó demasiado en responder (504).");
+                throw new ConnectionException("El servidor tardo demasiado en responder (504).");
 
             default:
-                // Otros errores HTTP
                 throw new AppException(
                     content ?? $"Error HTTP {(int)response.StatusCode}",
                     $"HTTP_{(int)response.StatusCode}",
@@ -203,10 +186,9 @@ public class ApiClient : IApiClient
 }
 
 /// <summary>
-/// Modelo para errores de validación de ASP.NET Core
+/// Validation error model for ASP.NET Core
 /// </summary>
 public class ValidationProblemDetails
 {
     public Dictionary<string, string[]> Errors { get; set; } = new();
 }
-

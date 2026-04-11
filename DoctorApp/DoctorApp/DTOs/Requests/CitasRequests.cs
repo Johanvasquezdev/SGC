@@ -46,8 +46,8 @@ public class CrearDisponibilidadRequest
     public int DiaSemana { get; set; }
     public TimeSpan HoraInicio { get; set; }
     public TimeSpan HoraFin { get; set; }
-    public int DuracionMinutos { get; set; }
-    public bool Activo { get; set; } = true;
+    public int DuracionCitaMin { get; set; }
+    public bool EsRecurrente { get; set; } = true;
 }
 
 /// <summary>
@@ -55,9 +55,12 @@ public class CrearDisponibilidadRequest
 /// </summary>
 public class ActualizarDisponibilidadRequest
 {
+    [System.Text.Json.Serialization.JsonIgnore]
     public int DisponibilidadId { get; set; }
-    public TimeSpan? HoraInicio { get; set; }
-    public TimeSpan? HoraFin { get; set; }
-    public int? DuracionMinutos { get; set; }
-    public bool? Activo { get; set; }
+    public int MedicoId { get; set; }
+    public int DiaSemana { get; set; }
+    public TimeSpan HoraInicio { get; set; }
+    public TimeSpan HoraFin { get; set; }
+    public int DuracionCitaMin { get; set; }
+    public bool EsRecurrente { get; set; } = true;
 }

@@ -7,12 +7,17 @@ public class DoctorResponseDto
 {
     public int Id { get; set; }
     public string Nombre { get; set; } = string.Empty;
-    public string Apellido { get; set; } = string.Empty;
-    public string Especialidad { get; set; } = string.Empty;
-    public string? Email { get; set; }
-    public string? Telefono { get; set; }
-    public string? Consultorio { get; set; }
-    public DateTime FechaRegistro { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string? Exequatur { get; set; }
+    public int? EspecialidadId { get; set; }
+    public string? NombreEspecialidad { get; set; }
+    public int? ProveedorSaludId { get; set; }
+    public string? Especialidad { get; set; }
+    public string? ProveedorSalud { get; set; }
+    public string? TelefonoConsultorio { get; set; }
+    public string? Foto { get; set; }
+    public bool Activo { get; set; }
+    public bool MedicoActivo { get; set; }
 }
 
 /// <summary>
