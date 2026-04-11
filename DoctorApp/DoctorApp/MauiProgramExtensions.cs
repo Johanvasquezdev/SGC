@@ -15,8 +15,16 @@ namespace DoctorApp
 {
     public static class MauiProgramExtensions
     {
-        // ✅ Configuración de la API - URL BASE actualizada
-        private const string API_BASE_URL = "http://localhost:5189";
+        private const string DefaultApiBaseUrl = "http://localhost:5189";
+
+        private static string ResolveApiBaseUrl()
+        {
+            var fromEnv = Environment.GetEnvironmentVariable("SGC_API_BASE_URL");
+            if (!string.IsNullOrWhiteSpace(fromEnv))
+                return fromEnv.TrimEnd('/');
+
+            return DefaultApiBaseUrl;
+        }
 
         public static MauiAppBuilder UseSharedMauiApp(this MauiAppBuilder builder)
         {
@@ -58,14 +66,16 @@ namespace DoctorApp
                 InnerHandler = httpClientHandler
             };
 
+            var apiBaseUrl = ResolveApiBaseUrl();
+
             // ✅ Crear HttpClient con URL base configurada
             var httpClient = new HttpClient(authHandler)
             {
-                BaseAddress = new Uri(API_BASE_URL),
+                BaseAddress = new Uri(apiBaseUrl),
                 Timeout = TimeSpan.FromSeconds(30)
             };
 
-            System.Diagnostics.Debug.WriteLine($"[MauiProgramExtensions] HttpClient configurado con URL base: {API_BASE_URL}");
+            System.Diagnostics.Debug.WriteLine($"[MauiProgramExtensions] HttpClient configurado con URL base: {apiBaseUrl}");
 
             // ✅ Registrar HttpClient como Singleton
             builder.Services.AddSingleton(httpClient);

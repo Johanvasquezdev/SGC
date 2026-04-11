@@ -14,7 +14,7 @@ namespace DoctorApp.Services.Hubs
     {
         private HubConnection? _hubConnection;
         private readonly ITokenManager _tokenManager;
-        private const string HubEndpoint = "http://localhost:5189/disponibilidadhub";
+        private readonly string _hubEndpoint;
 
         public event EventHandler<DisponibilidadHubEventArgs>? OnDisponibilidadCreada;
         public event EventHandler<DisponibilidadHubEventArgs>? OnDisponibilidadActualizada;
@@ -25,6 +25,16 @@ namespace DoctorApp.Services.Hubs
         public DisponibilidadHubClient(ITokenManager tokenManager)
         {
             _tokenManager = tokenManager ?? throw new ArgumentNullException(nameof(tokenManager));
+            _hubEndpoint = ResolveHubEndpoint();
+        }
+
+        private static string ResolveHubEndpoint()
+        {
+            var apiBaseUrl = Environment.GetEnvironmentVariable("SGC_API_BASE_URL");
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+                apiBaseUrl = "http://localhost:5189";
+
+            return $"{apiBaseUrl.TrimEnd('/')}/disponibilidadhub";
         }
 
         /// <summary>
@@ -46,7 +56,7 @@ namespace DoctorApp.Services.Hubs
 
                 // Crear conexión con bearer token
                 _hubConnection = new HubConnectionBuilder()
-                    .WithUrl(HubEndpoint, options =>
+                    .WithUrl(_hubEndpoint, options =>
                     {
                         options.AccessTokenProvider = async () => token;
                     })
