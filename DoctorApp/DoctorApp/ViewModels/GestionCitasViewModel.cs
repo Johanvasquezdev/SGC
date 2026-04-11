@@ -83,7 +83,7 @@ public class GestionCitasViewModel : BaseViewModel
             {
                 _fechaFiltro = value;
                 OnPropertyChanged();
-                _ = CargarCitas();
+                AplicarFiltros();
             }
         }
     }
@@ -129,9 +129,9 @@ public class GestionCitasViewModel : BaseViewModel
         Title = "Gestión de Citas";
 
         CargarCitasCommand = new Command(async () => await CargarCitas());
-        ConfirmarCitaCommand = new Command(async () => await ConfirmarCita());
-        CompletarCitaCommand = new Command(async () => await CompletarCita());
-        CancelarCitaCommand = new Command(async () => await CancelarCitaSeleccionada());
+        ConfirmarCitaCommand = new Command<Cita>(async (cita) => await ConfirmarCita(cita));
+        CompletarCitaCommand = new Command<Cita>(async (cita) => await CompletarCita(cita));
+        CancelarCitaCommand = new Command<Cita>(async (cita) => await CancelarCitaSeleccionada(cita));
         ActualizarEstadoCommand = new Command<EstadoCita>(async (estado) => await ActualizarEstadoCita(estado));
 
         _ = CargarCitas();
@@ -170,27 +170,30 @@ public class GestionCitasViewModel : BaseViewModel
         }
     }
 
-    private async Task ConfirmarCita()
+    private async Task ConfirmarCita(Cita? cita)
     {
-        if (CitaSeleccionada == null) return;
+        var citaObjetivo = cita ?? CitaSeleccionada;
+        if (citaObjetivo == null) return;
 
-        await _citasService.ConfirmarCitaAsync(CitaSeleccionada.Id, true);
+        await _citasService.ConfirmarCitaAsync(citaObjetivo.Id, true);
         await CargarCitas();
     }
 
-    private async Task CompletarCita()
+    private async Task CompletarCita(Cita? cita)
     {
-        if (CitaSeleccionada == null) return;
+        var citaObjetivo = cita ?? CitaSeleccionada;
+        if (citaObjetivo == null) return;
 
-        await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, true);
+        await _citasService.MarcarAsistenciaAsync(citaObjetivo.Id, true);
         await CargarCitas();
     }
 
-    private async Task CancelarCitaSeleccionada()
+    private async Task CancelarCitaSeleccionada(Cita? cita)
     {
-        if (CitaSeleccionada == null) return;
+        var citaObjetivo = cita ?? CitaSeleccionada;
+        if (citaObjetivo == null) return;
 
-        await _citasService.MarcarAsistenciaAsync(CitaSeleccionada.Id, false);
+        await _citasService.MarcarAsistenciaAsync(citaObjetivo.Id, false);
         await CargarCitas();
     }
 
@@ -218,6 +221,7 @@ public class GestionCitasViewModel : BaseViewModel
     {
         var filtradas = Citas.Where(c =>
             (EstadoFiltro == EstadoCita.Todos || c.Estado == EstadoFiltro) &&
+            c.FechaHora.Date == FechaFiltro.Date &&
             (string.IsNullOrEmpty(BusquedaPaciente) ||
              c.Paciente?.NombreCompleto?.Contains(BusquedaPaciente, StringComparison.OrdinalIgnoreCase) == true ||
              c.Paciente?.Cedula?.Contains(BusquedaPaciente) == true)
@@ -238,7 +242,7 @@ public class GestionCitasViewModel : BaseViewModel
             "completada" => EstadoCita.Completada,
             "cancelada" => EstadoCita.Cancelada,
             "rechazada" => EstadoCita.Cancelada,
-            "noasistio" => EstadoCita.Cancelada,
+            "noasistio" => EstadoCita.NoAsistio,
             _ => EstadoCita.Pendiente
         };
 

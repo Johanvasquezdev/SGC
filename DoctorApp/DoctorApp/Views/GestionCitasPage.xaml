@@ -93,7 +93,7 @@
                                        HasShadow="False"
                                        BackgroundColor="{Binding Estado, Converter={StaticResource EstadoCitaColorConverter}}"
                                        VerticalOptions="Center">
-                                    <Label Text="{Binding Estado}" 
+                                    <Label Text="{Binding Estado, Converter={StaticResource EstadoCitaTextoConverter}}" 
                                            FontSize="10" FontAttributes="Bold" 
                                            TextColor="White"
                                            HorizontalOptions="Center" VerticalOptions="Center"/>
@@ -103,7 +103,7 @@
                             <BoxView HeightRequest="1" BackgroundColor="#E5E7EB"/>
 
                             <!-- Información del Paciente -->
-                            <HorizontalStackLayout Spacing="15" IsVisible="{Binding CitaSeleccionada, Converter={StaticResource EqualsConverter}}">
+                            <HorizontalStackLayout Spacing="15">
                                 <VerticalStackLayout Spacing="2" HorizontalOptions="FillAndExpand">
                                     <Label Text="👤 Paciente" FontSize="10" FontAttributes="Bold" TextColor="#6B7280"/>
                                     <Label Text="{Binding Paciente.Cedula}" FontSize="11" TextColor="#1F2937"/>
@@ -127,8 +127,9 @@
                             <BoxView HeightRequest="1" BackgroundColor="#E5E7EB"/>
 
                             <!-- Botones de Acción (aparecen si está seleccionada) -->
-                            <HorizontalStackLayout Spacing="8" IsVisible="{Binding CitaSeleccionada, Converter={StaticResource EqualsConverter}}">
-                                <Button Command="{Binding ConfirmarCitaCommand}" 
+                            <HorizontalStackLayout Spacing="8">
+                                <Button Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ConfirmarCitaCommand}" 
+                                       CommandParameter="{Binding .}"
                                        Text="✅ Confirmar"
                                        BackgroundColor="#10B981"
                                        TextColor="White"
@@ -139,7 +140,8 @@
                                        HorizontalOptions="FillAndExpand"
                                        IsEnabled="{Binding Estado, Converter={StaticResource PuedoConfirmarConverter}}"/>
 
-                                <Button Command="{Binding CompletarCitaCommand}" 
+                                <Button Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CompletarCitaCommand}" 
+                                       CommandParameter="{Binding .}"
                                        Text="✔️ Completar"
                                        BackgroundColor="#3B82F6"
                                        TextColor="White"
@@ -149,7 +151,8 @@
                                        CornerRadius="6"
                                        HorizontalOptions="FillAndExpand"/>
 
-                                <Button Command="{Binding CancelarCitaCommand}" 
+                                <Button Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CancelarCitaCommand}" 
+                                       CommandParameter="{Binding .}"
                                        Text="✕ Cancelar"
                                        BackgroundColor="#EF4444"
                                        TextColor="White"
