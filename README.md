@@ -95,6 +95,8 @@ Notes:
 
 - `docker-compose.yml` maps container port `8080` to host `5189`.
 - Database/Redis in `.env.example` use `host.docker.internal` so local services can be used from container.
+- Configure CORS origins using `SGC_CORS_ORIGIN_0`/`SGC_CORS_ORIGIN_1` (or `Cors:AllowedOrigins`).
+- Outside Development, API startup fails if `Cors:AllowedOrigins` is not configured.
 
 ## Documentacion
 

@@ -60,6 +60,22 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("SGCPolicy", policy =>
     {
+        var configuredOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>()?
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .Select(origin => origin.Trim())
+            .ToArray() ?? Array.Empty<string>();
+
+        if (configuredOrigins.Length > 0)
+        {
+            policy.WithOrigins(configuredOrigins)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+            return;
+        }
+
         if (builder.Environment.IsDevelopment())
         {
             policy.WithOrigins(
@@ -72,12 +88,8 @@ builder.Services.AddCors(options =>
         }
         else
         {
-            policy.WithOrigins(
-                    "https://tu-dominio-web.com",
-                    "https://tu-dominio-desktop.com")
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
+            throw new InvalidOperationException(
+                "CORS origins must be configured via 'Cors:AllowedOrigins' outside development.");
         }
     });
 });

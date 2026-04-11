@@ -15,6 +15,8 @@ services:
       Jwt__Issuer: "${SGC_JWT_ISSUER:-SGC.API}"
       Jwt__Audience: "${SGC_JWT_AUDIENCE:-SGC.Clients}"
       Jwt__ExpireMinutes: "${SGC_JWT_EXPIRE_MINUTES:-60}"
+      Cors__AllowedOrigins__0: "${SGC_CORS_ORIGIN_0}"
+      Cors__AllowedOrigins__1: "${SGC_CORS_ORIGIN_1}"
       Stripe__PublicKey: "${SGC_STRIPE_PUBLIC_KEY}"
       Stripe__SecretKey: "${SGC_STRIPE_SECRET_KEY}"
       Stripe__WebhookSecret: "${SGC_STRIPE_WEBHOOK_SECRET}"
