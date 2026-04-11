@@ -175,15 +175,20 @@ public class GestionDisponibilidadViewModel : BaseViewModel
     // Servicios inyectados
     private readonly IDisponibilidadService _disponibilidadService;
     private readonly IDisponibilidadHubClient _disponibilidadHubClient;
+    private readonly DoctorApp.Security.ITokenManager _tokenManager;
 
     // Constructor
 
-    public GestionDisponibilidadViewModel(IDisponibilidadService disponibilidadService, IDisponibilidadHubClient disponibilidadHubClient)
+    public GestionDisponibilidadViewModel(
+        IDisponibilidadService disponibilidadService, 
+        IDisponibilidadHubClient disponibilidadHubClient,
+        DoctorApp.Security.ITokenManager tokenManager)
     {
         Title = "Gestión de Disponibilidad";
 
         _disponibilidadService = disponibilidadService ?? throw new ArgumentNullException(nameof(disponibilidadService));
         _disponibilidadHubClient = disponibilidadHubClient ?? throw new ArgumentNullException(nameof(disponibilidadHubClient));
+        _tokenManager = tokenManager ?? throw new ArgumentNullException(nameof(tokenManager));
 
         // Inicializar Commands
         AgregarHorarioCommand = new Command(async () => await AgregarHorario());
@@ -198,6 +203,7 @@ public class GestionDisponibilidadViewModel : BaseViewModel
         _disponibilidadHubClient.OnDisponibilidadEliminada += OnDisponibilidadEliminada;
 
         // Cargar datos iniciales
+        _ = InicializarMedicoAsync();
         _ = CargarDisponibilidades();
 
         // Conectar al hub SignalR
@@ -319,7 +325,19 @@ public class GestionDisponibilidadViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var disponibilidades = await _disponibilidadService.ObtenerDisponibilidadesAsync();
+            if (MedicoActual.Id <= 0)
+            {
+                await InicializarMedicoAsync();
+            }
+
+            if (MedicoActual.Id <= 0)
+            {
+                HorariosDisponibles.Clear();
+                MensajeConfirmacion = "No se encontro el medico autenticado";
+                return;
+            }
+
+            var disponibilidades = await _disponibilidadService.ObtenerDisponibilidadesAsync(MedicoActual.Id);
 
             if (disponibilidades == null || disponibilidades.Count == 0)
             {
@@ -335,14 +353,14 @@ public class GestionDisponibilidadViewModel : BaseViewModel
                 HorariosDisponibles.Add(new DisponibilidadHoraria
                 {
                     Id = disp.Id,
-                    Dia = ObtenerDiaSemanaDeString(disp.DiaNombre),
+                    Dia = ObtenerDiaSemanaDeString(disp.DiaSemana),
                     Hora = disp.HoraInicio.ToString("HH:mm"),
                     HoraInicio = TimeOnly.FromTimeSpan(disp.HoraInicio),
                     HoraFin = TimeOnly.FromTimeSpan(disp.HoraFin),
-                    EstaDisponible = disp.Activo,
-                    DuracionMinutos = disp.DuracionMinutos,
+                    EstaDisponible = disp.EsRecurrente,
+                    DuracionMinutos = disp.DuracionCitaMin,
                     FechaRegistro = DateTime.Now,
-                    Activo = disp.Activo
+                    Activo = disp.EsRecurrente
                 });
             }
 
@@ -391,6 +409,21 @@ public class GestionDisponibilidadViewModel : BaseViewModel
         };
     }
 
+    private async Task InicializarMedicoAsync()
+    {
+        var medicoId = await _tokenManager.GetUserIdAsync();
+        if (medicoId.HasValue)
+        {
+            MedicoActual.Id = medicoId.Value;
+        }
+
+        var nombre = await _tokenManager.GetUserNameAsync();
+        if (!string.IsNullOrWhiteSpace(nombre))
+        {
+            MedicoActual.Nombre = nombre;
+        }
+    }
+
     private async Task AgregarHorario()
     {
         if (HoraInicio >= HoraFin)
@@ -408,8 +441,8 @@ public class GestionDisponibilidadViewModel : BaseViewModel
                 DiaSemana = (int)DiaSeleccionado,
                 HoraInicio = HoraInicio.ToTimeSpan(),
                 HoraFin = HoraFin.ToTimeSpan(),
-                DuracionMinutos = DuracionConsulta,
-                Activo = Disponible
+                DuracionCitaMin = DuracionConsulta,
+                EsRecurrente = Disponible
             };
 
             var resultado = await _disponibilidadService.CrearDisponibilidadAsync(request);
@@ -459,10 +492,12 @@ public class GestionDisponibilidadViewModel : BaseViewModel
             var request = new ActualizarDisponibilidadRequest
             {
                 DisponibilidadId = HorarioSeleccionado.Id,
+                MedicoId = MedicoActual.Id,
+                DiaSemana = (int)HorarioSeleccionado.Dia,
                 HoraInicio = HorarioSeleccionado.HoraInicio.ToTimeSpan(),
                 HoraFin = HorarioSeleccionado.HoraFin.ToTimeSpan(),
-                DuracionMinutos = DuracionConsulta,
-                Activo = Disponible
+                DuracionCitaMin = DuracionConsulta,
+                EsRecurrente = Disponible
             };
 
             var resultado = await _disponibilidadService.ActualizarDisponibilidadAsync(request);

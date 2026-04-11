@@ -13,7 +13,7 @@ namespace DoctorApp.Services.Hubs
     {
         private HubConnection? _hubConnection;
         private readonly ITokenManager _tokenManager;
-        private const string HubEndpoint = "https://localhost:5001/hubs/cita-hub";
+        private const string HubEndpoint = "http://localhost:5189/citahub";
 
         public event EventHandler<CitaHubEventArgs>? OnNuevaEnCita;
         public event EventHandler<CitaHubEventArgs>? OnCitaActualizada;

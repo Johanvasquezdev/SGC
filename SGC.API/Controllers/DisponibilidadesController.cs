@@ -39,7 +39,7 @@ namespace SGC.API.Controllers
 
         // POST api/disponibilidad - Crea un nuevo horario de disponibilidad (solo medico)
         [HttpPost]
-        [Authorize(Roles = "Medico")]
+        [Authorize(Roles = "Administrador,Medico")] // Permite crear disponibilidad desde Admin o Medico.
         public async Task<IActionResult> Crear([FromBody] DisponibilidadRequest request)
         {
             var disponibilidad = await _disponibilidadService.CrearAsync(request);
@@ -48,7 +48,7 @@ namespace SGC.API.Controllers
 
         // PUT api/disponibilidad/{id} - Actualiza un horario de disponibilidad
         [HttpPut("{id}")]
-        [Authorize(Roles = "Medico")]
+        [Authorize(Roles = "Administrador,Medico")] // Permite actualizar disponibilidad desde Admin o Medico.
         public async Task<IActionResult> Actualizar(int id, [FromBody] DisponibilidadRequest request)
         {
             await _disponibilidadService.ActualizarAsync(id, request);
@@ -57,7 +57,7 @@ namespace SGC.API.Controllers
 
         // DELETE api/disponibilidad/{id} - Elimina un horario de disponibilidad
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Medico")]
+        [Authorize(Roles = "Administrador,Medico")] // Permite eliminar disponibilidad desde Admin o Medico.
         public async Task<IActionResult> Eliminar(int id)
         {
             await _disponibilidadService.EliminarAsync(id);

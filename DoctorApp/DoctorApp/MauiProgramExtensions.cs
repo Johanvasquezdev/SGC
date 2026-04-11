@@ -16,7 +16,7 @@ namespace DoctorApp
     public static class MauiProgramExtensions
     {
         // ✅ Configuración de la API - URL BASE actualizada
-        private const string API_BASE_URL = "http://localhost:5189/api";
+        private const string API_BASE_URL = "http://localhost:5189";
 
         public static MauiAppBuilder UseSharedMauiApp(this MauiAppBuilder builder)
         {
@@ -41,7 +41,7 @@ namespace DoctorApp
 
         /// <summary>
         /// ✅ Registra HttpClient y servicios de API REALES (no mocks)
-        /// Usa ApiClient para consumir datos desde http://localhost:5189/api
+        /// Usa ApiClient para consumir datos desde http://localhost:5189
         /// </summary>
         private static MauiAppBuilder RegisterApiServices(this MauiAppBuilder builder)
         {
@@ -79,6 +79,7 @@ namespace DoctorApp
                 .AddScoped<IDisponibilidadService, DisponibilidadService>()
                 .AddScoped<IAuthService, AuthService>()
                 .AddScoped<IDoctorService, DoctorService>()
+                .AddScoped<IPacienteService, PacienteService>()
                 .AddScoped<ICitasHubClient, CitasHubClient>()
                 .AddScoped<IDisponibilidadHubClient, DisponibilidadHubClient>();
 
@@ -120,7 +121,8 @@ namespace DoctorApp
             builder.Services
                 .AddSingleton<DashboardViewModel>()
                 .AddSingleton<GestionDisponibilidadViewModel>()
-                .AddSingleton<GestionCitasViewModel>();
+                .AddSingleton<GestionCitasViewModel>()
+                .AddSingleton<PanelConsultasDelDiaViewModel>();
 
             return builder;
         }

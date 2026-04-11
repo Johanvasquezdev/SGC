@@ -62,17 +62,17 @@ public class CrearDisponibilidadValidator : AbstractValidator<CrearDisponibilida
             .WithMessage("El ID del médico es requerido");
 
         RuleFor(x => x.DiaSemana)
-            .GreaterThanOrEqualTo(1)
-            .LessThanOrEqualTo(7)
-            .WithMessage("El día de la semana debe estar entre 1 (Lunes) y 7 (Domingo)");
+            .GreaterThanOrEqualTo(0)
+            .LessThanOrEqualTo(6)
+            .WithMessage("El día de la semana debe estar entre 0 (Lunes) y 6 (Domingo)");
 
         RuleFor(x => x.HoraInicio)
             .LessThan(x => x.HoraFin)
             .WithMessage("La hora de inicio debe ser menor a la hora de fin");
 
-        RuleFor(x => x.DuracionMinutos)
+        RuleFor(x => x.DuracionCitaMin)
             .GreaterThan(0)
-            .LessThanOrEqualTo(480) // Máximo 8 horas
+            .LessThanOrEqualTo(480)
             .WithMessage("La duración debe estar entre 1 y 480 minutos");
     }
 }
@@ -88,17 +88,13 @@ public class ActualizarDisponibilidadValidator : AbstractValidator<ActualizarDis
             .GreaterThan(0)
             .WithMessage("El ID de disponibilidad es requerido");
 
-        When(x => x.HoraInicio.HasValue && x.HoraFin.HasValue, () =>
-        {
-            RuleFor(x => x.HoraInicio)
-                .Must((x, hora) => hora < x.HoraFin)
-                .WithMessage("La hora de inicio debe ser menor a la hora de fin");
-        });
+        RuleFor(x => x.HoraInicio)
+            .LessThan(x => x.HoraFin)
+            .WithMessage("La hora de inicio debe ser menor a la hora de fin");
 
-        RuleFor(x => x.DuracionMinutos)
+        RuleFor(x => x.DuracionCitaMin)
             .GreaterThan(0)
             .LessThanOrEqualTo(480)
-            .When(x => x.DuracionMinutos.HasValue)
             .WithMessage("La duración debe estar entre 1 y 480 minutos");
     }
 }

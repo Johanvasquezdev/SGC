@@ -21,7 +21,7 @@ public interface ICitasService
 /// </summary>
 public interface IDisponibilidadService
 {
-    Task<List<DisponibilidadResponseDto>> ObtenerDisponibilidadesAsync();
+    Task<List<DisponibilidadResponseDto>> ObtenerDisponibilidadesAsync(int medicoId);
     Task<DisponibilidadResponseDto> CrearDisponibilidadAsync(CrearDisponibilidadRequest request);
     Task<DisponibilidadResponseDto> ActualizarDisponibilidadAsync(ActualizarDisponibilidadRequest request);
     Task EliminarDisponibilidadAsync(int disponibilidadId);
@@ -84,4 +84,12 @@ public interface IDoctorService
     /// </summary>
     /// <returns>ID del doctor o null si no hay ninguno</returns>
     int? ObtenerDoctorIdCacheado();
+}
+
+/// <summary>
+/// Interfaz para el servicio de Pacientes
+/// </summary>
+public interface IPacienteService
+{
+    Task<PacienteResponseDto?> ObtenerPorCedulaAsync(string cedula);
 }

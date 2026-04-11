@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace DoctorApp.DTOs.Responses;
 
 /// <summary>
@@ -13,35 +15,43 @@ public class ObtenerAgendaResponse
 }
 
 /// <summary>
-/// DTO para una cita en la respuesta
+/// DTO para una cita en la respuesta (alineado con la API)
 /// </summary>
 public class CitaResponseDto
 {
     public int Id { get; set; }
-    public DateTime FechaHora { get; set; }
     public int PacienteId { get; set; }
     public string PacienteNombre { get; set; } = string.Empty;
-    public string PacienteCedula { get; set; } = string.Empty;
-    public string Motivo { get; set; } = string.Empty;
-    public bool Confirmada { get; set; }
-    public bool Asistio { get; set; }
-    public int DuracionMinutos { get; set; }
+    public int MedicoId { get; set; }
+    public string MedicoNombre { get; set; } = string.Empty;
+    public int? DisponibilidadId { get; set; }
+    public DateTime FechaHora { get; set; }
     public string Estado { get; set; } = string.Empty;
+    public string? Motivo { get; set; }
+    public string? Notas { get; set; }
+    public DateTime FechaCreacion { get; set; }
+
+    [JsonIgnore]
+    public bool Confirmada => Estado.Equals("Confirmada", StringComparison.OrdinalIgnoreCase)
+        || Estado.Equals("Completada", StringComparison.OrdinalIgnoreCase);
+
+    [JsonIgnore]
+    public int DuracionMinutos { get; set; }
 }
 
 /// <summary>
-/// DTO para disponibilidad
+/// DTO para disponibilidad (alineado con la API)
 /// </summary>
 public class DisponibilidadResponseDto
 {
     public int Id { get; set; }
-    public int DiaSemana { get; set; }
-    public string DiaNombre { get; set; } = string.Empty;
+    public int MedicoId { get; set; }
+    public string MedicoNombre { get; set; } = string.Empty;
+    public string DiaSemana { get; set; } = string.Empty;
     public TimeSpan HoraInicio { get; set; }
     public TimeSpan HoraFin { get; set; }
-    public int DuracionMinutos { get; set; }
-    public bool Activo { get; set; }
-    public int CitasAsignadas { get; set; }
+    public int DuracionCitaMin { get; set; }
+    public bool EsRecurrente { get; set; }
 }
 
 /// <summary>
@@ -49,10 +59,10 @@ public class DisponibilidadResponseDto
 /// </summary>
 public class AuthTokenResponse
 {
-    public string AccessToken { get; set; } = string.Empty;
-    public string TokenType { get; set; } = "Bearer";
-    public int ExpiresIn { get; set; }
-    public string RefreshToken { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
+    public string NombreUsuario { get; set; } = string.Empty;
+    public string Rol { get; set; } = string.Empty;
+    public DateTime Expiracion { get; set; }
 }
 
 /// <summary>

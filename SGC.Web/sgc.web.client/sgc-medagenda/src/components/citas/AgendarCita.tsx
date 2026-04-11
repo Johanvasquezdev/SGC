@@ -36,6 +36,9 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
 
   if (!isOpen || !medico) return null;
 
+  const toLocalIso = (value: string) => (value.length === 16 ? `${value}:00` : value);
+  const toLocalDate = (value: string) => value.split("T")[0];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let pacienteId = user?.id || 0;
@@ -66,8 +69,7 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
     setIsLoading(true);
     setError(null);
     try {
-      const fecha = new Date(fechaHora);
-      const fechaParam = fecha.toISOString().split("T")[0];
+      const fechaParam = toLocalDate(fechaHora);
       const disponibilidades = await DisponibilidadService.obtenerPorMedico(
         medico.id,
         fechaParam
@@ -80,7 +82,7 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
       const citaCreada = await CitaService.crearCita({
         pacienteId,
         medicoId: medico.id,
-        fechaHora: new Date(fechaHora).toISOString(),
+        fechaHora: toLocalIso(fechaHora),
         disponibilidadId,
         motivo,
         notas,

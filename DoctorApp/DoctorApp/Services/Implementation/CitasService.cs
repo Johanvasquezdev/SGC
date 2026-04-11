@@ -9,7 +9,7 @@ using DoctorApp.Validators;
 namespace DoctorApp.Services.Implementation;
 
 /// <summary>
-/// Servicio de Citas - Consume endpoints de /api/citas
+/// Citas service - consumes /api/citas endpoints
 /// </summary>
 public class CitasService : ICitasService
 {
@@ -35,8 +35,25 @@ public class CitasService : ICitasService
         try
         {
             var endpoint = $"/api/citas/medico/agenda?fecha={fecha:yyyy-MM-dd}";
-            return await _apiClient.GetAsync<ObtenerAgendaResponse>(endpoint) 
-                ?? new ObtenerAgendaResponse();
+            var citas = await _apiClient.GetAsync<List<CitaResponseDto>>(endpoint)
+                ?? new List<CitaResponseDto>();
+
+            var confirmadas = citas.Count(c =>
+                c.Estado.Equals("Confirmada", StringComparison.OrdinalIgnoreCase) ||
+                c.Estado.Equals("Completada", StringComparison.OrdinalIgnoreCase));
+
+            var pendientes = citas.Count(c =>
+                c.Estado.Equals("Solicitada", StringComparison.OrdinalIgnoreCase) ||
+                c.Estado.Equals("Pendiente", StringComparison.OrdinalIgnoreCase));
+
+            return new ObtenerAgendaResponse
+            {
+                Fecha = fecha,
+                Citas = citas,
+                TotalCitas = citas.Count,
+                CitasConfirmadas = confirmadas,
+                CitasPendientes = pendientes
+            };
         }
         catch (AppException)
         {
@@ -63,14 +80,14 @@ public class CitasService : ICitasService
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-            throw new Exceptions.ValidationException("Error de validación", errors);
+            throw new Exceptions.ValidationException("Error de validacion", errors);
         }
 
         try
         {
             var endpoint = $"/api/citas/{citaId}/confirmar";
-            return await _apiClient.PutAsync<CitaResponseDto>(endpoint, request) 
-                ?? throw new AppException("No se recibió respuesta del servidor");
+            var response = await _apiClient.PutAsync<CitaResponseDto>(endpoint, request);
+            return response ?? new CitaResponseDto { Id = citaId, Estado = "Confirmada" };
         }
         catch (AppException)
         {
@@ -92,14 +109,14 @@ public class CitasService : ICitasService
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-            throw new Exceptions.ValidationException("Error de validación", errors);
+            throw new Exceptions.ValidationException("Error de validacion", errors);
         }
 
         try
         {
             var endpoint = $"/api/citas/{citaId}/iniciar-consulta";
-            return await _apiClient.PutAsync<CitaResponseDto>(endpoint, request)
-                ?? throw new AppException("No se recibió respuesta del servidor");
+            var response = await _apiClient.PutAsync<CitaResponseDto>(endpoint, request);
+            return response ?? new CitaResponseDto { Id = citaId, Estado = "EnProgreso" };
         }
         catch (AppException)
         {
@@ -126,14 +143,14 @@ public class CitasService : ICitasService
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-            throw new Exceptions.ValidationException("Error de validación", errors);
+            throw new Exceptions.ValidationException("Error de validacion", errors);
         }
 
         try
         {
             var endpoint = $"/api/citas/{citaId}/asistencia?asistio={asistio}";
-            return await _apiClient.PutAsync<CitaResponseDto>(endpoint, request)
-                ?? throw new AppException("No se recibió respuesta del servidor");
+            var response = await _apiClient.PutAsync<CitaResponseDto>(endpoint, request);
+            return response ?? new CitaResponseDto { Id = citaId, Estado = asistio ? "Completada" : "NoAsistio" };
         }
         catch (AppException)
         {
@@ -149,8 +166,7 @@ public class CitasService : ICitasService
     {
         try
         {
-            var hoy = DateTime.Now.Date;
-            var agenda = await ObtenerAgendaAsync(hoy);
+            var agenda = await ObtenerAgendaAsync(DateTime.Now.Date);
             return agenda.Citas ?? new List<CitaResponseDto>();
         }
         catch (AppException)
@@ -159,7 +175,7 @@ public class CitasService : ICitasService
         }
         catch (Exception ex)
         {
-            throw new ConnectionException($"Error al obtener citas del día: {ex.Message}", ex);
+            throw new ConnectionException($"Error al obtener citas del dia: {ex.Message}", ex);
         }
     }
 

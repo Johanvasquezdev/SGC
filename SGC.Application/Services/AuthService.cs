@@ -33,12 +33,17 @@ namespace SGC.Application.Services
                 .GetByEmailAsync(request.Email);
 
             // Validaciones de seguridad
+            if (usuario == null)
+                throw new UnauthorizedAccessException(
+                    "Credenciales incorrectas.");
+
             if (!usuario.Activo)
                 throw new UnauthorizedAccessException(
                     "El usuario está desactivado.");
 
             // Verifica la contraseña contra el hash almacenado.
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
+            if (string.IsNullOrWhiteSpace(usuario.PasswordHash) ||
+                !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
                 throw new UnauthorizedAccessException(
                     "Credenciales incorrectas.");
 

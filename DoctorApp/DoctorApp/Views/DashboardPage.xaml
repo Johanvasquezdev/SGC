@@ -9,14 +9,17 @@
         <!-- Header Personalizado -->
         <Frame CornerRadius="0" Padding="20" HasShadow="False" BackgroundColor="#6B46C1" Margin="0">
             <VerticalStackLayout Spacing="8">
-                <Label Text="Bienvenido, Dr. Juan Pérez" 
-                       FontSize="20" FontAttributes="Bold" 
+                <Label Text="{Binding MedicoActual.NombreCompleto}"
+                       FontSize="20" FontAttributes="Bold"
                        TextColor="White"/>
-                <Label Text="Cardiología - Consultorio 201" 
-                       FontSize="13" 
+                <Label Text="{Binding MedicoActual.Especialidad}"
+                       FontSize="13"
                        TextColor="#E9D5FF"/>
-                <Label Text="{Binding FechaSeleccionada, StringFormat='{0:dddd, dd MMMM yyyy}'}" 
-                       FontSize="11" 
+                <Label Text="{Binding MedicoActual.Consultorio, StringFormat='Consultorio {0}'}"
+                       FontSize="12"
+                       TextColor="#E9D5FF"/>
+                <Label Text="{Binding FechaSeleccionada, StringFormat='{0:dddd, dd MMMM yyyy}'}"
+                       FontSize="11"
                        TextColor="#D8B4FE"/>
             </VerticalStackLayout>
         </Frame>
@@ -27,48 +30,48 @@
                 <!-- Estadísticas Cards -->
                 <HorizontalStackLayout Spacing="12">
                     <!-- Card Citas Hoy -->
-                    <Frame CornerRadius="12" Padding="15" HasShadow="True" 
-                           BackgroundColor="White" 
+                    <Frame CornerRadius="12" Padding="15" HasShadow="True"
+                           BackgroundColor="White"
                            WidthRequest="120" HeightRequest="100">
                         <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
-                            <Label Text="{Binding TotalCitasHoy, StringFormat='{0}'}" 
-                                   FontSize="28" FontAttributes="Bold" 
+                            <Label Text="{Binding TotalCitasHoy, StringFormat='{0}'}"
+                                   FontSize="28" FontAttributes="Bold"
                                    TextColor="#6B46C1"
                                    HorizontalOptions="Center"/>
-                            <Label Text="Citas Hoy" 
-                                   FontSize="12" 
+                            <Label Text="Citas Hoy"
+                                   FontSize="12"
                                    TextColor="#6B7280"
                                    HorizontalOptions="Center"/>
                         </VerticalStackLayout>
                     </Frame>
 
                     <!-- Card Confirmadas -->
-                    <Frame CornerRadius="12" Padding="15" HasShadow="True" 
-                           BackgroundColor="White" 
+                    <Frame CornerRadius="12" Padding="15" HasShadow="True"
+                           BackgroundColor="White"
                            WidthRequest="120" HeightRequest="100">
                         <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
-                            <Label Text="{Binding CitasConfirmadas, StringFormat='{0}'}" 
-                                   FontSize="28" FontAttributes="Bold" 
+                            <Label Text="{Binding CitasConfirmadas, StringFormat='{0}'}"
+                                   FontSize="28" FontAttributes="Bold"
                                    TextColor="#10B981"
                                    HorizontalOptions="Center"/>
-                            <Label Text="Confirmadas" 
-                                   FontSize="12" 
+                            <Label Text="Confirmadas"
+                                   FontSize="12"
                                    TextColor="#6B7280"
                                    HorizontalOptions="Center"/>
                         </VerticalStackLayout>
                     </Frame>
 
                     <!-- Card Pendientes -->
-                    <Frame CornerRadius="12" Padding="15" HasShadow="True" 
-                           BackgroundColor="White" 
+                    <Frame CornerRadius="12" Padding="15" HasShadow="True"
+                           BackgroundColor="White"
                            WidthRequest="120" HeightRequest="100">
                         <VerticalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
-                            <Label Text="{Binding CitasPendientes, StringFormat='{0}'}" 
-                                   FontSize="28" FontAttributes="Bold" 
+                            <Label Text="{Binding CitasPendientes, StringFormat='{0}'}"
+                                   FontSize="28" FontAttributes="Bold"
                                    TextColor="#F59E0B"
                                    HorizontalOptions="Center"/>
-                            <Label Text="Pendientes" 
-                                   FontSize="12" 
+                            <Label Text="Pendientes"
+                                   FontSize="12"
                                    TextColor="#6B7280"
                                    HorizontalOptions="Center"/>
                         </VerticalStackLayout>
@@ -79,7 +82,7 @@
                 <Frame CornerRadius="12" Padding="15" HasShadow="True" BackgroundColor="White">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Seleccionar Fecha" FontSize="14" FontAttributes="Bold" TextColor="#1F2937"/>
-                        <DatePicker Date="{Binding FechaSeleccionada}" 
+                        <DatePicker Date="{Binding FechaSeleccionada}"
                                    BackgroundColor="#F3F4F6"
                                    Format="dd/MM/yyyy"/>
                     </VerticalStackLayout>
@@ -95,11 +98,11 @@
                                 <HorizontalStackLayout Spacing="12">
                                     <!-- Hora -->
                                     <VerticalStackLayout WidthRequest="60" VerticalOptions="Center">
-                                        <Label Text="{Binding FechaHora, StringFormat='{0:HH:mm}'}" 
-                                               FontSize="16" FontAttributes="Bold" 
+                                        <Label Text="{Binding FechaHora, StringFormat='{0:HH:mm}'}"
+                                               FontSize="16" FontAttributes="Bold"
                                                TextColor="#1F2937"/>
-                                        <Label Text="{Binding DuracionMinutos, StringFormat='{0}min'}" 
-                                               FontSize="11" 
+                                        <Label Text="{Binding DuracionMinutos, StringFormat='{0}min'}"
+                                               FontSize="11"
                                                TextColor="#9CA3AF"/>
                                     </VerticalStackLayout>
 
@@ -108,21 +111,21 @@
 
                                     <!-- Info -->
                                     <VerticalStackLayout HorizontalOptions="FillAndExpand" Spacing="3">
-                                        <Label Text="{Binding Paciente.NombreCompleto}" 
-                                               FontSize="14" FontAttributes="Bold" 
+                                        <Label Text="{Binding Paciente.NombreCompleto}"
+                                               FontSize="14" FontAttributes="Bold"
                                                TextColor="#1F2937"/>
-                                        <Label Text="{Binding Motivo}" 
-                                               FontSize="12" 
+                                        <Label Text="{Binding Motivo}"
+                                               FontSize="12"
                                                TextColor="#6B7280"/>
                                     </VerticalStackLayout>
 
                                     <!-- Estado Badge -->
-                                    <Frame CornerRadius="6" Padding="8,4" 
+                                    <Frame CornerRadius="6" Padding="8,4"
                                            BackgroundColor="{Binding Confirmada, Converter={StaticResource EstadoColorConverter}}"
                                            WidthRequest="80"
                                            HasShadow="False">
-                                        <Label Text="{Binding Confirmada, Converter={StaticResource EstadoTextoConverter}}" 
-                                               FontSize="11" FontAttributes="Bold" 
+                                        <Label Text="{Binding Confirmada, Converter={StaticResource EstadoTextoConverter}}"
+                                               FontSize="11" FontAttributes="Bold"
                                                TextColor="White"
                                                HorizontalOptions="Center" VerticalOptions="Center"/>
                                     </Frame>
@@ -133,8 +136,8 @@
                 </CollectionView>
 
                 <!-- Refresh Button -->
-                <Button Command="{Binding RefrescarCommand}" 
-                        Text="🔄 Actualizar"
+                <Button Command="{Binding RefrescarCommand}"
+                        Text="Actualizar"
                         BackgroundColor="#6B46C1"
                         TextColor="White"
                         FontAttributes="Bold"

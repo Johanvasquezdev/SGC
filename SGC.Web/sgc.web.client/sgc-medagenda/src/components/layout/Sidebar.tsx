@@ -89,6 +89,12 @@ export const Sidebar = () => {
       color: "text-teal-500",
     },
     {
+      label: "Disponibilidad",
+      icon: Calendar,
+      href: "/admin/disponibilidad",
+      color: "text-emerald-500",
+    },
+    {
       label: "Especialidades",
       icon: Stethoscope,
       href: "/admin/especialidades",

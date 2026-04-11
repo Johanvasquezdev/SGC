@@ -1,5 +1,7 @@
 using DoctorApp.Exceptions;
 using DoctorApp.Security;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Dispatching;
 
 namespace DoctorApp.Services.ApiClient;
 
@@ -24,8 +26,12 @@ public class AuthenticationDelegatingHandler : DelegatingHandler
 
         if (!string.IsNullOrEmpty(token))
         {
+            var safeToken = token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                ? token.Substring("Bearer ".Length).Trim()
+                : token.Trim();
+
             // Inyectar token en header
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", safeToken);
         }
 
         // Agregar header de idempotencia (Idempotency-Key)
@@ -39,8 +45,9 @@ public class AuthenticationDelegatingHandler : DelegatingHandler
         // Manejo de errores específicos
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-            // Token expirado
+            // Token expirado o inválido
             await _tokenManager.RemoveTokenAsync();
+            _ = RedirigirALoginAsync();
             throw new UnauthorizedException("Tu token ha expirado. Por favor vuelve a iniciar sesión.");
         }
 
@@ -57,7 +64,22 @@ public class AuthenticationDelegatingHandler : DelegatingHandler
             return await SendAsync(request, cancellationToken);
         }
 
+        _retryCount = 0;
         return response;
+    }
+
+    private static Task RedirigirALoginAsync()
+    {
+        if (Application.Current?.Dispatcher == null)
+            return Task.CompletedTask;
+
+        return Application.Current.Dispatcher.DispatchAsync(() =>
+        {
+            if (Application.Current != null)
+            {
+                Application.Current.MainPage = new DoctorApp.Views.LoginPage();
+            }
+        });
     }
 }
 

@@ -1,5 +1,5 @@
-using DoctorApp.DTOs.Requests;
 using DoctorApp.DTOs.Responses;
+using Microsoft.Maui.Storage;
 using DoctorApp.Exceptions;
 using DoctorApp.Services.ApiClient;
 using DoctorApp.Services.Interfaces;
@@ -8,14 +8,13 @@ using DoctorApp.Security;
 namespace DoctorApp.Services.Implementation;
 
 /// <summary>
-/// Servicio de Autenticación - Maneja Login/Logout
+/// Servicio de Autenticacion - Maneja Login/Logout
 /// </summary>
 public class AuthService : IAuthService
 {
     private readonly IApiClient _apiClient;
     private readonly ITokenManager _tokenManager;
     private const string LoginEndpoint = "/api/auth/login";
-    private const string RefreshEndpoint = "/api/auth/refresh";
 
     public AuthService(IApiClient apiClient, ITokenManager tokenManager)
     {
@@ -26,23 +25,31 @@ public class AuthService : IAuthService
     public async Task<AuthTokenResponse> LoginAsync(string usuario, string contrasena)
     {
         if (string.IsNullOrWhiteSpace(usuario) || string.IsNullOrWhiteSpace(contrasena))
-            throw new ValidationException("Usuario y contraseña son requeridos");
+            throw new ValidationException("Correo y contraseña son requeridos");
 
         try
         {
             var request = new LoginRequest
             {
-                Usuario = usuario,
-                Contrasena = contrasena
+                Email = usuario,
+                Password = contrasena
             };
 
             var response = await _apiClient.PostAsync<AuthTokenResponse>(LoginEndpoint, request);
 
-            if (response == null || string.IsNullOrEmpty(response.AccessToken))
+            if (response == null || string.IsNullOrEmpty(response.Token))
                 throw new UnauthorizedException("Credenciales inválidas");
 
-            // Guardar token de forma segura
-            await _tokenManager.SaveTokenAsync(response.AccessToken);
+            var token = response.Token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                ? response.Token.Substring("Bearer ".Length).Trim()
+                : response.Token.Trim();
+
+            await _tokenManager.SaveTokenAsync(token);
+            if (!string.IsNullOrWhiteSpace(response.NombreUsuario))
+            {
+                // Guarda el nombre para mostrarlo aunque el JWT no tenga el claim.
+                Preferences.Set("auth_user_name", response.NombreUsuario.Trim());
+            }
 
             return response;
         }
@@ -64,42 +71,17 @@ public class AuthService : IAuthService
     {
         try
         {
-            // Limpiar token localmente
             await _tokenManager.RemoveTokenAsync();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error al cerrar sesión: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Error al cerrar sesion: {ex.Message}");
         }
     }
 
     public async Task<bool> EstaAutenticadoAsync()
     {
         return await _tokenManager.IsTokenValidAsync();
-    }
-
-    public async Task<AuthTokenResponse> RefreshTokenAsync(string refreshToken)
-    {
-        try
-        {
-            var request = new RefreshTokenRequest { RefreshToken = refreshToken };
-            var response = await _apiClient.PostAsync<AuthTokenResponse>(RefreshEndpoint, request);
-
-            if (response?.AccessToken != null)
-            {
-                await _tokenManager.SaveTokenAsync(response.AccessToken);
-            }
-
-            return response ?? throw new UnauthorizedException("No se pudo renovar el token");
-        }
-        catch (AppException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new ConnectionException($"Error al renovar token: {ex.Message}", ex);
-        }
     }
 }
 
@@ -108,14 +90,6 @@ public class AuthService : IAuthService
 /// </summary>
 public class LoginRequest
 {
-    public string Usuario { get; set; } = string.Empty;
-    public string Contrasena { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// DTO para refresh token request
-/// </summary>
-public class RefreshTokenRequest
-{
-    public string RefreshToken { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }

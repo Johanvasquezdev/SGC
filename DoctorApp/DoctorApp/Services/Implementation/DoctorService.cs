@@ -9,9 +9,8 @@ using DoctorApp.Validators;
 namespace DoctorApp.Services.Implementation;
 
 /// <summary>
-/// Servicio de Doctor - Consume endpoints de /api/doctores
-/// Maneja registro, obtención, actualización y consulta de citas
-/// Implementa manejo robusto de errores HTTP (404, 500, etc.)
+/// Doctor service - consumes /api/medicos endpoints
+/// Handles register, fetch, update, and doctor lookups
 /// </summary>
 public class DoctorService : IDoctorService
 {
@@ -28,55 +27,23 @@ public class DoctorService : IDoctorService
     }
 
     /// <summary>
-    /// Obtiene todas las citas de un doctor específico desde la API
-    /// Maneja errores: 404 (doctor no existe), 500 (error servidor), conexión
+    /// Gets doctor appointments. This API uses the authenticated doctor token.
     /// </summary>
-    /// <param name="doctorId">ID del doctor para filtrar citas</param>
-    /// <returns>Lista de citas del doctor, vacía si no hay citas</returns>
     public async Task<List<CitaResponseDto>> GetCitasByDoctorIdAsync(int doctorId)
     {
         if (doctorId <= 0)
-            throw new AppException("Doctor ID inválido", "INVALID_DOCTOR_ID", 400);
+            throw new AppException("Doctor ID invalido", "INVALID_DOCTOR_ID", 400);
 
         try
         {
-            var endpoint = $"/api/doctores/{doctorId}/citas";
-            System.Diagnostics.Debug.WriteLine($"[DoctorService] Obteniendo citas para doctor {doctorId} desde {endpoint}");
+            var endpoint = $"/api/citas/medico/agenda?fecha={DateTime.Today:yyyy-MM-dd}";
+            System.Diagnostics.Debug.WriteLine($"[DoctorService] Obteniendo citas desde {endpoint}");
 
             var response = await _apiClient.GetAsync<List<CitaResponseDto>>(endpoint);
             return response ?? new List<CitaResponseDto>();
         }
-        catch (AppException ex) when (ex.Code == "NOT_FOUND")
+        catch (AppException)
         {
-            // 404: Doctor no existe
-            System.Diagnostics.Debug.WriteLine($"[DoctorService] Error 404: Doctor {doctorId} no encontrado");
-            throw new AppException(
-                $"Doctor con ID {doctorId} no encontrado. Verifica que el doctor esté registrado.",
-                "DOCTOR_NOT_FOUND",
-                404
-            );
-        }
-        catch (ConnectionException ex) when (ex.Message.Contains("500"))
-        {
-            // 500: Error interno del servidor
-            System.Diagnostics.Debug.WriteLine($"[DoctorService] Error 500: Problema en el servidor al obtener citas");
-            throw new ConnectionException(
-                "Error en el servidor al obtener citas. Intenta más tarde.",
-                ex
-            );
-        }
-        catch (ConnectionException ex) when (ex.Message.Contains("503"))
-        {
-            // 503: Servicio no disponible
-            System.Diagnostics.Debug.WriteLine($"[DoctorService] Error 503: Servidor no disponible");
-            throw new ConnectionException(
-                "El servidor de citas no está disponible. Intenta en unos momentos.",
-                ex
-            );
-        }
-        catch (ConnectionException)
-        {
-            // Otras errores de conexión
             throw;
         }
         catch (Exception ex)
@@ -86,40 +53,34 @@ public class DoctorService : IDoctorService
     }
 
     /// <summary>
-    /// Registra un nuevo doctor en el sistema
-    /// Valida los datos, realiza POST a /api/doctores y almacena el ID en cache
-    /// Maneja errores: 400 (validación), 409 (duplicado), 500 (servidor)
+    /// Registers a new doctor
     /// </summary>
     public async Task<DoctorResponseDto> RegistrarDoctorAsync(DoctorRequestDto datos)
     {
-        // Validar datos
         var validationResult = await _registrarValidator.ValidateAsync(datos);
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-            throw new Exceptions.ValidationException("Error de validación en el registro", errors);
+            throw new Exceptions.ValidationException("Error de validacion en el registro", errors);
         }
 
         try
         {
-            var endpoint = "/api/doctores/registrar";
+            var endpoint = "/api/medicos";
             System.Diagnostics.Debug.WriteLine($"[DoctorService] Registrando doctor: {datos.Nombre} {datos.Apellido}");
             var response = await _apiClient.PostAsync<DoctorResponseDto>(endpoint, datos);
 
             if (response == null || response.Id == 0)
-                throw new AppException("No se recibió respuesta válida del servidor");
+                throw new AppException("No se recibio respuesta valida del servidor");
 
-            // Cachear el ID del doctor registrado
             _cachedDoctorId = response.Id;
-
             System.Diagnostics.Debug.WriteLine($"[DoctorService] Doctor registrado exitosamente. ID: {response.Id}");
             return response;
         }
         catch (ConflictException ex)
         {
-            // 409: Doctor ya existe (email duplicado)
             throw new AppException($"Doctor ya existe: {ex.Message}", "DOCTOR_EXISTS", 409);
         }
         catch (Exceptions.ValidationException)
@@ -128,20 +89,11 @@ public class DoctorService : IDoctorService
         }
         catch (ConnectionException ex) when (ex.Message.Contains("500"))
         {
-            // 500: Error interno del servidor
-            System.Diagnostics.Debug.WriteLine($"[DoctorService] Error 500 durante registro");
-            throw new ConnectionException(
-                "Error en el servidor al registrar doctor. Intenta más tarde.",
-                ex
-            );
+            throw new ConnectionException("Error en el servidor al registrar doctor. Intenta mas tarde.", ex);
         }
         catch (ConnectionException ex) when (ex.Message.Contains("503"))
         {
-            // 503: Servicio no disponible
-            throw new ConnectionException(
-                "El servidor no está disponible. Intenta en unos momentos.",
-                ex
-            );
+            throw new ConnectionException("El servidor no esta disponible. Intenta en unos momentos.", ex);
         }
         catch (AppException)
         {
@@ -154,17 +106,16 @@ public class DoctorService : IDoctorService
     }
 
     /// <summary>
-    /// Obtiene los datos del doctor actual usando su ID cacheado
-    /// Maneja errores: 404 (doctor no existe), 500 (error servidor)
+    /// Gets current doctor data using cached doctor id
     /// </summary>
     public async Task<DoctorResponseDto> ObtenerDoctorActualAsync()
     {
         try
         {
             if (!_cachedDoctorId.HasValue)
-                throw new AppException("Doctor ID no disponible. Por favor registra primero.", "NO_DOCTOR_ID", 400);
+                throw new AppException("Doctor ID no disponible. Por favor inicia sesion primero.", "NO_DOCTOR_ID", 400);
 
-            var endpoint = $"/api/doctores/{_cachedDoctorId}";
+            var endpoint = $"/api/medicos/{_cachedDoctorId}";
             System.Diagnostics.Debug.WriteLine($"[DoctorService] Obteniendo datos del doctor {_cachedDoctorId}");
             var response = await _apiClient.GetAsync<DoctorResponseDto>(endpoint);
 
@@ -175,29 +126,19 @@ public class DoctorService : IDoctorService
         }
         catch (AppException ex) when (ex.Code == "NOT_FOUND")
         {
-            // 404: Doctor no existe
-            System.Diagnostics.Debug.WriteLine($"[DoctorService] Error 404: Doctor no encontrado");
             throw new AppException(
-                "Tu perfil de doctor no fue encontrado. Verifica que estés registrado.",
+                "Tu perfil de doctor no fue encontrado. Verifica que estes registrado.",
                 "DOCTOR_NOT_FOUND",
                 404
             );
         }
         catch (ConnectionException ex) when (ex.Message.Contains("500"))
         {
-            // 500: Error interno del servidor
-            throw new ConnectionException(
-                "Error en el servidor al obtener datos del doctor. Intenta más tarde.",
-                ex
-            );
+            throw new ConnectionException("Error en el servidor al obtener datos del doctor. Intenta mas tarde.", ex);
         }
         catch (ConnectionException ex) when (ex.Message.Contains("503"))
         {
-            // 503: Servicio no disponible
-            throw new ConnectionException(
-                "El servidor no está disponible. Intenta en unos momentos.",
-                ex
-            );
+            throw new ConnectionException("El servidor no esta disponible. Intenta en unos momentos.", ex);
         }
         catch (AppException)
         {
@@ -210,44 +151,37 @@ public class DoctorService : IDoctorService
     }
 
     /// <summary>
-    /// Actualiza los datos de un doctor
-    /// Maneja errores: 400 (validación), 404 (doctor no existe), 500 (servidor)
+    /// Updates doctor data
     /// </summary>
     public async Task<DoctorResponseDto> ActualizarDoctorAsync(int doctorId, DoctorRequestDto datos)
     {
         if (doctorId <= 0)
-            throw new AppException("Doctor ID inválido", "INVALID_DOCTOR_ID", 400);
+            throw new AppException("Doctor ID invalido", "INVALID_DOCTOR_ID", 400);
 
-        // Validar datos
         var validationResult = await _registrarValidator.ValidateAsync(datos);
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-            throw new Exceptions.ValidationException("Error de validación en la actualización", errors);
+            throw new Exceptions.ValidationException("Error de validacion en la actualizacion", errors);
         }
 
         try
         {
-            var endpoint = $"/api/doctores/{doctorId}";
+            var endpoint = $"/api/medicos/{doctorId}";
             System.Diagnostics.Debug.WriteLine($"[DoctorService] Actualizando doctor {doctorId}");
             var response = await _apiClient.PutAsync<DoctorResponseDto>(endpoint, datos);
 
             if (response == null)
-                throw new AppException("No se recibió respuesta válida del servidor");
+                throw new AppException("No se recibio respuesta valida del servidor");
 
             System.Diagnostics.Debug.WriteLine($"[DoctorService] Doctor {doctorId} actualizado exitosamente");
             return response;
         }
         catch (AppException ex) when (ex.Code == "NOT_FOUND")
         {
-            // 404: Doctor no existe
-            throw new AppException(
-                $"El doctor con ID {doctorId} no fue encontrado.",
-                "DOCTOR_NOT_FOUND",
-                404
-            );
+            throw new AppException($"El doctor con ID {doctorId} no fue encontrado.", "DOCTOR_NOT_FOUND", 404);
         }
         catch (Exceptions.ValidationException)
         {
@@ -255,19 +189,11 @@ public class DoctorService : IDoctorService
         }
         catch (ConnectionException ex) when (ex.Message.Contains("500"))
         {
-            // 500: Error interno del servidor
-            throw new ConnectionException(
-                "Error en el servidor al actualizar doctor. Intenta más tarde.",
-                ex
-            );
+            throw new ConnectionException("Error en el servidor al actualizar doctor. Intenta mas tarde.", ex);
         }
         catch (ConnectionException ex) when (ex.Message.Contains("503"))
         {
-            // 503: Servicio no disponible
-            throw new ConnectionException(
-                "El servidor no está disponible. Intenta en unos momentos.",
-                ex
-            );
+            throw new ConnectionException("El servidor no esta disponible. Intenta en unos momentos.", ex);
         }
         catch (AppException)
         {
@@ -280,7 +206,7 @@ public class DoctorService : IDoctorService
     }
 
     /// <summary>
-    /// Establece el ID del doctor (útil después de login)
+    /// Sets cached doctor id
     /// </summary>
     public void EstablecerDoctorId(int doctorId)
     {
@@ -288,7 +214,7 @@ public class DoctorService : IDoctorService
     }
 
     /// <summary>
-    /// Obtiene el ID del doctor cacheado
+    /// Gets cached doctor id
     /// </summary>
     public int? ObtenerDoctorIdCacheado()
     {

@@ -27,11 +27,11 @@ public class DisponibilidadService : IDisponibilidadService
         _actualizarValidator = actualizarValidator;
     }
 
-    public async Task<List<DisponibilidadResponseDto>> ObtenerDisponibilidadesAsync()
+    public async Task<List<DisponibilidadResponseDto>> ObtenerDisponibilidadesAsync(int medicoId)
     {
         try
         {
-            const string endpoint = "/api/disponibilidad";
+            var endpoint = $"/api/disponibilidad/medico/{medicoId}";
             var result = await _apiClient.GetAsync<List<DisponibilidadResponseDto>>(endpoint);
             return result ?? new List<DisponibilidadResponseDto>();
         }

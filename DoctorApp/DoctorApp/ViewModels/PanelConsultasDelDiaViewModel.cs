@@ -1,16 +1,19 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using DoctorApp.Models;
+using DoctorApp.Services.Interfaces;
+using DoctorApp.Security;
+using DoctorApp.DTOs.Responses;
 
 namespace DoctorApp.ViewModels;
 
 /// <summary>
-/// ViewModel para el Panel de Consultas del Día
-/// Maneja la lógica de presentación para mostrar pacientes citados hoy
+/// ViewModel para el Panel de Consultas del Dia
+/// Carga el medico desde token/API y muestra consultas simuladas por ahora.
 /// </summary>
 public class PanelConsultasDelDiaViewModel : BaseViewModel
 {
-    private Medico _medicoActual;
+    private Medico _medicoActual = new();
     private ObservableCollection<PacienteConsultaModel> _consultasDelDia = new();
     private PacienteConsultaModel? _pacienteSeleccionado;
     private int _totalConsultas;
@@ -20,7 +23,10 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
     private EstadoConsulta _filtroEstado = EstadoConsulta.Esperando;
     private string _busquedaPaciente = string.Empty;
 
-    // Propiedades Filtradas
+    // Servicios
+    private readonly IDoctorService _doctorService;
+    private readonly ITokenManager _tokenManager;
+
     public ObservableCollection<PacienteConsultaModel> ConsultasFiltradas
     {
         get
@@ -38,8 +44,6 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
             return result;
         }
     }
-
-    // Propiedades
 
     public Medico MedicoActual
     {
@@ -161,42 +165,58 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         }
     }
 
-    // Commands
-
     public ICommand IniciarConsultaCommand { get; }
     public ICommand CompletarConsultaCommand { get; }
     public ICommand MarcarNoPrestoCommand { get; }
     public ICommand ReprogramarConsultaCommand { get; }
     public ICommand CargarConsultasCommand { get; }
 
-    // Constructor
-
-    public PanelConsultasDelDiaViewModel()
+    public PanelConsultasDelDiaViewModel(IDoctorService doctorService, ITokenManager tokenManager)
     {
-        Title = "Panel de Consultas del Día";
+        Title = "Panel de Consultas del Dia";
+        _doctorService = doctorService ?? throw new ArgumentNullException(nameof(doctorService));
+        _tokenManager = tokenManager ?? throw new ArgumentNullException(nameof(tokenManager));
 
-        // Inicializar Commands
         IniciarConsultaCommand = new Command(async () => await IniciarConsulta());
         CompletarConsultaCommand = new Command(async () => await CompletarConsulta());
         MarcarNoPrestoCommand = new Command(async () => await MarcarNoPresentado());
         ReprogramarConsultaCommand = new Command(async () => await ReprogramarConsulta());
         CargarConsultasCommand = new Command(async () => await CargarConsultasDelDia());
 
-        // Inicializar médico
-        MedicoActual = new Medico
-        {
-            Id = 1,
-            Nombre = "Juan",
-            Apellido = "Pérez García",
-            Especialidad = "Cardiología",
-            Consultorio = "201"
-        };
-
-        // Cargar datos simulados
+        _ = InicializarMedicoAsync();
         CargarDatosSimulados();
     }
 
-    // Métodos
+    private async Task InicializarMedicoAsync()
+    {
+        var medicoId = await _tokenManager.GetUserIdAsync();
+        var nombreToken = await _tokenManager.GetUserNameAsync();
+
+        if (!string.IsNullOrWhiteSpace(nombreToken))
+        {
+            var (nombre, apellido) = SepararNombre(nombreToken);
+            MedicoActual = new Medico
+            {
+                Id = medicoId ?? 0,
+                Nombre = nombre,
+                Apellido = apellido
+            };
+        }
+
+        if (!medicoId.HasValue)
+            return;
+
+        try
+        {
+            _doctorService.EstablecerDoctorId(medicoId.Value);
+            var doctorDto = await _doctorService.ObtenerDoctorActualAsync();
+            MedicoActual = MapearDoctorDto(doctorDto);
+        }
+        catch
+        {
+            // Si falla, dejamos el nombre del token.
+        }
+    }
 
     private void CargarDatosSimulados()
     {
@@ -208,66 +228,27 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
             {
                 Id = 1,
                 Nombre = "Carlos",
-                Apellido = "López Martínez",
+                Apellido = "Lopez Martinez",
                 Cedula = "12345678",
                 Telefono = "+34 600 123 456",
                 HoraConsulta = ahora.AddMinutes(5),
-                Motivo = "Revisión general",
+                Motivo = "Revision general",
                 Estado = EstadoConsulta.Esperando,
                 Edad = "45",
-                AntecedentesRelevantes = "Hipertensión, Diabetes tipo 2"
+                AntecedentesRelevantes = "Hipertension, Diabetes tipo 2"
             },
             new PacienteConsultaModel
             {
                 Id = 2,
-                Nombre = "María",
-                Apellido = "González Rodríguez",
+                Nombre = "Maria",
+                Apellido = "Gonzalez Rodriguez",
                 Cedula = "87654321",
                 Telefono = "+34 601 234 567",
                 HoraConsulta = ahora.AddMinutes(35),
                 Motivo = "Seguimiento cardiaco",
                 Estado = EstadoConsulta.Esperando,
                 Edad = "52",
-                AntecedentesRelevantes = "Arritmia cardíaca"
-            },
-            new PacienteConsultaModel
-            {
-                Id = 3,
-                Nombre = "Juan",
-                Apellido = "Ramírez Santos",
-                Cedula = "11111111",
-                Telefono = "+34 602 345 678",
-                HoraConsulta = ahora.AddMinutes(65),
-                Motivo = "Electrocardiograma",
-                Estado = EstadoConsulta.Esperando,
-                Edad = "38",
-                AntecedentesRelevantes = "Sin antecedentes relevantes"
-            },
-            new PacienteConsultaModel
-            {
-                Id = 4,
-                Nombre = "Ana",
-                Apellido = "Fernández López",
-                Cedula = "22222222",
-                Telefono = "+34 603 456 789",
-                HoraConsulta = ahora.AddMinutes(-15),
-                Motivo = "Consulta general",
-                Estado = EstadoConsulta.EnConsulta,
-                Edad = "41",
-                AntecedentesRelevantes = "Alergia a penicilina"
-            },
-            new PacienteConsultaModel
-            {
-                Id = 5,
-                Nombre = "Pedro",
-                Apellido = "Diaz Gómez",
-                Cedula = "33333333",
-                Telefono = "+34 604 567 890",
-                HoraConsulta = ahora.AddMinutes(-45),
-                Motivo = "Control de presión",
-                Estado = EstadoConsulta.Completada,
-                Edad = "58",
-                AntecedentesRelevantes = "Colesterol elevado"
+                AntecedentesRelevantes = "Arritmia cardiaca"
             }
         };
 
@@ -282,8 +263,7 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            // Aquí iría la llamada a la API
-            await Task.Delay(500); // Simulamos carga
+            await Task.Delay(200);
         }
         finally
         {
@@ -299,7 +279,7 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         {
             await Application.Current!.MainPage!.DisplayAlert(
                 "Aviso",
-                "Solo se puede iniciar consulta con pacientes en estado 'Esperando'",
+                "Solo se puede iniciar consulta con pacientes en estado Esperando",
                 "OK"
             );
             return;
@@ -324,7 +304,7 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         PacienteSeleccionado.Estado = EstadoConsulta.Completada;
 
         await Application.Current!.MainPage!.DisplayAlert(
-            "Éxito",
+            "Exito",
             $"Consulta completada para {PacienteSeleccionado.NombreCompleto}",
             "OK"
         );
@@ -338,8 +318,8 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
 
         bool confirmado = await Application.Current!.MainPage!.DisplayAlert(
             "Confirmar",
-            $"¿Marcar a {PacienteSeleccionado.NombreCompleto} como no presentado?",
-            "Sí",
+            $"Marcar a {PacienteSeleccionado.NombreCompleto} como no presentado?",
+            "Si",
             "No"
         );
 
@@ -363,7 +343,7 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
 
         await Application.Current!.MainPage!.DisplayAlert(
             "Reprogramada",
-            $"Consulta de {PacienteSeleccionado.NombreCompleto} marcada para reprogramación",
+            $"Consulta de {PacienteSeleccionado.NombreCompleto} marcada para reprogramacion",
             "OK"
         );
 
@@ -378,5 +358,40 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
         ConsultasEsperando = Consultasdeldia.Count(c => c.Estado == EstadoConsulta.Esperando);
 
         OnPropertyChanged(nameof(ConsultasFiltradas));
+    }
+
+    private static Medico MapearDoctorDto(DoctorResponseDto dto)
+    {
+        var (nombre, apellido) = SepararNombre(dto.Nombre);
+        return new Medico
+        {
+            Id = dto.Id,
+            Nombre = nombre,
+            Apellido = apellido,
+            Especialidad = dto.Especialidad ?? dto.NombreEspecialidad ?? string.Empty,
+            Consultorio = dto.ProveedorSalud ?? string.Empty,
+            Email = dto.Email ?? string.Empty,
+            Telefono = dto.TelefonoConsultorio ?? string.Empty,
+            NumeroLicencia = dto.Exequatur ?? string.Empty,
+            Activo = dto.Activo,
+            FechaRegistro = DateTime.Now
+        };
+    }
+
+    private static (string nombre, string apellido) SepararNombre(string nombreCompleto)
+    {
+        var limpio = (nombreCompleto ?? string.Empty).Trim();
+        if (limpio.StartsWith("Dr. ", StringComparison.OrdinalIgnoreCase))
+            limpio = limpio.Substring(4).Trim();
+        if (limpio.StartsWith("Dra. ", StringComparison.OrdinalIgnoreCase))
+            limpio = limpio.Substring(5).Trim();
+
+        var partes = limpio.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length == 0)
+            return ("Medico", string.Empty);
+
+        var nombre = partes[0];
+        var apellido = partes.Length > 1 ? string.Join(" ", partes.Skip(1)) : string.Empty;
+        return (nombre, apellido);
     }
 }
