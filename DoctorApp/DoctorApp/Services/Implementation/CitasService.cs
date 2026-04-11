@@ -201,11 +201,17 @@ public class CitasService : ICitasService
         }
         catch (ConflictException) when (asistio)
         {
-            await IniciarConsultaAsync(citaId);
-            await EjecutarMarcarAsistenciaAsync(citaId, request);
+            await IntentarCompletarConTransicionesAsync(citaId, request);
 
             var actualizada = await ObtenerCitaPorIdAsync(citaId);
             return actualizada ?? new CitaResponseDto { Id = citaId, Estado = "Completada" };
+        }
+        catch (ConflictException) when (!asistio)
+        {
+            await IntentarMarcarNoAsistioConTransicionesAsync(citaId, request);
+
+            var actualizada = await ObtenerCitaPorIdAsync(citaId);
+            return actualizada ?? new CitaResponseDto { Id = citaId, Estado = "NoAsistio" };
         }
         catch (AppException)
         {
@@ -221,6 +227,43 @@ public class CitasService : ICitasService
     {
         var endpoint = $"/api/citas/{citaId}/asistencia?asistio={request.Asistio}";
         await _apiClient.PutAsync<object>(endpoint, request);
+    }
+
+    private async Task IntentarCompletarConTransicionesAsync(int citaId, MarcarAsistenciaRequest request)
+    {
+        try
+        {
+            await IniciarConsultaAsync(citaId);
+        }
+        catch (ConflictException)
+        {
+            try
+            {
+                await ConfirmarCitaAsync(citaId, true);
+            }
+            catch (ConflictException)
+            {
+                // Puede estar ya confirmada o en otro estado.
+            }
+
+            await IniciarConsultaAsync(citaId);
+        }
+
+        await EjecutarMarcarAsistenciaAsync(citaId, request);
+    }
+
+    private async Task IntentarMarcarNoAsistioConTransicionesAsync(int citaId, MarcarAsistenciaRequest request)
+    {
+        try
+        {
+            await ConfirmarCitaAsync(citaId, true);
+        }
+        catch (ConflictException)
+        {
+            // Puede estar ya confirmada o en estado no apto.
+        }
+
+        await EjecutarMarcarAsistenciaAsync(citaId, request);
     }
 
     public async Task<List<CitaResponseDto>> ObtenerCitasDelDiaAsync()

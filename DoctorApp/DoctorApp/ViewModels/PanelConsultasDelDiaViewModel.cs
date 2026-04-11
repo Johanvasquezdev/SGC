@@ -344,6 +344,14 @@ public class PanelConsultasDelDiaViewModel : BaseViewModel
                 "OK"
             );
         }
+        catch (ConflictException)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Aviso",
+                "No se pudo completar porque la cita está en un estado no válido.",
+                "OK"
+            );
+        }
         catch (Exception ex)
         {
             await Application.Current!.MainPage!.DisplayAlert(
