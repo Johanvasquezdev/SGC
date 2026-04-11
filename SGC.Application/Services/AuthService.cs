@@ -42,10 +42,23 @@ namespace SGC.Application.Services
                     "El usuario está desactivado.");
 
             // Verifica la contraseña contra el hash almacenado.
-            if (string.IsNullOrWhiteSpace(usuario.PasswordHash) ||
-                !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
+            try
+            {
+                if (string.IsNullOrWhiteSpace(usuario.PasswordHash) ||
+                    !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
+                    throw new UnauthorizedAccessException(
+                        "Credenciales incorrectas.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw;
+            }
+            catch
+            {
+                // Hash inválido o corrupto: tratar como credenciales incorrectas.
                 throw new UnauthorizedAccessException(
                     "Credenciales incorrectas.");
+            }
 
             var token = _tokenService.GenerarToken(usuario);
 
