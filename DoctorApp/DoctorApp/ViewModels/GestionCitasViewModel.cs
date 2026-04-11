@@ -12,7 +12,7 @@ public class GestionCitasViewModel : BaseViewModel
     private ObservableCollection<Cita> _citas = new();
     private ObservableCollection<Cita> _citasFiltradas = new();
     private Cita? _citaSeleccionada;
-    private EstadoCita _estadoFiltro = EstadoCita.Confirmada;
+    private EstadoCita _estadoFiltro = EstadoCita.Todos;
     private DateTime _fechaFiltro = DateTime.Today;
     private string _busquedaPaciente = string.Empty;
     private bool _mostrarCancelar;
@@ -217,7 +217,7 @@ public class GestionCitasViewModel : BaseViewModel
     private void AplicarFiltros()
     {
         var filtradas = Citas.Where(c =>
-            c.Estado == EstadoFiltro &&
+            (EstadoFiltro == EstadoCita.Todos || c.Estado == EstadoFiltro) &&
             (string.IsNullOrEmpty(BusquedaPaciente) ||
              c.Paciente?.NombreCompleto?.Contains(BusquedaPaciente, StringComparison.OrdinalIgnoreCase) == true ||
              c.Paciente?.Cedula?.Contains(BusquedaPaciente) == true)
