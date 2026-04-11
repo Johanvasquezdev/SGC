@@ -31,74 +31,109 @@ namespace SGC.Application.Services
         // Crea un nuevo paciente, validando los datos y aplicando la logica de negocio antes de guardarlo en el repositorio.
         public async Task<PacienteResponse> CrearAsync(CrearPacienteRequest request)
         {
-            LogOperacion("CrearPaciente", $"Email: {request.Email}");
+            return await ExecuteOperacionAsync(
+                "CrearPaciente",
+                async () =>
+                {
+                    var paciente = new Paciente
+                    {
+                        Nombre = request.Nombre,
+                        Email = request.Email,
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                        Rol = RolUsuario.Paciente,
+                        Cedula = request.Cedula,
+                        Telefono = request.Telefono,
+                        FechaNacimiento = request.FechaNacimiento,
+                        TipoSeguro = request.TipoSeguro,
+                        NumeroSeguro = request.NumeroSeguro
+                    };
 
-            var paciente = new Paciente
-            {
-                Nombre = request.Nombre,
-                Email = request.Email,
-                // Genera hash seguro de la contraseña antes de persistir.
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Rol = RolUsuario.Paciente,
-                Cedula = request.Cedula,
-                Telefono = request.Telefono,
-                FechaNacimiento = request.FechaNacimiento,
-                TipoSeguro = request.TipoSeguro,
-                NumeroSeguro = request.NumeroSeguro
-            };
-
-            _validator.Validar(paciente);
-            await _pacienteRepository.AddAsync(paciente);
-            return PacienteMapper.ToResponse(paciente);
+                    _validator.Validar(paciente);
+                    await _pacienteRepository.AddAsync(paciente);
+                    return PacienteMapper.ToResponse(paciente);
+                },
+                $"Email: {request.Email}");
         }
 
         // Obtiene un paciente por su ID, lanzando una excepcion si no se encuentra o esta desactivado.
         public async Task<PacienteResponse> GetByIdAsync(int id)
         {
-            var paciente = await _pacienteRepository.GetByIdAsync(id);
-            return PacienteMapper.ToResponse(paciente);
+            return await ExecuteOperacionAsync(
+                "GetPacienteById",
+                async () =>
+                {
+                    var paciente = await _pacienteRepository.GetByIdAsync(id);
+                    return PacienteMapper.ToResponse(paciente);
+                },
+                $"PacienteId: {id}");
         }
 
         // Obtiene todos los pacientes, incluyendo solo los activos y mapeando a DTOs de respuesta.
         public async Task<IEnumerable<PacienteResponse>> GetAllAsync()
         {
-            var pacientes = await _pacienteRepository.GetAllAsync();
-            return pacientes.Select(PacienteMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetAllPacientes",
+                async () =>
+                {
+                    var pacientes = await _pacienteRepository.GetAllAsync();
+                    return pacientes.Select(PacienteMapper.ToResponse);
+                });
         }
 
         // Obtiene un paciente por su cedula, lanzando una excepcion si no se encuentra o esta desactivado.
         public async Task<PacienteResponse> GetByCedulaAsync(string cedula)
         {
-            var paciente = await _pacienteRepository.GetByCedulaAsync(cedula);
-            return PacienteMapper.ToResponse(paciente);
+            return await ExecuteOperacionAsync(
+                "GetPacienteByCedula",
+                async () =>
+                {
+                    var paciente = await _pacienteRepository.GetByCedulaAsync(cedula);
+                    return PacienteMapper.ToResponse(paciente);
+                },
+                $"Cedula: {cedula}");
         }
 
         // Actualiza los datos de un paciente existente, validando los cambios y aplicando la logica de negocio antes de guardarlo en el repositorio.
         public async Task ActualizarAsync(ActualizarPacienteRequest request)
         {
-            LogOperacion("ActualizarPaciente", $"Id: {request.Id}");
-            var paciente = await _pacienteRepository.GetByIdAsync(request.Id);
-            PacienteMapper.UpdateEntity(paciente, request);
-            _validator.Validar(paciente);
-            await _pacienteRepository.UpdateAsync(paciente);
+            await ExecuteOperacionAsync(
+                "ActualizarPaciente",
+                async () =>
+                {
+                    var paciente = await _pacienteRepository.GetByIdAsync(request.Id);
+                    PacienteMapper.UpdateEntity(paciente, request);
+                    _validator.Validar(paciente);
+                    await _pacienteRepository.UpdateAsync(paciente);
+                },
+                $"Id: {request.Id}");
         }
 
         // Desactiva un paciente, aplicando la logica de negocio antes de guardarlo en el repositorio.
         public async Task DesactivarAsync(int id)
         {
-            LogAdvertencia("DesactivarPaciente", $"Id: {id}");
-            var paciente = await _pacienteRepository.GetByIdAsync(id);
-            paciente.Desactivar();
-            await _pacienteRepository.UpdateAsync(paciente);
+            await ExecuteOperacionAsync(
+                "DesactivarPaciente",
+                async () =>
+                {
+                    var paciente = await _pacienteRepository.GetByIdAsync(id);
+                    paciente.Desactivar();
+                    await _pacienteRepository.UpdateAsync(paciente);
+                },
+                $"Id: {id}");
         }
 
         // Activa un paciente, aplicando la logica de negocio antes de guardarlo en el repositorio.
         public async Task ActivarAsync(int id)
         {
-            LogOperacion("ActivarPaciente", $"Id: {id}");
-            var paciente = await _pacienteRepository.GetByIdAsync(id);
-            paciente.Activar();
-            await _pacienteRepository.UpdateAsync(paciente);
+            await ExecuteOperacionAsync(
+                "ActivarPaciente",
+                async () =>
+                {
+                    var paciente = await _pacienteRepository.GetByIdAsync(id);
+                    paciente.Activar();
+                    await _pacienteRepository.UpdateAsync(paciente);
+                },
+                $"Id: {id}");
         }
     }
 }

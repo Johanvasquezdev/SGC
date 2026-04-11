@@ -20,21 +20,33 @@ namespace SGC.Infraestructure.Email
         private async Task EnviarAsync(string destinatario,
             string asunto, string cuerpo)
         {
+            var fromAddress = _config["Email:From"]
+                ?? throw new InvalidOperationException("Email:From no configurado");
+            var emailHost = _config["Email:Host"]
+                ?? throw new InvalidOperationException("Email:Host no configurado");
+            var emailPortRaw = _config["Email:Port"];
+            if (!int.TryParse(emailPortRaw, out var emailPort))
+                throw new InvalidOperationException("Email:Port no es válido");
+            var emailUsername = _config["Email:Username"]
+                ?? throw new InvalidOperationException("Email:Username no configurado");
+            var emailPassword = _config["Email:Password"]
+                ?? throw new InvalidOperationException("Email:Password no configurado");
+
             var mensaje = new MimeMessage();
             mensaje.From.Add(MailboxAddress.Parse(
-                _config["Email:From"]));
+                fromAddress));
             mensaje.To.Add(MailboxAddress.Parse(destinatario));
             mensaje.Subject = asunto;
             mensaje.Body = new TextPart("html") { Text = cuerpo };
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(
-                _config["Email:Host"],
-                int.Parse(_config["Email:Port"]!),
+                emailHost,
+                emailPort,
                 SecureSocketOptions.StartTls);
             await smtp.AuthenticateAsync(
-                _config["Email:Username"],
-                _config["Email:Password"]);
+                emailUsername,
+                emailPassword);
             await smtp.SendAsync(mensaje);
             await smtp.DisconnectAsync(true);
         }

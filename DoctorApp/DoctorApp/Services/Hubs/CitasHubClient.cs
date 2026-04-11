@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Diagnostics;
+using System.Text.Json;
 using DoctorApp.Security;
 using DoctorApp.Exceptions;
 
@@ -59,36 +60,42 @@ namespace DoctorApp.Services.Hubs
                     .Build();
 
                 // Registrar handlers de eventos del servidor
-                _hubConnection.On<int, string, string, string>("NuevaEnCita", 
-                    (citaId, pacienteNombre, fechaHora, motivo) =>
+                _hubConnection.On<object>("NuevaCita",
+                    payload =>
                     {
+                        var citaId = TryReadInt(payload, "id") ?? TryReadInt(payload, "Id") ?? 0;
+                        var fecha = TryReadDateTime(payload, "fechaHora") ?? TryReadDateTime(payload, "FechaHora");
+                        var pacienteNombre = TryReadString(payload, "pacienteNombre") ?? TryReadString(payload, "PacienteNombre") ?? string.Empty;
+
                         OnNuevaEnCita?.Invoke(this, new CitaHubEventArgs
                         {
                             CitaId = citaId,
                             PacienteNombre = pacienteNombre,
                             Estado = "Nueva",
-                            FechaHora = DateTime.TryParse(fechaHora, out var dt) ? dt : DateTime.UtcNow
+                            FechaHora = fecha ?? DateTime.UtcNow
                         });
                     });
 
-                _hubConnection.On<int, string>("CitaActualizada", 
-                    (citaId, nuevoEstado) =>
+                _hubConnection.On<object>("EstadoCitaActualizado",
+                    payload =>
                     {
+                        var citaId = TryReadInt(payload, "id") ?? TryReadInt(payload, "Id") ?? 0;
+                        var estado = TryReadString(payload, "estado") ?? TryReadString(payload, "Estado") ?? "Actualizada";
+
                         OnCitaActualizada?.Invoke(this, new CitaHubEventArgs
                         {
                             CitaId = citaId,
-                            Estado = nuevoEstado
+                            Estado = estado
                         });
-                    });
 
-                _hubConnection.On<int>("CitaConfirmada", 
-                    (citaId) =>
-                    {
-                        OnCitaConfirmada?.Invoke(this, new CitaHubEventArgs
+                        if (string.Equals(estado, "Confirmada", StringComparison.OrdinalIgnoreCase))
                         {
-                            CitaId = citaId,
-                            Estado = "Confirmada"
-                        });
+                            OnCitaConfirmada?.Invoke(this, new CitaHubEventArgs
+                            {
+                                CitaId = citaId,
+                                Estado = "Confirmada"
+                            });
+                        }
                     });
 
                 // Handlers de reconexión
@@ -142,6 +149,47 @@ namespace DoctorApp.Services.Hubs
             {
                 Debug.WriteLine($"[CitasHubClient] Error during disconnect: {ex.Message}");
             }
+        }
+
+        private static JsonElement? AsObjectElement(object payload)
+        {
+            if (payload is JsonElement element && element.ValueKind == JsonValueKind.Object)
+                return element;
+
+            return null;
+        }
+
+        private static int? TryReadInt(object payload, string propertyName)
+        {
+            var obj = AsObjectElement(payload);
+            if (obj == null || !obj.Value.TryGetProperty(propertyName, out var property))
+                return null;
+
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var number))
+                return number;
+
+            if (property.ValueKind == JsonValueKind.String && int.TryParse(property.GetString(), out var parsed))
+                return parsed;
+
+            return null;
+        }
+
+        private static string? TryReadString(object payload, string propertyName)
+        {
+            var obj = AsObjectElement(payload);
+            if (obj == null || !obj.Value.TryGetProperty(propertyName, out var property))
+                return null;
+
+            if (property.ValueKind == JsonValueKind.String)
+                return property.GetString();
+
+            return property.ToString();
+        }
+
+        private static DateTime? TryReadDateTime(object payload, string propertyName)
+        {
+            var raw = TryReadString(payload, propertyName);
+            return DateTime.TryParse(raw, out var parsed) ? parsed : null;
         }
     }
 }

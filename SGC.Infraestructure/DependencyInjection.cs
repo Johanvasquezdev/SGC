@@ -37,10 +37,13 @@ namespace SGC.Infraestructure
             services.AddHttpClient<IChatbotService, AnthropicChatService>();
 
             // Redis
+            var redisConnection = config.GetConnectionString("Redis");
+            if (string.IsNullOrWhiteSpace(redisConnection))
+                throw new InvalidOperationException("ConnectionStrings:Redis no configurado");
+
             services.AddSingleton<IConnectionMultiplexer>(_ =>
                 ConnectionMultiplexer.Connect(
-                    config.GetConnectionString("Redis")
-                    ?? "localhost:6379"));
+                    redisConnection));
             services.AddScoped<ICacheService, RedisCacheService>();
 
             // SignalR

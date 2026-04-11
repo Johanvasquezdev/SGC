@@ -8,6 +8,12 @@ using SGC.Infraestructure.SignalR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException("Configuration key 'Jwt:Key' is required.");
+}
+
 // ============================================================
 // 1. Dependencias del sistema
 // ============================================================
@@ -17,7 +23,7 @@ builder.Services.AddSGCDependencies(builder.Configuration);
 // 2. JWT Authentication
 // ============================================================
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+var key = Encoding.UTF8.GetBytes(jwtKey);
 
 builder.Services.AddAuthentication(options =>
 {

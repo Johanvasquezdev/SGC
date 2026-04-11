@@ -7,12 +7,21 @@ namespace SGC.Infraestructure.Pagos
     // Servicio de pago utilizando Stripe para procesar pagos de citas médicas
     public class StripePaymentService : IPaymentService
     {
+        private readonly PaymentIntentService _paymentIntentService;
+        private readonly RefundService _refundService;
+
         public StripePaymentService(IConfiguration config)
         {
-            StripeConfiguration.ApiKey = config["Stripe:SecretKey"];
+            var stripeSecretKey = config["Stripe:SecretKey"];
+            if (string.IsNullOrWhiteSpace(stripeSecretKey))
+                throw new InvalidOperationException("Stripe:SecretKey no configurado");
+
+            StripeConfiguration.ApiKey = stripeSecretKey;
+            _paymentIntentService = new PaymentIntentService();
+            _refundService = new RefundService();
         }
 
-        // Método para crear un intento de pago en Stripe y obtener el client secret para completar el pago en el frontend
+        // Método para crear un intento de pago en Stripe y devolver el PaymentIntentId para persistencia local
         public async Task<string> CrearIntentoPagoAsync(
             decimal monto, string moneda, int citaId)
         {
@@ -25,17 +34,15 @@ namespace SGC.Infraestructure.Pagos
                     { "citaId", citaId.ToString() }
                 }
             };
-            var service = new PaymentIntentService();
-            var intent = await service.CreateAsync(options);
-            return intent.ClientSecret;
+            var intent = await _paymentIntentService.CreateAsync(options);
+            return intent.Id;
         }
 
         // Método para confirmar el estado del pago después de que el cliente complete el proceso de pago en el frontend
         public async Task<bool> ConfirmarPagoAsync(
             string paymentIntentId)
         {
-            var service = new PaymentIntentService();
-            var intent = await service.GetAsync(paymentIntentId);
+            var intent = await _paymentIntentService.GetAsync(paymentIntentId);
             return intent.Status == "succeeded";
         }
 
@@ -47,8 +54,7 @@ namespace SGC.Infraestructure.Pagos
             {
                 PaymentIntent = paymentIntentId
             };
-            var service = new RefundService();
-            var refund = await service.CreateAsync(options);
+            var refund = await _refundService.CreateAsync(options);
             return refund.Status == "succeeded";
         }
     }

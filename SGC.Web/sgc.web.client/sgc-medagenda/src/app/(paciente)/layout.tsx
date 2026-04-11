@@ -1,6 +1,4 @@
 "use client";
-
-import { useMemo } from "react";
 import { Bell, Search } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -8,11 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function PacienteLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-
-  const initials = useMemo(() => {
-    if (!user?.nombre) return "P";
-    return user.nombre.trim().charAt(0).toUpperCase();
-  }, [user?.nombre]);
+  const initials = user?.nombre?.trim().charAt(0).toUpperCase() || "P";
 
   return (
     <div className="min-h-screen bg-background text-foreground">

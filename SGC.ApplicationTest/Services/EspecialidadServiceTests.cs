@@ -2,7 +2,9 @@ using Moq;
 using SGC.Application.DTOs.Catalog;
 using SGC.Application.Services;
 using SGC.Domain.Entities.Catalog;
+using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
+using SGC.Domain.Validators;
 using Xunit;
 
 namespace SGC.ApplicationTest.Services
@@ -11,12 +13,17 @@ namespace SGC.ApplicationTest.Services
     public class EspecialidadServiceTests
     {
         private readonly Mock<IEspecialidadRepository> _especialidadRepoMock;
+        private readonly Mock<ISGCLogger> _loggerMock;
         private readonly EspecialidadService _especialidadService;
 
         public EspecialidadServiceTests()
         {
             _especialidadRepoMock = new Mock<IEspecialidadRepository>();
-            _especialidadService = new EspecialidadService(_especialidadRepoMock.Object);
+            _loggerMock = new Mock<ISGCLogger>();
+            _especialidadService = new EspecialidadService(
+                _especialidadRepoMock.Object,
+                new EspecialidadValidator(),
+                _loggerMock.Object);
         }
 
         [Fact]

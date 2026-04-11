@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Diagnostics;
+using System.Text.Json;
 using DoctorApp.Security;
 using DoctorApp.Exceptions;
 
@@ -59,37 +60,28 @@ namespace DoctorApp.Services.Hubs
                     .Build();
 
                 // Registrar handlers de eventos del servidor
-                _hubConnection.On<int, string, string, string, int, bool>("DisponibilidadCreada", 
-                    (dispId, dia, horaInicio, horaFin, duracion, activo) =>
+                // El backend actual publica un único evento con (medicoId, disponibilidadDto)
+                _hubConnection.On<int, object>("DisponibilidadActualizada",
+                    (medicoId, payload) =>
                     {
-                        OnDisponibilidadCreada?.Invoke(this, new DisponibilidadHubEventArgs
+                        var args = new DisponibilidadHubEventArgs
                         {
-                            DisponibilidadId = dispId,
-                            DiaSemana = dia,
-                            HoraInicio = TimeSpan.TryParse(horaInicio, out var hi) ? hi : TimeSpan.Zero,
-                            HoraFin = TimeSpan.TryParse(horaFin, out var hf) ? hf : TimeSpan.Zero,
-                            DuracionMinutos = duracion,
-                            Activo = activo
-                        });
-                    });
+                            DisponibilidadId = TryReadInt(payload, "id") ?? TryReadInt(payload, "Id") ?? 0,
+                            DiaSemana = TryReadString(payload, "diaSemana") ?? TryReadString(payload, "DiaSemana") ?? string.Empty,
+                            HoraInicio = TryReadTimeSpan(payload, "horaInicio") ?? TryReadTimeSpan(payload, "HoraInicio") ?? TimeSpan.Zero,
+                            HoraFin = TryReadTimeSpan(payload, "horaFin") ?? TryReadTimeSpan(payload, "HoraFin") ?? TimeSpan.Zero,
+                            DuracionMinutos = TryReadInt(payload, "duracionMinutos") ?? TryReadInt(payload, "DuracionMinutos") ?? 0,
+                            Activo = TryReadBool(payload, "activo") ?? TryReadBool(payload, "Activo") ?? true,
+                            CitasAsignadas = TryReadInt(payload, "citasAsignadas") ?? TryReadInt(payload, "CitasAsignadas") ?? 0,
+                            Timestamp = DateTime.UtcNow
+                        };
 
-                _hubConnection.On<int, bool>("DisponibilidadActualizada", 
-                    (dispId, activo) =>
-                    {
-                        OnDisponibilidadActualizada?.Invoke(this, new DisponibilidadHubEventArgs
+                        // Mantenemos compatibilidad con los eventos existentes del cliente.
+                        OnDisponibilidadActualizada?.Invoke(this, args);
+                        if (args.DisponibilidadId == 0)
                         {
-                            DisponibilidadId = dispId,
-                            Activo = activo
-                        });
-                    });
-
-                _hubConnection.On<int>("DisponibilidadEliminada", 
-                    (dispId) =>
-                    {
-                        OnDisponibilidadEliminada?.Invoke(this, new DisponibilidadHubEventArgs
-                        {
-                            DisponibilidadId = dispId
-                        });
+                            Debug.WriteLine($"[DisponibilidadHubClient] Evento recibido para medico {medicoId} sin id de disponibilidad");
+                        }
                     });
 
                 // Handlers de reconexión
@@ -143,6 +135,65 @@ namespace DoctorApp.Services.Hubs
             {
                 Debug.WriteLine($"[DisponibilidadHubClient] Error during disconnect: {ex.Message}");
             }
+        }
+
+        private static JsonElement? AsObjectElement(object payload)
+        {
+            if (payload is JsonElement element && element.ValueKind == JsonValueKind.Object)
+                return element;
+
+            return null;
+        }
+
+        private static int? TryReadInt(object payload, string propertyName)
+        {
+            var obj = AsObjectElement(payload);
+            if (obj == null || !obj.Value.TryGetProperty(propertyName, out var property))
+                return null;
+
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var number))
+                return number;
+
+            if (property.ValueKind == JsonValueKind.String && int.TryParse(property.GetString(), out var parsed))
+                return parsed;
+
+            return null;
+        }
+
+        private static string? TryReadString(object payload, string propertyName)
+        {
+            var obj = AsObjectElement(payload);
+            if (obj == null || !obj.Value.TryGetProperty(propertyName, out var property))
+                return null;
+
+            if (property.ValueKind == JsonValueKind.String)
+                return property.GetString();
+
+            return property.ToString();
+        }
+
+        private static bool? TryReadBool(object payload, string propertyName)
+        {
+            var obj = AsObjectElement(payload);
+            if (obj == null || !obj.Value.TryGetProperty(propertyName, out var property))
+                return null;
+
+            if (property.ValueKind == JsonValueKind.True)
+                return true;
+
+            if (property.ValueKind == JsonValueKind.False)
+                return false;
+
+            if (property.ValueKind == JsonValueKind.String && bool.TryParse(property.GetString(), out var parsed))
+                return parsed;
+
+            return null;
+        }
+
+        private static TimeSpan? TryReadTimeSpan(object payload, string propertyName)
+        {
+            var raw = TryReadString(payload, propertyName);
+            return TimeSpan.TryParse(raw, out var parsed) ? parsed : null;
         }
     }
 }

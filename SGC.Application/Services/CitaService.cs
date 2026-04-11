@@ -35,143 +35,203 @@ namespace SGC.Application.Services
         // Agenda una nueva cita validando disponibilidad y conflictos de horario
         public async Task<CitaResponse> AgendarAsync(CrearCitaRequest request)
         {
-            LogOperacion("AgendarCita",
+            return await ExecuteOperacionAsync(
+                "AgendarCita",
+                async () =>
+                {
+                    var medico = await _medicoRepository
+                        .GetByIdWithHorariosAsync(request.MedicoId);
+
+                    var cita = CitaMapper.ToEntity(request);
+                    _domainService.ValidarAgendamiento(cita, medico);
+
+                    var existeConflicto = await _citaRepository
+                        .ExisteConflictoAsync(request.MedicoId, request.FechaHora);
+                    if (existeConflicto)
+                    {
+                        throw new Domain.Exceptions.CitaConflictoException(
+                            "Ya existe una cita programada en ese horario.");
+                    }
+
+                    await _citaRepository.AddAsync(cita);
+                    return CitaMapper.ToResponse(cita);
+                },
                 $"Paciente: {request.PacienteId}, Medico: {request.MedicoId}");
-
-            // Carga el medico con sus horarios para validar disponibilidad
-            var medico = await _medicoRepository
-                .GetByIdWithHorariosAsync(request.MedicoId);
-
-            var cita = CitaMapper.ToEntity(request);
-
-            // Valida reglas de dominio — disponibilidad y estado del medico
-            _domainService.ValidarAgendamiento(cita, medico);
-
-            // Verifica que no exista otra cita en el mismo horario
-            var existeConflicto = await _citaRepository
-                .ExisteConflictoAsync(request.MedicoId, request.FechaHora);
-            if (existeConflicto)
-                throw new Domain.Exceptions.CitaConflictoException(
-                    "Ya existe una cita programada en ese horario.");
-
-            await _citaRepository.AddAsync(cita);
-            return CitaMapper.ToResponse(cita);
         }
 
         // Obtiene una cita por su identificador
         public async Task<CitaResponse> GetByIdAsync(int id)
         {
-            var cita = await _citaRepository.GetByIdAsync(id);
-            return CitaMapper.ToResponse(cita);
+            return await ExecuteOperacionAsync(
+                "GetCitaById",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(id);
+                    return CitaMapper.ToResponse(cita);
+                },
+                $"CitaId: {id}");
         }
 
         // Obtiene todas las citas del sistema
         public async Task<IEnumerable<CitaResponse>> GetAllAsync()
         {
-            var citas = await _citaRepository.GetAllAsync();
-            return citas.Select(CitaMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetAllCitas",
+                async () =>
+                {
+                    var citas = await _citaRepository.GetAllAsync();
+                    return citas.Select(CitaMapper.ToResponse);
+                });
         }
 
         // Obtiene todas las citas de un paciente especifico
         public async Task<IEnumerable<CitaResponse>> GetByPacienteAsync(int pacienteId)
         {
-            var citas = await _citaRepository.GetByPacienteIdAsync(pacienteId);
-            return citas.Select(CitaMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetCitasByPaciente",
+                async () =>
+                {
+                    var citas = await _citaRepository.GetByPacienteIdAsync(pacienteId);
+                    return citas.Select(CitaMapper.ToResponse);
+                },
+                $"PacienteId: {pacienteId}");
         }
 
         // Obtiene todas las citas de un medico especifico
         public async Task<IEnumerable<CitaResponse>> GetByMedicoAsync(int medicoId)
         {
-            var citas = await _citaRepository.GetByMedicoIdAsync(medicoId);
-            return citas.Select(CitaMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetCitasByMedico",
+                async () =>
+                {
+                    var citas = await _citaRepository.GetByMedicoIdAsync(medicoId);
+                    return citas.Select(CitaMapper.ToResponse);
+                },
+                $"MedicoId: {medicoId}");
         }
 
         // Obtiene todas las citas de una fecha especifica
         public async Task<IEnumerable<CitaResponse>> GetByFechaAsync(DateTime fecha)
         {
-            var citas = await _citaRepository.GetByFechaAsync(fecha);
-            return citas.Select(CitaMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetCitasByFecha",
+                async () =>
+                {
+                    var citas = await _citaRepository.GetByFechaAsync(fecha);
+                    return citas.Select(CitaMapper.ToResponse);
+                },
+                $"Fecha: {fecha:O}");
         }
 
         // Confirma una cita cambiando su estado a Confirmada
         public async Task ConfirmarAsync(int citaId)
         {
-            LogOperacion("ConfirmarCita", $"CitaId: {citaId}");
-            var cita = await _citaRepository.GetByIdAsync(citaId);
-            cita.Confirmar();
-            await _citaRepository.UpdateAsync(cita);
+            await ExecuteOperacionAsync(
+                "ConfirmarCita",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(citaId);
+                    cita.Confirmar();
+                    await _citaRepository.UpdateAsync(cita);
+                },
+                $"CitaId: {citaId}");
         }
 
         // Cancela una cita registrando el motivo
         public async Task CancelarAsync(int citaId, string motivo)
         {
-            LogAdvertencia("CancelarCita",
+            await ExecuteOperacionAsync(
+                "CancelarCita",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(citaId);
+                    cita.Cancelar(motivo);
+                    await _citaRepository.UpdateAsync(cita);
+                },
                 $"CitaId: {citaId}, Motivo: {motivo}");
-            var cita = await _citaRepository.GetByIdAsync(citaId);
-            cita.Cancelar(motivo);
-            await _citaRepository.UpdateAsync(cita);
         }
 
         // Rechaza una cita solicitada registrando el motivo
         public async Task RechazarAsync(int citaId, string motivo)
         {
-            LogAdvertencia("RechazarCita",
+            await ExecuteOperacionAsync(
+                "RechazarCita",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(citaId);
+                    cita.Rechazar(motivo);
+                    await _citaRepository.UpdateAsync(cita);
+                },
                 $"CitaId: {citaId}, Motivo: {motivo}");
-            var cita = await _citaRepository.GetByIdAsync(citaId);
-            cita.Rechazar(motivo);
-            await _citaRepository.UpdateAsync(cita);
         }
 
         // Reprograma una cita a una nueva fecha validando disponibilidad
         public async Task ReprogramarAsync(int citaId, DateTime nuevaFecha)
         {
-            LogOperacion("ReprogramarCita",
-                $"CitaId: {citaId}, NuevaFecha: {nuevaFecha}");
+            await ExecuteOperacionAsync(
+                "ReprogramarCita",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(citaId);
+                    var medico = await _medicoRepository
+                        .GetByIdWithHorariosAsync(cita.MedicoId);
 
-            var cita = await _citaRepository.GetByIdAsync(citaId);
+                    _domainService.ValidarReprogramacion(cita, medico, nuevaFecha);
 
-            // Carga el medico con horarios para validar nueva disponibilidad
-            var medico = await _medicoRepository
-                .GetByIdWithHorariosAsync(cita.MedicoId);
+                    var existeConflicto = await _citaRepository
+                        .ExisteConflictoAsync(cita.MedicoId, nuevaFecha);
+                    if (existeConflicto)
+                    {
+                        throw new Domain.Exceptions.CitaConflictoException(
+                            "Ya existe una cita en ese horario.");
+                    }
 
-            _domainService.ValidarReprogramacion(cita, medico, nuevaFecha);
-
-            // Verifica que no haya conflicto en la nueva fecha
-            var existeConflicto = await _citaRepository
-                .ExisteConflictoAsync(cita.MedicoId, nuevaFecha);
-            if (existeConflicto)
-                throw new Domain.Exceptions.CitaConflictoException(
-                    "Ya existe una cita en ese horario.");
-
-            cita.Reprogramar(nuevaFecha);
-            await _citaRepository.UpdateAsync(cita);
+                    cita.Reprogramar(nuevaFecha);
+                    await _citaRepository.UpdateAsync(cita);
+                },
+                $"CitaId: {citaId}, NuevaFecha: {nuevaFecha:O}");
         }
 
         // Marca una cita como no asistida por el paciente
         public async Task MarcarNoAsistioAsync(int citaId)
         {
-            LogAdvertencia("MarcarNoAsistio", $"CitaId: {citaId}");
-            var cita = await _citaRepository.GetByIdAsync(citaId);
-            cita.MarcarNoAsistio();
-            await _citaRepository.UpdateAsync(cita);
+            await ExecuteOperacionAsync(
+                "MarcarNoAsistio",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(citaId);
+                    cita.MarcarNoAsistio();
+                    await _citaRepository.UpdateAsync(cita);
+                },
+                $"CitaId: {citaId}");
         }
 
         // Inicia la consulta medica de una cita confirmada
         public async Task IniciarConsultaAsync(int citaId)
         {
-            LogOperacion("IniciarConsulta", $"CitaId: {citaId}");
-            var cita = await _citaRepository.GetByIdAsync(citaId);
-            cita.IniciarConsulta();
-            await _citaRepository.UpdateAsync(cita);
+            await ExecuteOperacionAsync(
+                "IniciarConsulta",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(citaId);
+                    cita.IniciarConsulta();
+                    await _citaRepository.UpdateAsync(cita);
+                },
+                $"CitaId: {citaId}");
         }
 
         // Completa una cita que esta en progreso
         public async Task CompletarAsync(int citaId)
         {
-            LogOperacion("CompletarCita", $"CitaId: {citaId}");
-            var cita = await _citaRepository.GetByIdAsync(citaId);
-            cita.Completar();
-            await _citaRepository.UpdateAsync(cita);
+            await ExecuteOperacionAsync(
+                "CompletarCita",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(citaId);
+                    cita.Completar();
+                    await _citaRepository.UpdateAsync(cita);
+                },
+                $"CitaId: {citaId}");
         }
     }
 }

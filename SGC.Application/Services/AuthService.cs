@@ -2,6 +2,7 @@
 using SGC.Application.Contracts;
 using SGC.Application.DTOs.Security;
 using SGC.Application.Services.Base;
+using SGC.Domain.Exceptions;
 using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
 using System;
@@ -27,50 +28,46 @@ namespace SGC.Application.Services
         // Metodo para autenticar a un usuario y generar un token JWT
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
-            LogOperacion("Login", $"Email: {request.Email}");
+            return await ExecuteOperacionAsync(
+                "Login",
+                async () =>
+                {
+                    var usuario = await _usuarioRepository
+                        .GetByEmailAsync(request.Email);
 
-            var usuario = await _usuarioRepository
-                .GetByEmailAsync(request.Email);
+                    if (!usuario.Activo)
+                        throw new UnauthorizedAccessException(
+                            "El usuario está desactivado.");
 
-            // Validaciones de seguridad
-            if (usuario == null)
-                throw new UnauthorizedAccessException(
-                    "Credenciales incorrectas.");
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(usuario.PasswordHash) ||
+                            !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
+                            throw new UnauthorizedAccessException(
+                                "Credenciales incorrectas.");
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new ValidationDomainException(
+                            "Credenciales incorrectas.", ex);
+                    }
 
-            if (!usuario.Activo)
-                throw new UnauthorizedAccessException(
-                    "El usuario está desactivado.");
+                    var token = _tokenService.GenerarToken(usuario);
+                    LogOperacion("LoginExitoso", $"UsuarioId: {usuario.Id}");
 
-            // Verifica la contraseña contra el hash almacenado.
-            try
-            {
-                if (string.IsNullOrWhiteSpace(usuario.PasswordHash) ||
-                    !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
-                    throw new UnauthorizedAccessException(
-                        "Credenciales incorrectas.");
-            }
-            catch (UnauthorizedAccessException)
-            {
-                throw;
-            }
-            catch
-            {
-                // Hash inválido o corrupto: tratar como credenciales incorrectas.
-                throw new UnauthorizedAccessException(
-                    "Credenciales incorrectas.");
-            }
-
-            var token = _tokenService.GenerarToken(usuario);
-
-            LogOperacion("LoginExitoso", $"UsuarioId: {usuario.Id}");
-
-            return new LoginResponse
-            {
-                Token = token,
-                NombreUsuario = usuario.Nombre,
-                Rol = usuario.Rol.ToString(),
-                Expiracion = DateTime.UtcNow.AddMinutes(60)
-            };
+                    return new LoginResponse
+                    {
+                        Token = token,
+                        NombreUsuario = usuario.Nombre,
+                        Rol = usuario.Rol.ToString(),
+                        Expiracion = DateTime.UtcNow.AddMinutes(60)
+                    };
+                },
+                $"Email: {request.Email}");
         }
     }
 }

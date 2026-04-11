@@ -32,54 +32,85 @@ namespace SGC.Application.Services
         public async Task<ProveedorSaludResponse> CrearAsync(
             ProveedorSaludRequest request)
         {
-            LogOperacion("CrearProveedor", $"Nombre: {request.Nombre}");
-            var proveedor = ProveedorSaludMapper.ToEntity(request);
-            _validator.Validar(proveedor);
-            await _proveedorRepository.AddAsync(proveedor);
-            return ProveedorSaludMapper.ToResponse(proveedor);
+            return await ExecuteOperacionAsync(
+                "CrearProveedor",
+                async () =>
+                {
+                    var proveedor = ProveedorSaludMapper.ToEntity(request);
+                    _validator.Validar(proveedor);
+                    await _proveedorRepository.AddAsync(proveedor);
+                    return ProveedorSaludMapper.ToResponse(proveedor);
+                },
+                $"Nombre: {request.Nombre}");
         }
 
         // Obtiene un proveedor por su ID
         public async Task<ProveedorSaludResponse> GetByIdAsync(int id)
         {
-            var proveedor = await _proveedorRepository.GetByIdAsync(id);
-            return ProveedorSaludMapper.ToResponse(proveedor);
+            return await ExecuteOperacionAsync(
+                "GetProveedorById",
+                async () =>
+                {
+                    var proveedor = await _proveedorRepository.GetByIdAsync(id);
+                    return ProveedorSaludMapper.ToResponse(proveedor);
+                },
+                $"ProveedorId: {id}");
         }
 
         // Obtiene todos los proveedores del sistema
         public async Task<IEnumerable<ProveedorSaludResponse>> GetAllAsync()
         {
-            var proveedores = await _proveedorRepository.GetAllAsync();
-            return proveedores.Select(ProveedorSaludMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetAllProveedores",
+                async () =>
+                {
+                    var proveedores = await _proveedorRepository.GetAllAsync();
+                    return proveedores.Select(ProveedorSaludMapper.ToResponse);
+                });
         }
 
         // Obtiene solo los proveedores activos
         public async Task<IEnumerable<ProveedorSaludResponse>> GetActivosAsync()
         {
-            var proveedores = await _proveedorRepository.GetActivosAsync();
-            return proveedores.Select(ProveedorSaludMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetProveedoresActivos",
+                async () =>
+                {
+                    var proveedores = await _proveedorRepository.GetActivosAsync();
+                    return proveedores.Select(ProveedorSaludMapper.ToResponse);
+                });
         }
 
         // Actualiza los datos de un proveedor existente
         public async Task ActualizarAsync(int id, ProveedorSaludRequest request)
         {
-            LogOperacion("ActualizarProveedor", $"Id: {id}");
-            var proveedor = await _proveedorRepository.GetByIdAsync(id);
-            proveedor.Nombre = request.Nombre;
-            proveedor.Tipo = request.Tipo;
-            proveedor.Telefono = request.Telefono;
-            proveedor.Email = request.Email;
-            _validator.Validar(proveedor);
-            await _proveedorRepository.UpdateAsync(proveedor);
+            await ExecuteOperacionAsync(
+                "ActualizarProveedor",
+                async () =>
+                {
+                    var proveedor = await _proveedorRepository.GetByIdAsync(id);
+                    proveedor.Nombre = request.Nombre;
+                    proveedor.Tipo = request.Tipo;
+                    proveedor.Telefono = request.Telefono;
+                    proveedor.Email = request.Email;
+                    _validator.Validar(proveedor);
+                    await _proveedorRepository.UpdateAsync(proveedor);
+                },
+                $"Id: {id}");
         }
 
-        // Desactiva un proveedor usando borrado lógico
+        // Desactiva un proveedor usando borrado lï¿½gico
         public async Task EliminarAsync(int id)
         {
-            LogAdvertencia("EliminarProveedor", $"Id: {id}");
-            var proveedor = await _proveedorRepository.GetByIdAsync(id);
-            proveedor.Activo = false;
-            await _proveedorRepository.UpdateAsync(proveedor);
+            await ExecuteOperacionAsync(
+                "EliminarProveedor",
+                async () =>
+                {
+                    var proveedor = await _proveedorRepository.GetByIdAsync(id);
+                    proveedor.Activo = false;
+                    await _proveedorRepository.UpdateAsync(proveedor);
+                },
+                $"Id: {id}");
         }
     }
 }

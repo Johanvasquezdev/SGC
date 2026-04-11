@@ -4,36 +4,38 @@ import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem("theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return true;
+  });
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
-    if (stored === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDark(true);
-    } else if (stored === "light") {
-      document.documentElement.classList.remove("dark");
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDark(true);
+    const nextIsDark = stored ? stored === "dark" : true;
+
+    document.documentElement.classList.toggle("dark", nextIsDark);
+    document.body.classList.toggle("dark", nextIsDark);
+    document.documentElement.style.colorScheme = nextIsDark ? "dark" : "light";
+
+    if (!stored) {
+      localStorage.setItem("theme", nextIsDark ? "dark" : "light");
     }
 
     const onStorage = () => {
       const stored = localStorage.getItem("theme");
-      if (stored === "dark") {
-        document.documentElement.classList.add("dark");
-        setIsDark(true);
-      } else if (stored === "light") {
-        document.documentElement.classList.remove("dark");
-        setIsDark(false);
-      }
+      const next = stored === "dark";
+      document.documentElement.classList.toggle("dark", next);
+      document.body.classList.toggle("dark", next);
+      document.documentElement.style.colorScheme = next ? "dark" : "light";
+      queueMicrotask(() => setIsDark(next));
     };
 
     const onThemeChanged = () => {
       const active = document.documentElement.classList.contains("dark");
-      setIsDark(active);
+      queueMicrotask(() => setIsDark(active));
     };
 
     window.addEventListener("storage", onStorage);

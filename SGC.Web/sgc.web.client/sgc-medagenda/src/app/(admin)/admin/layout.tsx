@@ -1,6 +1,4 @@
 "use client";
-
-import { useMemo } from "react";
 import { Bell, Search } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -8,11 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-
-  const initials = useMemo(() => {
-    if (!user?.nombre) return "A";
-    return user.nombre.trim().charAt(0).toUpperCase();
-  }, [user?.nombre]);
+  const initials = user?.nombre?.trim().charAt(0).toUpperCase() || "A";
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">

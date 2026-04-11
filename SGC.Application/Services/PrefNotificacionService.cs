@@ -29,42 +29,53 @@ namespace SGC.Application.Services
         public async Task<PrefNotificacionResponse> GetByUsuarioAsync(
             int usuarioId)
         {
-            var pref = await _prefRepository.GetByUsuarioIdAsync(usuarioId);
-            return MapToResponse(pref);
+            return await ExecuteOperacionAsync(
+                "GetPrefNotificacionByUsuario",
+                async () =>
+                {
+                    var pref = await _prefRepository.GetByUsuarioIdAsync(usuarioId);
+                    return MapToResponse(pref);
+                },
+                $"UsuarioId: {usuarioId}");
         }
 
         // Guarda o actualiza las preferencias de notificacion de un usuario
         public async Task<PrefNotificacionResponse> GuardarAsync(
             PrefNotificacionRequest request)
         {
-            LogOperacion("GuardarPreferencias",
-                $"UsuarioId: {request.UsuarioId}");
-            PrefNotificacion pref;
-            try
-            {
-                pref = await _prefRepository
-                    .GetByUsuarioIdAsync(request.UsuarioId);
-                pref.RecibirEmail = request.RecibirEmail;
-                pref.RecibirSMS = request.RecibirSMS;
-                pref.RecibirPush = request.RecibirPush;
-                pref.HorasAntesRecordatorio = request.HorasAntesRecordatorio;
-                _validator.Validar(pref);
-                await _prefRepository.UpdateAsync(pref);
-            }
-            catch (KeyNotFoundException)
-            {
-                pref = new PrefNotificacion
+            return await ExecuteOperacionAsync(
+                "GuardarPreferencias",
+                async () =>
                 {
-                    UsuarioId = request.UsuarioId,
-                    RecibirEmail = request.RecibirEmail,
-                    RecibirSMS = request.RecibirSMS,
-                    RecibirPush = request.RecibirPush,
-                    HorasAntesRecordatorio = request.HorasAntesRecordatorio
-                };
-                _validator.Validar(pref);
-                await _prefRepository.AddAsync(pref);
-            }
-            return MapToResponse(pref);
+                    PrefNotificacion pref;
+                    try
+                    {
+                        pref = await _prefRepository
+                            .GetByUsuarioIdAsync(request.UsuarioId);
+                        pref.RecibirEmail = request.RecibirEmail;
+                        pref.RecibirSMS = request.RecibirSMS;
+                        pref.RecibirPush = request.RecibirPush;
+                        pref.HorasAntesRecordatorio = request.HorasAntesRecordatorio;
+                        _validator.Validar(pref);
+                        await _prefRepository.UpdateAsync(pref);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        pref = new PrefNotificacion
+                        {
+                            UsuarioId = request.UsuarioId,
+                            RecibirEmail = request.RecibirEmail,
+                            RecibirSMS = request.RecibirSMS,
+                            RecibirPush = request.RecibirPush,
+                            HorasAntesRecordatorio = request.HorasAntesRecordatorio
+                        };
+                        _validator.Validar(pref);
+                        await _prefRepository.AddAsync(pref);
+                    }
+
+                    return MapToResponse(pref);
+                },
+                $"UsuarioId: {request.UsuarioId}");
         }
 
         // Mapea la entidad PrefNotificacion a su DTO de respuesta

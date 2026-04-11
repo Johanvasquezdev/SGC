@@ -10,7 +10,8 @@ namespace SGC.Infraestructure.Pagos
 
         public StripeWebhookService(IConfiguration config)
         {
-            _webhookSecret = config["Stripe:WebhookSecret"]!;
+            _webhookSecret = config["Stripe:WebhookSecret"]
+                ?? throw new InvalidOperationException("Stripe:WebhookSecret no configurado");
         }
 
         // Método para validar la firma del webhook de Stripe y construir el evento a partir del payload recibido

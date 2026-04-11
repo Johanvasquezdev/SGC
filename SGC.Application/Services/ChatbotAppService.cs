@@ -24,17 +24,20 @@ namespace SGC.Application.Services
         public async Task<ChatResponse> EnviarMensajeAsync(
             ChatRequest request)
         {
-            LogOperacion("EnviarMensaje",
+            return await ExecuteOperacionAsync(
+                "EnviarMensaje",
+                async () =>
+                {
+                    var respuesta = await _chatbotService
+                        .EnviarMensajeAsync(request.Mensaje, request.Contexto);
+
+                    return new ChatResponse
+                    {
+                        Respuesta = respuesta,
+                        FechaRespuesta = DateTime.UtcNow
+                    };
+                },
                 $"UsuarioId: {request.UsuarioId}");
-
-            var respuesta = await _chatbotService
-                .EnviarMensajeAsync(request.Mensaje, request.Contexto);
-
-            return new ChatResponse
-            {
-                Respuesta = respuesta,
-                FechaRespuesta = DateTime.UtcNow
-            };
         }
     }
 }

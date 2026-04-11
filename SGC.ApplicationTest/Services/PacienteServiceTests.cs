@@ -3,7 +3,9 @@ using SGC.Application.DTOs.Medical;
 using SGC.Application.Services;
 using SGC.Domain.Entities.Medical;
 using SGC.Domain.Enums;
+using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
+using SGC.Domain.Validators;
 using Xunit;
 
 namespace SGC.ApplicationTest.Services
@@ -12,12 +14,17 @@ namespace SGC.ApplicationTest.Services
     public class PacienteServiceTests
     {
         private readonly Mock<IPacienteRepository> _pacienteRepoMock;
+        private readonly Mock<ISGCLogger> _loggerMock;
         private readonly PacienteService _pacienteService;
 
         public PacienteServiceTests()
         {
             _pacienteRepoMock = new Mock<IPacienteRepository>();
-            _pacienteService = new PacienteService(_pacienteRepoMock.Object);
+            _loggerMock = new Mock<ISGCLogger>();
+            _pacienteService = new PacienteService(
+                _pacienteRepoMock.Object,
+                new PacienteValidator(),
+                _loggerMock.Object);
         }
 
         [Fact]

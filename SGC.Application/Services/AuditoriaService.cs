@@ -29,39 +29,54 @@ namespace SGC.Application.Services
             string accion, string? valorAnterior,
             string? valorNuevo, string? direccionIP)
         {
-            LogOperacion("RegistrarAuditoria",
+            await ExecuteOperacionAsync(
+                "RegistrarAuditoria",
+                async () =>
+                {
+                    var evento = new AuditEntity
+                    {
+                        UsuarioId = usuarioId,
+                        Entidad = entidad,
+                        Accion = accion,
+                        ValorAnterior = valorAnterior,
+                        ValorNuevo = valorNuevo,
+                        DireccionIP = direccionIP,
+                        Fecha = DateTime.UtcNow
+                    };
+
+                    await _auditoriaRepository.AddAsync(evento);
+                },
                 $"Entidad: {entidad}, Accion: {accion}");
-
-            var evento = new AuditEntity
-            {
-                UsuarioId = usuarioId,
-                Entidad = entidad,
-                Accion = accion,
-                ValorAnterior = valorAnterior,
-                ValorNuevo = valorNuevo,
-                DireccionIP = direccionIP,
-                Fecha = DateTime.UtcNow
-            };
-
-            await _auditoriaRepository.AddAsync(evento);
         }
 
         // Obtiene los eventos de auditoria relacionados con una entidad específica, como "Usuario", "Cita", etc. El método consulta el repositorio de auditoria para recuperar los eventos que coinciden con la entidad dada y los convierte a objetos de respuesta utilizando el mapeador de auditoria.
         public async Task<IEnumerable<AuditoriaResponse>> GetByEntidadAsync(
             string entidad)
         {
-            var eventos = await _auditoriaRepository
-                .GetByEntidadAsync(entidad);
-            return eventos.Select(AuditoriaMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetAuditoriaByEntidad",
+                async () =>
+                {
+                    var eventos = await _auditoriaRepository
+                        .GetByEntidadAsync(entidad);
+                    return eventos.Select(AuditoriaMapper.ToResponse);
+                },
+                $"Entidad: {entidad}");
         }
 
         // Obtiene los eventos de auditoria relacionados con un usuario específico, identificados por su ID. El método consulta el repositorio de auditoria para recuperar los eventos que fueron realizados por el usuario dado y los convierte a objetos de respuesta utilizando el mapeador de auditoria.
         public async Task<IEnumerable<AuditoriaResponse>> GetByUsuarioAsync(
             int usuarioId)
         {
-            var eventos = await _auditoriaRepository
-                .GetByUsuarioIdAsync(usuarioId);
-            return eventos.Select(AuditoriaMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetAuditoriaByUsuario",
+                async () =>
+                {
+                    var eventos = await _auditoriaRepository
+                        .GetByUsuarioIdAsync(usuarioId);
+                    return eventos.Select(AuditoriaMapper.ToResponse);
+                },
+                $"UsuarioId: {usuarioId}");
         }
     }
 }

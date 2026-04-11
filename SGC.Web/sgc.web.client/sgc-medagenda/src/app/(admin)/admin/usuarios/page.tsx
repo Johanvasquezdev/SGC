@@ -16,7 +16,9 @@ export default function UsuariosPage() {
   };
 
   useEffect(() => {
-    cargar();
+    queueMicrotask(() => {
+      void cargar();
+    });
   }, []);
 
   const toggleActivo = async (id: number, activo: boolean) => {

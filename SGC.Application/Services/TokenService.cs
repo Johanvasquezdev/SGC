@@ -16,12 +16,25 @@ namespace SGC.Application.Services
     {
         // Configuración para acceder a los parámetros JWT
         private readonly IConfiguration _config;
+        private readonly string _jwtKey;
+        private readonly string _jwtIssuer;
+        private readonly string _jwtAudience;
+        private readonly int _jwtExpireMinutes;
 
         public TokenService(
             IConfiguration config,
             ISGCLogger logger) : base(logger)
         {
             _config = config;
+            _jwtKey = _config["Jwt:Key"]
+                ?? throw new InvalidOperationException("Jwt:Key no configurado");
+            _jwtIssuer = _config["Jwt:Issuer"]
+                ?? throw new InvalidOperationException("Jwt:Issuer no configurado");
+            _jwtAudience = _config["Jwt:Audience"]
+                ?? throw new InvalidOperationException("Jwt:Audience no configurado");
+
+            if (!int.TryParse(_config["Jwt:ExpireMinutes"], out _jwtExpireMinutes))
+                throw new InvalidOperationException("Jwt:ExpireMinutes no es válido");
         }
 
         // Genera un token JWT firmado con los datos del usuario
@@ -30,7 +43,7 @@ namespace SGC.Application.Services
             LogOperacion("GenerarToken", $"UsuarioId: {usuario.Id}");
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+                Encoding.UTF8.GetBytes(_jwtKey));
 
             var credenciales = new SigningCredentials(
                 key, SecurityAlgorithms.HmacSha256);
@@ -49,11 +62,11 @@ namespace SGC.Application.Services
             };
 
             var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
+                issuer: _jwtIssuer,
+                audience: _jwtAudience,
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(
-                    int.Parse(_config["Jwt:ExpireMinutes"]!)),
+                    _jwtExpireMinutes),
                 signingCredentials: credenciales
             );
 
@@ -66,16 +79,16 @@ namespace SGC.Application.Services
             try
             {
                 var handler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]!);
+                var key = Encoding.UTF8.GetBytes(_jwtKey);
 
                 handler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = _config["Jwt:Issuer"],
+                    ValidIssuer = _jwtIssuer,
                     ValidateAudience = true,
-                    ValidAudience = _config["Jwt:Audience"],
+                    ValidAudience = _jwtAudience,
                     ValidateLifetime = true
                 }, out var tokenValidado);
 

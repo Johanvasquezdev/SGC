@@ -31,32 +31,19 @@ namespace SGC.API.Middleware
         // Mapea cada tipo de excepcion a su codigo HTTP correspondiente
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            var (statusCode, mensaje) = exception switch
-            {
-                // 400 - Solicitud invalida (validaciones, argumentos incorrectos)
-                InvalidOperationException ex => (HttpStatusCode.BadRequest, ex.Message),
-                ArgumentException ex => (HttpStatusCode.BadRequest, ex.Message),
-
-                // 404 - Recurso no encontrado
-                CitaNotFoundException ex => (HttpStatusCode.NotFound, ex.Message),
-                KeyNotFoundException ex => (HttpStatusCode.NotFound, ex.Message),
-
-                // 409 - Conflicto (citas duplicadas, horario no disponible)
-                CitaConflictoException ex => (HttpStatusCode.Conflict, ex.Message),
-                HorarioNoDisponibleException ex => (HttpStatusCode.Conflict, ex.Message),
-
-                // 401 - No autorizado
-                UnauthorizedAccessException ex => (HttpStatusCode.Unauthorized, ex.Message),
-
-                // 500 - Error interno del servidor
-                _ => (HttpStatusCode.InternalServerError, "Ocurrio un error interno en el servidor.")
-            };
+            var traceId = context.TraceIdentifier;
+            var (statusCode, code, message) = ResolveError(exception);
 
             // Solo registrar errores internos como Error; los demas como Warning
             if (statusCode == HttpStatusCode.InternalServerError)
-                _logger.LogError(exception, "Error interno: {Mensaje}", exception.Message);
+                _logger.LogError(exception, "Error interno. TraceId: {TraceId}", traceId);
             else
-                _logger.LogWarning("Excepcion controlada ({StatusCode}): {Mensaje}", (int)statusCode, mensaje);
+                _logger.LogWarning(
+                    "Excepcion controlada ({StatusCode}/{Code}). TraceId: {TraceId}. Mensaje: {Mensaje}",
+                    (int)statusCode,
+                    code,
+                    traceId,
+                    message);
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)statusCode;
@@ -64,8 +51,9 @@ namespace SGC.API.Middleware
             var respuesta = new
             {
                 status = (int)statusCode,
-                error = statusCode.ToString(),
-                mensaje
+                code,
+                message,
+                traceId
             };
 
             var json = JsonSerializer.Serialize(respuesta, new JsonSerializerOptions
@@ -74,6 +62,42 @@ namespace SGC.API.Middleware
             });
 
             await context.Response.WriteAsync(json);
+        }
+
+        private static (HttpStatusCode StatusCode, string Code, string Message) ResolveError(Exception exception)
+        {
+            return exception switch
+            {
+                DomainException ex when ex is CitaConflictoException or HorarioNoDisponibleException
+                    => (HttpStatusCode.Conflict, ex.Code, ex.Message),
+
+                NotFoundDomainException ex
+                    => (HttpStatusCode.NotFound, ex.Code, ex.Message),
+
+                DomainException ex when ex is ValidationDomainException or CitaNotFoundException
+                    => (HttpStatusCode.BadRequest, ex.Code, ex.Message),
+
+                DomainException ex when ex is InfrastructureException
+                    => (HttpStatusCode.InternalServerError, ex.Code, "Ocurrio un error interno en el servidor."),
+
+                DomainException ex
+                    => (HttpStatusCode.BadRequest, ex.Code, ex.Message),
+
+                KeyNotFoundException ex
+                    => (HttpStatusCode.NotFound, "not_found", ex.Message),
+
+                InvalidOperationException ex
+                    => (HttpStatusCode.BadRequest, "invalid_operation", ex.Message),
+
+                ArgumentException ex
+                    => (HttpStatusCode.BadRequest, "validation_error", ex.Message),
+
+                UnauthorizedAccessException ex
+                    => (HttpStatusCode.Unauthorized, "unauthorized", ex.Message),
+
+                _
+                    => (HttpStatusCode.InternalServerError, "internal_error", "Ocurrio un error interno en el servidor.")
+            };
         }
     }
 }

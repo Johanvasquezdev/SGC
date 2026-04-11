@@ -13,6 +13,9 @@ namespace SGC.Application.Contracts
         Task<bool> ConfirmarPagoAsync(string stripePaymentIntentId);
         // Confirma el pago en Stripe utilizando el ID del PaymentIntent. Esto se llama desde el webhook de Stripe cuando se recibe la confirmacion de pago exitoso.
 
+        Task<bool> MarcarPagoFallidoAsync(string stripePaymentIntentId);
+        // Marca como fallido un pago pendiente identificado por el PaymentIntent de Stripe.
+
         Task<bool> ReembolsarPagoAsync(int pagoId);
         // Inicia un reembolso para un pago existente, devolviendo el dinero al paciente. Esto se puede usar en casos de cancelacion de citas o devoluciones.
 

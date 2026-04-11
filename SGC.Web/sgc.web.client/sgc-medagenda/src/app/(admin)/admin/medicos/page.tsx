@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Stethoscope, Search, Plus, CheckCircle2, XCircle, Loader2, Phone, X } from "lucide-react";
+import Image from "next/image";
 import { MedicoDTO, CreateMedicoRequest, UpdateMedicoRequest } from "@/types/medico.types";
 import { MedicoService } from "@/services/medico.service";
 import { EspecialidadService, EspecialidadDTO } from "@/services/especialidad.service";
@@ -196,9 +197,12 @@ export default function AdminMedicosPage() {
                   <tr key={medico.id} className="hover:bg-slate-950/60 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <img 
-                          src={medico.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(medico.nombre)}&background=e0e7ff&color=4338ca`} 
-                          alt="Avatar" 
+                        <Image
+                          src={medico.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(medico.nombre)}&background=e0e7ff&color=4338ca`}
+                          alt="Avatar"
+                          width={40}
+                          height={40}
+                          unoptimized
                           className="w-10 h-10 rounded-full object-cover border border-slate-700"
                         />
                         <div>

@@ -30,72 +30,109 @@ namespace SGC.Application.Services
         public async Task<DisponibilidadResponse> CrearAsync(
             DisponibilidadRequest request)
         {
-            LogOperacion("CrearDisponibilidad",
+            return await ExecuteOperacionAsync(
+                "CrearDisponibilidad",
+                async () =>
+                {
+                    var disponibilidad = DisponibilidadMapper.ToEntity(request);
+                    _validator.Validar(disponibilidad);
+                    await _disponibilidadRepository.AddAsync(disponibilidad);
+                    return DisponibilidadMapper.ToResponse(disponibilidad);
+                },
                 $"MedicoId: {request.MedicoId}");
-            var disponibilidad = DisponibilidadMapper.ToEntity(request);
-            _validator.Validar(disponibilidad);
-            await _disponibilidadRepository.AddAsync(disponibilidad);
-            return DisponibilidadMapper.ToResponse(disponibilidad);
         }
 
         // Obtiene una disponibilidad por su ID, logueando la consulta
         public async Task<DisponibilidadResponse> GetByIdAsync(int id)
         {
-            var disponibilidad = await _disponibilidadRepository
-                .GetByIdAsync(id);
-            return DisponibilidadMapper.ToResponse(disponibilidad);
+            return await ExecuteOperacionAsync(
+                "GetDisponibilidadById",
+                async () =>
+                {
+                    var disponibilidad = await _disponibilidadRepository
+                        .GetByIdAsync(id);
+                    return DisponibilidadMapper.ToResponse(disponibilidad);
+                },
+                $"DisponibilidadId: {id}");
         }
 
         // Obtiene todas las disponibilidades, logueando la consulta
         public async Task<IEnumerable<DisponibilidadResponse>> GetAllAsync()
         {
-            var disponibilidades = await _disponibilidadRepository
-                .GetAllAsync();
-            return disponibilidades.Select(DisponibilidadMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetAllDisponibilidades",
+                async () =>
+                {
+                    var disponibilidades = await _disponibilidadRepository
+                        .GetAllAsync();
+                    return disponibilidades.Select(DisponibilidadMapper.ToResponse);
+                });
         }
 
         // Obtiene las disponibilidades de un medico por su ID, logueando la consulta
         public async Task<IEnumerable<DisponibilidadResponse>> GetByMedicoAsync(
             int medicoId)
         {
-            var disponibilidades = await _disponibilidadRepository
-                .GetByMedicoIdAsync(medicoId);
-            return disponibilidades.Select(DisponibilidadMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetDisponibilidadesByMedico",
+                async () =>
+                {
+                    var disponibilidades = await _disponibilidadRepository
+                        .GetByMedicoIdAsync(medicoId);
+                    return disponibilidades.Select(DisponibilidadMapper.ToResponse);
+                },
+                $"MedicoId: {medicoId}");
         }
 
         // Obtiene las disponibilidades de un medico por el dia de la semana, logueando la consulta
         public async Task<IEnumerable<DisponibilidadResponse>> GetByDiaAsync(
             int diaSemana)
         {
-            var dia = (DiaSemana)diaSemana;
-            var disponibilidades = await _disponibilidadRepository
-                .GetByDiaAsync(dia);
-            return disponibilidades.Select(DisponibilidadMapper.ToResponse);
+            return await ExecuteOperacionAsync(
+                "GetDisponibilidadesByDia",
+                async () =>
+                {
+                    var dia = (DiaSemana)diaSemana;
+                    var disponibilidades = await _disponibilidadRepository
+                        .GetByDiaAsync(dia);
+                    return disponibilidades.Select(DisponibilidadMapper.ToResponse);
+                },
+                $"DiaSemana: {diaSemana}");
         }
 
         // Actualiza una disponibilidad existente, validando que no se solape con las otras y logueando la operacion
         public async Task ActualizarAsync(int id, DisponibilidadRequest request)
         {
-            LogOperacion("ActualizarDisponibilidad", $"Id: {id}");
-            var disponibilidad = await _disponibilidadRepository
-                .GetByIdAsync(id);
-            disponibilidad.MedicoId = request.MedicoId;
-            disponibilidad.DiaSemana = (DiaSemana)request.DiaSemana;
-            disponibilidad.HoraInicio = request.HoraInicio;
-            disponibilidad.HoraFin = request.HoraFin;
-            disponibilidad.DuracionCitaMin = request.DuracionCitaMin;
-            disponibilidad.EsRecurrente = request.EsRecurrente;
-            _validator.Validar(disponibilidad);
-            await _disponibilidadRepository.UpdateAsync(disponibilidad);
+            await ExecuteOperacionAsync(
+                "ActualizarDisponibilidad",
+                async () =>
+                {
+                    var disponibilidad = await _disponibilidadRepository
+                        .GetByIdAsync(id);
+                    disponibilidad.MedicoId = request.MedicoId;
+                    disponibilidad.DiaSemana = (DiaSemana)request.DiaSemana;
+                    disponibilidad.HoraInicio = request.HoraInicio;
+                    disponibilidad.HoraFin = request.HoraFin;
+                    disponibilidad.DuracionCitaMin = request.DuracionCitaMin;
+                    disponibilidad.EsRecurrente = request.EsRecurrente;
+                    _validator.Validar(disponibilidad);
+                    await _disponibilidadRepository.UpdateAsync(disponibilidad);
+                },
+                $"Id: {id}");
         }
 
         // Elimina una disponibilidad por su ID, logueando la operacion
         public async Task EliminarAsync(int id)
         {
-            LogAdvertencia("EliminarDisponibilidad", $"Id: {id}");
-            var disponibilidad = await _disponibilidadRepository
-                .GetByIdAsync(id);
-            await _disponibilidadRepository.DeleteAsync(disponibilidad);
+            await ExecuteOperacionAsync(
+                "EliminarDisponibilidad",
+                async () =>
+                {
+                    var disponibilidad = await _disponibilidadRepository
+                        .GetByIdAsync(id);
+                    await _disponibilidadRepository.DeleteAsync(disponibilidad);
+                },
+                $"Id: {id}");
         }
     }
 }

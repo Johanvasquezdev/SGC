@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { decodeJwt, getUserIdFromPayload } from "@/lib/jwt";
 import { AuthUser } from "@/types/auth.types";
 
@@ -50,25 +50,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     // Sincroniza token/usuario desde storage en tiempo real.
     if (typeof window === "undefined") return;
     const nextToken = localStorage.getItem("medagenda_token");
     setToken(nextToken);
     setUser(getUserFromStorage());
-  };
+  }, []);
 
   useEffect(() => {
-    refresh();
     const onStorage = () => refresh();
     const onAuthChanged = () => refresh();
+    queueMicrotask(refresh);
     window.addEventListener("storage", onStorage);
     window.addEventListener("auth-changed", onAuthChanged);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("auth-changed", onAuthChanged);
     };
-  }, []);
+  }, [refresh]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: Boolean(token),
       refresh,
     }),
-    [user, token]
+    [user, token, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

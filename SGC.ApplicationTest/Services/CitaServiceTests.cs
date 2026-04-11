@@ -5,7 +5,9 @@ using SGC.Domain.Entities.Appointments;
 using SGC.Domain.Entities.Medical;
 using SGC.Domain.Enums;
 using SGC.Domain.Exceptions;
+using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
+using SGC.Domain.Services;
 using Xunit;
 
 namespace SGC.ApplicationTest.Services
@@ -16,17 +18,20 @@ namespace SGC.ApplicationTest.Services
         private readonly Mock<ICitaRepository> _citaRepoMock;
         private readonly Mock<IMedicoRepository> _medicoRepoMock;
         private readonly CitaDomainService _domainService;
+        private readonly Mock<ISGCLogger> _loggerMock;
         private readonly CitaService _citaService;
 
         public CitaServiceTests()
         {
             _citaRepoMock = new Mock<ICitaRepository>();
             _medicoRepoMock = new Mock<IMedicoRepository>();
+            _loggerMock = new Mock<ISGCLogger>();
             _domainService = new CitaDomainService();
             _citaService = new CitaService(
                 _citaRepoMock.Object,
                 _medicoRepoMock.Object,
-                _domainService);
+                _domainService,
+                _loggerMock.Object);
         }
 
         [Fact]
@@ -67,7 +72,7 @@ namespace SGC.ApplicationTest.Services
                 Motivo = "Consulta general"
             };
 
-            _medicoRepoMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(medico);
+            _medicoRepoMock.Setup(r => r.GetByIdWithHorariosAsync(20)).ReturnsAsync(medico);
             _citaRepoMock.Setup(r => r.ExisteConflictoAsync(20, fechaCita)).ReturnsAsync(false);
             _citaRepoMock.Setup(r => r.AddAsync(It.IsAny<Cita>())).Returns(Task.CompletedTask);
 
@@ -120,7 +125,7 @@ namespace SGC.ApplicationTest.Services
                 Motivo = "Consulta"
             };
 
-            _medicoRepoMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(medico);
+            _medicoRepoMock.Setup(r => r.GetByIdWithHorariosAsync(20)).ReturnsAsync(medico);
             _citaRepoMock.Setup(r => r.ExisteConflictoAsync(20, fechaCita)).ReturnsAsync(true);
 
             // Act & Assert

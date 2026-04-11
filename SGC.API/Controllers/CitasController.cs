@@ -19,11 +19,32 @@ namespace SGC.API.Controllers
             _citaService = citaService;
         }
 
+        private bool TryGetUserId(out int userId)
+        {
+            userId = 0;
+            var rawUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(rawUserId, out userId);
+        }
+
+        private static IActionResult ForbiddenOwnership()
+        {
+            return new ForbidResult();
+        }
+
         [HttpGet("{id}")]
         // GET api/citas/{id} - Obtiene una cita por su ID, accesible para pacientes y medicos (si es su cita)
         public async Task<IActionResult> GetById(int id)
         {
             var cita = await _citaService.GetByIdAsync(id);
+
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            if (!User.IsInRole("Administrador") &&
+                cita.PacienteId != userId &&
+                cita.MedicoId != userId)
+                return ForbiddenOwnership();
+
             return Ok(cita);
         }
 
@@ -31,6 +52,12 @@ namespace SGC.API.Controllers
         // GET api/citas/paciente/{id} - Obtiene las citas de un paciente, solo para el paciente autenticado
         public async Task<IActionResult> GetByPaciente(int id)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            if (!User.IsInRole("Administrador") && userId != id)
+                return ForbiddenOwnership();
+
             var citas = await _citaService.GetByPacienteAsync(id);
             return Ok(citas);
         }
@@ -40,7 +67,9 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> GetAgendaMedico(
             [FromQuery] DateTime fecha)
         {
-            var medicoId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (!TryGetUserId(out var medicoId))
+                return Unauthorized();
+
             var citas = await _citaService.GetByMedicoAsync(medicoId);
             var citasFecha = citas.Where(
                 c => c.FechaHora.Date == fecha.Date);
@@ -52,7 +81,9 @@ namespace SGC.API.Controllers
         // GET api/citas/medico - Obtiene todas las citas del medico autenticado
         public async Task<IActionResult> GetCitasMedico()
         {
-            var medicoId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (!TryGetUserId(out var medicoId))
+                return Unauthorized();
+
             var citas = await _citaService.GetByMedicoAsync(medicoId);
             return Ok(citas);
         }
@@ -62,6 +93,12 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> Crear(
             [FromBody] CrearCitaRequest request)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            if (!User.IsInRole("Administrador") && request.PacienteId != userId)
+                return ForbiddenOwnership();
+
             var cita = await _citaService.AgendarAsync(request);
             return CreatedAtAction(nameof(GetById),
                 new { id = cita.Id }, cita);
@@ -72,6 +109,13 @@ namespace SGC.API.Controllers
         // PUT api/citas/{id}/confirmar - Confirma una cita, solo para medicos y administradores
         public async Task<IActionResult> Confirmar(int id)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            var cita = await _citaService.GetByIdAsync(id);
+            if (!User.IsInRole("Administrador") && cita.MedicoId != userId)
+                return ForbiddenOwnership();
+
             await _citaService.ConfirmarAsync(id);
             return NoContent();
         }
@@ -81,6 +125,15 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> Cancelar(int id,
             [FromBody] ActualizarCitaRequest request)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            var cita = await _citaService.GetByIdAsync(id);
+            if (!User.IsInRole("Administrador") &&
+                cita.PacienteId != userId &&
+                cita.MedicoId != userId)
+                return ForbiddenOwnership();
+
             await _citaService.CancelarAsync(id,
                 request.Motivo ?? "Sin motivo especificado");
             return NoContent();
@@ -92,6 +145,13 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> Rechazar(int id,
             [FromBody] ActualizarCitaRequest request)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            var cita = await _citaService.GetByIdAsync(id);
+            if (cita.MedicoId != userId)
+                return ForbiddenOwnership();
+
             await _citaService.RechazarAsync(id,
                 request.Motivo ?? "Sin motivo especificado");
             return NoContent();
@@ -102,6 +162,15 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> Reprogramar(int id,
             [FromBody] ActualizarCitaRequest request)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            var cita = await _citaService.GetByIdAsync(id);
+            if (!User.IsInRole("Administrador") &&
+                cita.PacienteId != userId &&
+                cita.MedicoId != userId)
+                return ForbiddenOwnership();
+
             if (request.FechaHora == null)
                 return BadRequest(
                     new { mensaje = "La nueva fecha es requerida." });
@@ -114,6 +183,13 @@ namespace SGC.API.Controllers
         // PUT api/citas/{id}/iniciar-consulta - Inicia la consulta de una cita, solo para medicos (si es su cita)
         public async Task<IActionResult> IniciarConsulta(int id)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            var cita = await _citaService.GetByIdAsync(id);
+            if (cita.MedicoId != userId)
+                return ForbiddenOwnership();
+
             await _citaService.IniciarConsultaAsync(id);
             return NoContent();
         }
@@ -124,6 +200,13 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> MarcarAsistencia(int id,
             [FromQuery] bool asistio)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            var cita = await _citaService.GetByIdAsync(id);
+            if (cita.MedicoId != userId)
+                return ForbiddenOwnership();
+
             if (asistio)
                 await _citaService.CompletarAsync(id);
             else

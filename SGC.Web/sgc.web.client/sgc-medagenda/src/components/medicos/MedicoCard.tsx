@@ -1,4 +1,5 @@
-﻿import { Star, MapPin, Clock, ArrowRight } from "lucide-react";
+import { Star, MapPin, Clock, ArrowRight } from "lucide-react";
+import Image from "next/image";
 import { MedicoDTO } from "@/types/medico.types";
 
 interface MedicoCardProps {
@@ -10,9 +11,12 @@ export function MedicoCard({ medico, onAgendarClick }: MedicoCardProps) {
   return (
     <div className="group bg-card rounded-2xl p-6 shadow-sm hover:shadow-md transition-all border border-border flex flex-col h-full">
       <div className="flex items-start gap-4">
-        <img 
-          src={medico.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(medico.nombre)}&background=0D8B93&color=fff`} 
-          alt={`Foto de ${medico.nombre}`} 
+        <Image
+          src={medico.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(medico.nombre)}&background=0D8B93&color=fff`}
+          alt={`Foto de ${medico.nombre}`}
+          width={64}
+          height={64}
+          unoptimized
           className="w-16 h-16 rounded-full object-cover border-2 border-emerald-200 dark:border-emerald-900"
         />
         <div>
