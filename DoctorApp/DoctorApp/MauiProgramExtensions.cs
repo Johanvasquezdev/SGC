@@ -49,7 +49,7 @@ namespace DoctorApp
 
         /// <summary>
         /// ✅ Registra HttpClient y servicios de API REALES (no mocks)
-        /// Usa ApiClient para consumir datos desde http://localhost:5189
+        /// Usa ApiClient para consumir datos desde SGC_API_BASE_URL o fallback local
         /// </summary>
         private static MauiAppBuilder RegisterApiServices(this MauiAppBuilder builder)
         {

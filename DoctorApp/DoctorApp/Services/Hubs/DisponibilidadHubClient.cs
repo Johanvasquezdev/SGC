@@ -34,6 +34,8 @@ namespace DoctorApp.Services.Hubs
             if (string.IsNullOrWhiteSpace(apiBaseUrl))
                 apiBaseUrl = "http://localhost:5189";
 
+            apiBaseUrl = apiBaseUrl.Replace("https://localhost:7224", "http://localhost:5189");
+
             return $"{apiBaseUrl.TrimEnd('/')}/disponibilidadhub";
         }
 

@@ -15,10 +15,7 @@ export function useSignalR({ hubUrl, onNuevaCita }: UseSignalROptions) {
       process.env.NEXT_PUBLIC_API_BASE_URL ||
       "http://localhost:5189";
     const normalizedBase = baseUrl.replace(/\/$/, "");
-    const rawHubUrl = hubUrl || `${normalizedBase}/citahub`;
-    const resolvedHubUrl =
-      rawHubUrl.replace("http://localhost:5189", "https://localhost:7224")
-               .replace("http://127.0.0.1:5189", "https://127.0.0.1:7224");
+    const resolvedHubUrl = hubUrl || `${normalizedBase}/citahub`;
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(resolvedHubUrl, {

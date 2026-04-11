@@ -16,6 +16,7 @@ namespace SGC.Application.Mappers
                 Cedula = paciente.Cedula,
                 Telefono = paciente.Telefono,
                 FechaNacimiento = paciente.FechaNacimiento,
+                Edad = paciente.CalcularEdad(),
                 TipoSeguro = paciente.TipoSeguro,
                 NumeroSeguro = paciente.NumeroSeguro,
                 Activo = paciente.Activo

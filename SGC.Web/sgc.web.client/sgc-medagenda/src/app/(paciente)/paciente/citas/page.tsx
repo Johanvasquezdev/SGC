@@ -16,7 +16,7 @@ export default function MisCitasPage() {
 
   // Escucha eventos del hub para notificar cambios en tiempo real.
   useSignalR({
-    hubUrl: "http://localhost:5189/citahub",
+    hubUrl: `${(process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5189").replace(/\/$/, "")}/citahub`,
     onNuevaCita: () => {
       toast.info("Nueva cita registrada");
     },

@@ -22,7 +22,8 @@ namespace SGC.Application.Mappers
                 ProveedorSalud = medico.ProveedorSalud?.Nombre,
                 TelefonoConsultorio = medico.TelefonoConsultorio,
                 Foto = medico.Foto,
-                Activo = medico.Activo
+                Activo = medico.Activo,
+                MedicoActivo = medico.MedicoActivo
             };
         }
 
