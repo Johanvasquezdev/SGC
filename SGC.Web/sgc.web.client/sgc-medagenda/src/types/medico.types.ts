@@ -1,13 +1,4 @@
-import { UsuarioBase } from './auth.types';
-
-export interface MedicoDTO extends UsuarioBase {
-  especialidadId: number;
-  especialidadNombre?: string;
-  proveedorSaludId: number;
-  exequatur: string;
-  telefonoConsultorio: string;
-  foto: string | null;
-}
+export type { MedicoDTO } from './api.types';
 
 export interface EspecialidadDTO {
   id: number;
