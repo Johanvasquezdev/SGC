@@ -12,6 +12,25 @@ export enum EstadoCita {
 export interface UsuarioBase { id: number; nombre: string; email: string; rol: RolUsuario | string; fechaCreacion: string; activo: boolean; }
 export interface UsuarioResponse extends UsuarioBase { }
 
+export interface PerfilUsuarioResponse {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: RolUsuario | string;
+  telefono?: string | null;
+}
+
+export interface ActualizarPerfilRequest {
+  nombre: string;
+  email: string;
+  telefono?: string | null;
+}
+
+export interface CambiarPasswordRequest {
+  passwordActual: string;
+  passwordNueva: string;
+}
+
 export interface MedicoDTO extends UsuarioBase { especialidadId: number; especialidadNombre?: string; proveedorSaludId: number; exequatur: string; telefonoConsultorio: string; foto: string | null; }
 
 export interface DisponibilidadDTO {

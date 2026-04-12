@@ -3,6 +3,8 @@ using SGC.Application.DTOs.Appointments;
 using SGC.Application.Mappers;
 using SGC.Application.Services.Base;
 using SGC.Domain.Entities.Appointments;
+using SGC.Domain.Entities.Notifications;
+using SGC.Domain.Enums;
 using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Domain.Services;
@@ -21,14 +23,19 @@ namespace SGC.Application.Services
         // Servicio de dominio para validar reglas de negocio
         private readonly CitaDomainService _domainService;
 
+        // Repositorio de notificaciones para informar al paciente sobre cambios de estado
+        private readonly INotificacionRepository _notificacionRepository;
+
         public CitaService(
             ICitaRepository citaRepository,
             IMedicoRepository medicoRepository,
+            INotificacionRepository notificacionRepository,
             CitaDomainService domainService,
             ISGCLogger logger) : base(logger)
         {
             _citaRepository = citaRepository;
             _medicoRepository = medicoRepository;
+            _notificacionRepository = notificacionRepository;
             _domainService = domainService;
         }
 
@@ -133,6 +140,9 @@ namespace SGC.Application.Services
                     var cita = await _citaRepository.GetByIdAsync(citaId);
                     cita.Confirmar();
                     await _citaRepository.UpdateAsync(cita);
+                    await CrearNotificacionCambioEstadoAsync(
+                        cita,
+                        "aceptó tu cita");
                 },
                 $"CitaId: {citaId}");
         }
@@ -147,6 +157,23 @@ namespace SGC.Application.Services
                     var cita = await _citaRepository.GetByIdAsync(citaId);
                     cita.Cancelar(motivo);
                     await _citaRepository.UpdateAsync(cita);
+                },
+                $"CitaId: {citaId}, Motivo: {motivo}");
+        }
+
+        // Cancela una cita por accion del medico y notifica al paciente
+        public async Task CancelarPorMedicoAsync(int citaId, string motivo)
+        {
+            await ExecuteOperacionAsync(
+                "CancelarCitaPorMedico",
+                async () =>
+                {
+                    var cita = await _citaRepository.GetByIdAsync(citaId);
+                    cita.Cancelar(motivo);
+                    await _citaRepository.UpdateAsync(cita);
+                    await CrearNotificacionCambioEstadoAsync(
+                        cita,
+                        "canceló tu cita");
                 },
                 $"CitaId: {citaId}, Motivo: {motivo}");
         }
@@ -202,6 +229,9 @@ namespace SGC.Application.Services
                     var cita = await _citaRepository.GetByIdAsync(citaId);
                     cita.MarcarNoAsistio();
                     await _citaRepository.UpdateAsync(cita);
+                    await CrearNotificacionCambioEstadoAsync(
+                        cita,
+                        "te marcó como no asistido");
                 },
                 $"CitaId: {citaId}");
         }
@@ -216,6 +246,9 @@ namespace SGC.Application.Services
                     var cita = await _citaRepository.GetByIdAsync(citaId);
                     cita.IniciarConsulta();
                     await _citaRepository.UpdateAsync(cita);
+                    await CrearNotificacionCambioEstadoAsync(
+                        cita,
+                        "inició tu cita");
                 },
                 $"CitaId: {citaId}");
         }
@@ -230,8 +263,34 @@ namespace SGC.Application.Services
                     var cita = await _citaRepository.GetByIdAsync(citaId);
                     cita.Completar();
                     await _citaRepository.UpdateAsync(cita);
+                    await CrearNotificacionCambioEstadoAsync(
+                        cita,
+                        "completó tu cita");
                 },
                 $"CitaId: {citaId}");
+        }
+
+        // Crea una notificacion persistente para el paciente con el nombre del medico
+        private async Task CrearNotificacionCambioEstadoAsync(
+            Cita cita,
+            string accion)
+        {
+            var medico = await _medicoRepository.GetByIdAsync(cita.MedicoId);
+            var nombreMedico = medico == null || string.IsNullOrWhiteSpace(medico.Nombre)
+                ? "Tu médico"
+                : medico.Nombre.Trim();
+
+            var notificacion = new Notificacion
+            {
+                UsuarioId = cita.PacienteId,
+                CitaId = cita.Id,
+                Tipo = TipoNotificacion.Push,
+                Mensaje = $"{nombreMedico} {accion}",
+                Leida = false,
+                FechaEnvio = DateTime.UtcNow
+            };
+
+            await _notificacionRepository.AddAsync(notificacion);
         }
     }
 }

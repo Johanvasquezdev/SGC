@@ -3,6 +3,7 @@ import { Bell, Search } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import Link from "next/link";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -38,9 +39,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </span>
               </a>
 
-              <div className="w-9 h-9 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-semibold">
+              <Link
+                href="/admin/settings"
+                aria-label="Abrir configuración de usuario"
+                className="w-9 h-9 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-semibold hover:bg-indigo-500/30"
+              >
                 {initials}
-              </div>
+              </Link>
             </div>
           </header>
 

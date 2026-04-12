@@ -134,8 +134,19 @@ namespace SGC.API.Controllers
                 cita.MedicoId != userId)
                 return ForbiddenOwnership();
 
-            await _citaService.CancelarAsync(id,
-                request.Motivo ?? "Sin motivo especificado");
+            var motivo = request.Motivo ?? "Sin motivo especificado";
+            var esMedico = cita.MedicoId == userId;
+            var esAdministrador = User.IsInRole("Administrador");
+
+            if (esMedico || esAdministrador)
+            {
+                await _citaService.CancelarPorMedicoAsync(id, motivo);
+            }
+            else
+            {
+                await _citaService.CancelarAsync(id, motivo);
+            }
+
             return NoContent();
         }
 

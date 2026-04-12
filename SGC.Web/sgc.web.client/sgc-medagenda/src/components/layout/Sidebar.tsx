@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   LogOut,
   Building2,
+  Settings,
 } from "lucide-react";
 import { AuthService } from "@/services/auth.service";
 
@@ -59,6 +60,12 @@ export const Sidebar = () => {
       icon: MessageSquare,
       href: "/paciente/chatbot",
       color: "text-purple-500",
+    },
+    {
+      label: "Configuración",
+      icon: Settings,
+      href: "/paciente/settings",
+      color: "text-slate-400",
     },
   ];
 
@@ -117,6 +124,12 @@ export const Sidebar = () => {
       icon: ShieldAlert,
       href: "/admin/auditoria",
       color: "text-rose-500",
+    },
+    {
+      label: "Configuración",
+      icon: Settings,
+      href: "/admin/settings",
+      color: "text-slate-400",
     },
   ];
 

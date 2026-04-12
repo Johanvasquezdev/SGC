@@ -22,5 +22,14 @@ namespace SGC.Application.Contracts
 
         // Activa un usuario en el sistema
         Task ActivarAsync(int id);
+
+        // Obtiene el perfil editable del usuario autenticado
+        Task<PerfilUsuarioResponse> GetPerfilAsync(int userId);
+
+        // Actualiza el perfil del usuario autenticado
+        Task<PerfilUsuarioResponse> ActualizarPerfilAsync(int userId, ActualizarPerfilRequest request);
+
+        // Cambia la contrasena del usuario autenticado
+        Task CambiarPasswordAsync(int userId, CambiarPasswordRequest request);
     }
 }

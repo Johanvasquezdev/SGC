@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGC.Application.Contracts;
 using SGC.Application.DTOs.Medical;
+using System.Security.Claims;
 
 namespace SGC.API.Controllers
 {
@@ -14,6 +15,13 @@ namespace SGC.API.Controllers
         public MedicosController(IMedicoService medicoService)
         {
             _medicoService = medicoService;
+        }
+
+        private bool TryGetUserId(out int userId)
+        {
+            userId = 0;
+            var rawUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(rawUserId, out userId);
         }
 
         [HttpGet]
@@ -52,6 +60,12 @@ namespace SGC.API.Controllers
         public async Task<IActionResult> Actualizar(int id,
             [FromBody] ActualizarMedicoRequest request)
         {
+            if (!TryGetUserId(out var userId))
+                return Unauthorized();
+
+            if (!User.IsInRole("Administrador") && userId != id)
+                return Forbid();
+
             request.Id = id;
             await _medicoService.ActualizarAsync(request);
             return NoContent();

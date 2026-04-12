@@ -3,6 +3,7 @@ import { Bell, Search } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import Link from "next/link";
 
 export default function PacienteLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -38,9 +39,13 @@ export default function PacienteLayout({ children }: { children: React.ReactNode
                 </span>
               </a>
 
-              <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-semibold">
+              <Link
+                href="/paciente/settings"
+                aria-label="Abrir configuración de usuario"
+                className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-semibold hover:bg-emerald-500/30"
+              >
                 {initials}
-              </div>
+              </Link>
             </div>
           </header>
 

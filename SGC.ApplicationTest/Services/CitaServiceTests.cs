@@ -8,6 +8,7 @@ using SGC.Domain.Exceptions;
 using SGC.Domain.Interfaces.ILogger;
 using SGC.Domain.Interfaces.Repository;
 using SGC.Domain.Services;
+using SGC.Domain.Entities.Notifications;
 using Xunit;
 
 namespace SGC.ApplicationTest.Services
@@ -17,6 +18,7 @@ namespace SGC.ApplicationTest.Services
     {
         private readonly Mock<ICitaRepository> _citaRepoMock;
         private readonly Mock<IMedicoRepository> _medicoRepoMock;
+        private readonly Mock<INotificacionRepository> _notificacionRepoMock;
         private readonly CitaDomainService _domainService;
         private readonly Mock<ISGCLogger> _loggerMock;
         private readonly CitaService _citaService;
@@ -25,11 +27,13 @@ namespace SGC.ApplicationTest.Services
         {
             _citaRepoMock = new Mock<ICitaRepository>();
             _medicoRepoMock = new Mock<IMedicoRepository>();
+            _notificacionRepoMock = new Mock<INotificacionRepository>();
             _loggerMock = new Mock<ISGCLogger>();
             _domainService = new CitaDomainService();
             _citaService = new CitaService(
                 _citaRepoMock.Object,
                 _medicoRepoMock.Object,
+                _notificacionRepoMock.Object,
                 _domainService,
                 _loggerMock.Object);
         }
@@ -148,6 +152,17 @@ namespace SGC.ApplicationTest.Services
 
             _citaRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(cita);
             _citaRepoMock.Setup(r => r.UpdateAsync(It.IsAny<Cita>())).Returns(Task.CompletedTask);
+            _medicoRepoMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(new Medico
+            {
+                Id = 20,
+                Nombre = "Dr. Garcia",
+                Email = "garcia@email.com",
+                PasswordHash = "hash",
+                Rol = RolUsuario.Medico,
+                MedicoActivo = true,
+                Activo = true
+            });
+            _notificacionRepoMock.Setup(r => r.AddAsync(It.IsAny<Notificacion>())).Returns(Task.CompletedTask);
 
             // Act
             await _citaService.CancelarAsync(1, "No puedo asistir");
@@ -172,6 +187,17 @@ namespace SGC.ApplicationTest.Services
 
             _citaRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(cita);
             _citaRepoMock.Setup(r => r.UpdateAsync(It.IsAny<Cita>())).Returns(Task.CompletedTask);
+            _medicoRepoMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(new Medico
+            {
+                Id = 20,
+                Nombre = "Dr. Garcia",
+                Email = "garcia@email.com",
+                PasswordHash = "hash",
+                Rol = RolUsuario.Medico,
+                MedicoActivo = true,
+                Activo = true
+            });
+            _notificacionRepoMock.Setup(r => r.AddAsync(It.IsAny<Notificacion>())).Returns(Task.CompletedTask);
 
             // Act
             await _citaService.ConfirmarAsync(1);
@@ -179,6 +205,48 @@ namespace SGC.ApplicationTest.Services
             // Assert
             Assert.Equal(EstadoCita.Confirmada, cita.Estado);
             _citaRepoMock.Verify(r => r.UpdateAsync(cita), Times.Once);
+            _notificacionRepoMock.Verify(r => r.AddAsync(It.Is<Notificacion>(n =>
+                n.UsuarioId == cita.PacienteId &&
+                n.CitaId == cita.Id &&
+                n.Mensaje == "Dr. Garcia aceptó tu cita")), Times.Once);
+        }
+
+        [Fact]
+        public async Task CancelarPorMedicoAsync_CuandoCitaExiste_CreaNotificacionPaciente()
+        {
+            // Arrange
+            var cita = new Cita
+            {
+                Id = 1,
+                PacienteId = 10,
+                MedicoId = 20,
+                FechaHora = DateTime.UtcNow.AddDays(1),
+                Estado = EstadoCita.Solicitada
+            };
+
+            _citaRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(cita);
+            _citaRepoMock.Setup(r => r.UpdateAsync(It.IsAny<Cita>())).Returns(Task.CompletedTask);
+            _medicoRepoMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(new Medico
+            {
+                Id = 20,
+                Nombre = "Dra. Lopez",
+                Email = "lopez@email.com",
+                PasswordHash = "hash",
+                Rol = RolUsuario.Medico,
+                MedicoActivo = true,
+                Activo = true
+            });
+            _notificacionRepoMock.Setup(r => r.AddAsync(It.IsAny<Notificacion>())).Returns(Task.CompletedTask);
+
+            // Act
+            await _citaService.CancelarPorMedicoAsync(1, "No disponible");
+
+            // Assert
+            Assert.Equal(EstadoCita.Cancelada, cita.Estado);
+            _notificacionRepoMock.Verify(r => r.AddAsync(It.Is<Notificacion>(n =>
+                n.UsuarioId == cita.PacienteId &&
+                n.CitaId == cita.Id &&
+                n.Mensaje == "Dra. Lopez canceló tu cita")), Times.Once);
         }
 
         [Fact]

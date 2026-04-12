@@ -29,6 +29,9 @@ namespace SGC.Application.Contracts
         // Cancela una cita registrando el motivo
         Task CancelarAsync(int citaId, string motivo);
 
+        // Cancela una cita por accion del medico y notifica al paciente
+        Task CancelarPorMedicoAsync(int citaId, string motivo);
+
         // Rechaza una cita solicitada registrando el motivo
         Task RechazarAsync(int citaId, string motivo);
 
