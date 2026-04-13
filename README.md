@@ -5,12 +5,6 @@ Proyecto académico de aplicación web y desktop de sistema de gestión de citas
 
 ---
 
-> ### ⚠️ INFORMACIÓN IMPORTANTE SOBRE RAMAS Y COMMITS
->
-> **Ramas sin matrícula** (`feature/api`, `feature/ioc`, `feature/application`, `feature/dominio`, `feature/persistencia`, `feature/unittest`) fueron desarrolladas **en conjunto** por ambos integrantes: Johan Vasquez y Gregori Evangelista.
->
-> **Sobre los commits:** Debido al flujo de trabajo del equipo, la mayoría de los commits fueron realizados desde la cuenta de Johan Vasquez. El código correspondiente a la App Desktop (.NET MAUI) y los módulos bajo responsabilidad de Gregori Evangelista fue desarrollado por él y enviado al repositorio a través de su compañero. Esto no refleja menor participación de ninguno de los dos integrantes.
-
 ---
 
 ## 📋 Descripción del Proyecto
