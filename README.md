@@ -5,7 +5,6 @@ Proyecto académico de aplicación web y desktop de sistema de gestión de citas
 
 ---
 
----
 
 ## 📋 Descripción del Proyecto
 
