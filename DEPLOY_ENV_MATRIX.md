@@ -49,6 +49,27 @@ Required variables:
 - `Cors__AllowedOrigins__0`
 - `Cors__AllowedOrigins__1` (optional second origin)
 
+Optional/production hardening variables:
+
+- `MessageBroker__Provider` (`RabbitMQ` | `Kafka` | `None`)
+- `RabbitMQ__Host`
+- `RabbitMQ__Port`
+- `RabbitMQ__Username`
+- `RabbitMQ__Password`
+- `RabbitMQ__VirtualHost`
+- `Kafka__BootstrapServers`
+- `Kafka__Username` (if SASL)
+- `Kafka__Password` (if SASL)
+- `Kafka__SecurityProtocol`
+- `Twilio__AccountSid`
+- `Twilio__AuthToken`
+- `Twilio__FromPhoneNumber`
+- `Smtp__Host`
+- `Smtp__Port`
+- `Smtp__User`
+- `Smtp__Password`
+- `Smtp__FromEmail`
+
 Per environment examples:
 
 - `dev`: localhost origins and local DB/Redis.
@@ -69,3 +90,5 @@ Per environment examples:
 3. API has correct CORS origins for that frontend env.
 4. Health endpoint responds: `/health`.
 5. Smoke flows pass: auth, citas CRUD happy path, SignalR connect, payment intent creation.
+6. Dependency probes pass: Redis, Twilio, SMTP, SignalR.
+7. Broker probes pass for enabled provider (RabbitMQ and/or Kafka).

@@ -2,12 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { CalendarCheck, Clock, Stethoscope } from "lucide-react";
+import {
+  Calendar,
+  CalendarDays,
+  CalendarCheck,
+  Clock,
+  MoreVertical,
+  Stethoscope,
+} from "lucide-react";
 import { CitaDTO, EstadoCita, MedicoDTO } from "@/types/api.types";
 import { CitaService } from "@/services/cita.service";
 import { MedicoService } from "@/services/medico.service";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { CitaCard } from "@/components/citas/CitaCard";
 import { MedicoCard } from "@/components/medicos/MedicoCard";
 import { AgendarCitaModal } from "@/components/citas/AgendarCita";
 import { toast } from "sonner";
@@ -54,6 +60,21 @@ export default function PacienteDashboard() {
 
   const medicosDestacados = medicos.slice(0, 3);
 
+  const getStatusStyles = (estado: EstadoCita | string) => {
+    switch ((estado || "").toString().toLowerCase()) {
+      case "confirmada":
+        return "bg-emerald-500/15 text-emerald-300";
+      case "solicitada":
+        return "bg-amber-500/15 text-amber-300";
+      case "cancelada":
+        return "bg-rose-500/15 text-rose-300";
+      case "noasistio":
+        return "bg-slate-500/20 text-slate-300";
+      default:
+        return "bg-slate-500/20 text-slate-300";
+    }
+  };
+
   const cancelarCita = async (citaId: number) => {
     try {
       await CitaService.cancelarCita(citaId, "Cancelada por paciente");
@@ -67,54 +88,74 @@ export default function PacienteDashboard() {
   return (
     <div className="space-y-8">
       <header className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Bienvenido, {user?.nombre || "Paciente"}
         </h1>
-        <p className="text-muted-foreground">Gestiona tus citas y encuentra médicos especialistas</p>
+        <p className="text-muted-foreground">
+          Gestiona tus citas y encuentra médicos especialistas
+        </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-card p-5 rounded-2xl border border-border flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10">
-            <CalendarCheck className="w-6 h-6 text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Citas Hoy</p>
-            <p className="text-2xl font-bold">{loading ? "-" : citasHoy.length}</p>
-          </div>
-        </div>
-        <div className="bg-card p-5 rounded-2xl border border-border flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10">
-            <Clock className="w-6 h-6 text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Citas Pendientes</p>
-            <p className="text-2xl font-bold">{loading ? "-" : citasPendientes.length}</p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-2xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-xl bg-emerald-500/15 p-3">
+              <CalendarCheck className="h-6 w-6 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Citas Hoy</p>
+              <p className="text-2xl font-bold text-foreground">{loading ? "-" : citasHoy.length}</p>
+            </div>
           </div>
         </div>
-        <div className="bg-card p-5 rounded-2xl border border-border flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10">
-            <Stethoscope className="w-6 h-6 text-emerald-400" />
+
+        <div className="rounded-2xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-xl bg-emerald-500/15 p-3">
+              <Clock className="h-6 w-6 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Citas Pendientes</p>
+              <p className="text-2xl font-bold text-foreground">{loading ? "-" : citasPendientes.length}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Médicos Disponibles</p>
-            <p className="text-2xl font-bold">{loading ? "-" : medicos.length}</p>
+        </div>
+
+        <div className="rounded-2xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-xl bg-emerald-500/15 p-3">
+              <Stethoscope className="h-6 w-6 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Médicos Disponibles</p>
+              <p className="text-2xl font-bold text-foreground">{loading ? "-" : medicos.length}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <div className="space-y-4 lg:col-span-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Próximas Citas</h2>
+            <h2 className="text-xl font-semibold text-foreground">Próximas Citas</h2>
             <div className="flex items-center gap-4">
-              <a href="/paciente/medicos" className="text-emerald-600 text-sm font-medium hover:underline">Agendar cita</a>
-              <a href="/paciente/citas" className="text-emerald-600 text-sm font-medium hover:underline">Ver todas</a>
+              <a
+                href="/paciente/medicos"
+                className="text-sm font-medium text-emerald-500 hover:text-emerald-400"
+              >
+                Agendar cita
+              </a>
+              <a
+                href="/paciente/citas"
+                className="text-sm font-medium text-emerald-500 hover:text-emerald-400"
+              >
+                Ver todas
+              </a>
             </div>
           </div>
 
           {proximasCitas.length === 0 ? (
-            <div className="bg-card p-6 rounded-2xl border border-border text-muted-foreground">
+            <div className="rounded-2xl border border-border/60 bg-card/70 p-6 text-muted-foreground backdrop-blur-sm">
               No tienes citas próximas. Agenda una con un médico disponible.
             </div>
           ) : (
@@ -122,18 +163,49 @@ export default function PacienteDashboard() {
               {proximasCitas.map((cita) => {
                 const medico = medicosById.get(cita.medicoId);
                 return (
-                  <div key={cita.id} className="space-y-2">
-                    <CitaCard
-                      doctorNombre={medico?.nombre || "Medico"}
-                      especialidad={medico?.especialidadNombre || "Especialidad"}
-                      fecha={dayjs(cita.fechaHora).format("DD MMM YYYY")}
-                      hora={dayjs(cita.fechaHora).format("hh:mm A")}
-                      estado={cita.estado}
-                    />
+                  <div key={cita.id} className="rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="rounded-xl bg-emerald-500/15 p-3">
+                          <CalendarDays className="h-5 w-5 text-emerald-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{medico?.nombre || "Médico"}</p>
+                          <p className="text-sm text-emerald-500">
+                            {medico?.especialidadNombre || "Especialidad"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground md:gap-6">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-4 w-4" />
+                          <span>{dayjs(cita.fechaHora).format("DD MMM YYYY")}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-4 w-4" />
+                          <span>{dayjs(cita.fechaHora).format("hh:mm A")}</span>
+                        </div>
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyles(cita.estado)}`}
+                        >
+                          {cita.estado}
+                        </span>
+                        <button
+                          type="button"
+                          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                          aria-label="Acciones de cita"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+
                     {(cita.estado === EstadoCita.Confirmada || cita.estado === EstadoCita.Solicitada) && (
                       <button
+                        type="button"
                         onClick={() => cancelarCita(cita.id)}
-                        className="text-sm text-rose-600 hover:text-rose-700"
+                        className="mt-3 border-t border-border/60 pt-3 text-sm text-rose-500 hover:text-rose-400"
                       >
                         Cancelar cita
                       </button>
@@ -145,10 +217,15 @@ export default function PacienteDashboard() {
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Médicos Destacados</h2>
-            <a href="/paciente/medicos" className="text-emerald-600 text-sm font-medium hover:underline">Ver todos</a>
+            <h2 className="text-xl font-semibold text-foreground">Médicos Destacados</h2>
+            <a
+              href="/paciente/medicos"
+              className="text-sm font-medium text-emerald-500 hover:text-emerald-400"
+            >
+              Ver todos
+            </a>
           </div>
 
           <div className="grid gap-4">

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Building2, Plus, Loader2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Building2, Plus, Loader2, X, Search, CheckCircle2, XCircle } from "lucide-react";
 import { ProveedorSaludDTO, ProveedorSaludService } from "@/services/proveedor.service";
 
 export default function ProveedoresPage() {
@@ -10,6 +10,7 @@ export default function ProveedoresPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState<ProveedorSaludDTO | null>(null);
+  const [query, setQuery] = useState("");
   const [formData, setFormData] = useState({
     nombre: "",
     tipo: "",
@@ -66,21 +67,89 @@ export default function ProveedoresPage() {
     cerrarModal();
   };
 
+  const totalProveedores = proveedores.length;
+  const proveedoresActivos = useMemo(() => proveedores.filter((p) => p.activo).length, [proveedores]);
+  const proveedoresInactivos = totalProveedores - proveedoresActivos;
+
+  const proveedoresFiltrados = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return proveedores;
+
+    return proveedores.filter((p) => {
+      return (
+        p.nombre.toLowerCase().includes(term) ||
+        (p.tipo || "").toLowerCase().includes(term) ||
+        (p.email || "").toLowerCase().includes(term) ||
+        (p.telefono || "").toLowerCase().includes(term)
+      );
+    });
+  }, [proveedores, query]);
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <header className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
-          <Building2 className="text-indigo-400" /> Proveedores de Salud (ARS)
-        </h1>
-        <button
-          onClick={abrirCrear}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm hover:bg-indigo-500"
-        >
-          <Plus className="w-4 h-4" /> Registrar ARS
-        </button>
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
+      <header className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/15 via-slate-900 to-cyan-500/15 p-6 md:p-7">
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300/90">
+              Administracion
+            </p>
+            <h1 className="mt-2 flex items-center gap-2 text-3xl font-bold tracking-tight text-white">
+              <Building2 className="h-7 w-7 text-indigo-300" />
+              Proveedores de Salud
+            </h1>
+            <p className="mt-2 max-w-2xl text-slate-300">
+              Gestiona ARS, clinicas y hospitales para mantener actualizado el ecosistema de convenios.
+            </p>
+          </div>
+
+          <button
+            onClick={abrirCrear}
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-500/20 px-4 py-2 text-sm font-medium text-indigo-100 transition-colors hover:bg-indigo-500/30"
+          >
+            <Plus className="h-4 w-4" /> Registrar proveedor
+          </button>
+        </div>
       </header>
 
-      <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl overflow-hidden">
+      <section className="grid gap-4 md:grid-cols-3">
+        <article className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-5">
+          <p className="text-sm text-slate-400">Total proveedores</p>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? "--" : totalProveedores}</p>
+        </article>
+
+        <article className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+          <div className="flex items-center gap-2 text-emerald-300">
+            <CheckCircle2 className="h-4 w-4" />
+            <p className="text-sm">Activos</p>
+          </div>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? "--" : proveedoresActivos}</p>
+        </article>
+
+        <article className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
+          <div className="flex items-center gap-2 text-rose-300">
+            <XCircle className="h-4 w-4" />
+            <p className="text-sm">Inactivos</p>
+          </div>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? "--" : proveedoresInactivos}</p>
+        </article>
+      </section>
+
+      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4">
+        <label className="relative block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nombre, tipo, telefono o email"
+            className="w-full rounded-xl border border-slate-800 bg-slate-950/70 py-2.5 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500"
+          />
+        </label>
+      </section>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/70">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-950/70 border-b border-slate-800/80 text-slate-300">
             <tr>
@@ -98,8 +167,14 @@ export default function ProveedoresPage() {
                   <Loader2 className="animate-spin mx-auto text-indigo-400" />
                 </td>
               </tr>
+            ) : proveedoresFiltrados.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-6 text-center text-slate-400">
+                  No se encontraron proveedores para el filtro actual.
+                </td>
+              </tr>
             ) : (
-              proveedores.map((prov) => (
+              proveedoresFiltrados.map((prov) => (
                 <tr key={prov.id} className="border-b border-slate-800/80">
                   <td className="p-4 font-medium text-white">{prov.nombre}</td>
                   <td className="p-4 text-slate-400">{prov.tipo || "-"}</td>

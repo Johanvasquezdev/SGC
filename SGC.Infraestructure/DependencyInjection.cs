@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+using System;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SGC.Domain.Interfaces;
 using SGC.Domain.Interfaces.ILogger;
@@ -36,21 +37,59 @@ namespace SGC.Infraestructure
             // AI Chatbot
             services.AddHttpClient<IChatbotService, AnthropicChatService>();
 
-            // Redis
+            // Redis (fallback local en Development)
             var redisConnection = config.GetConnectionString("Redis");
-            if (string.IsNullOrWhiteSpace(redisConnection))
-                throw new InvalidOperationException("ConnectionStrings:Redis no configurado");
+            var redisToken = config["ConnectionStrings:RedisToken"];
+            var isDevelopment = string.Equals(
+                config["ASPNETCORE_ENVIRONMENT"],
+                "Development",
+                StringComparison.OrdinalIgnoreCase);
 
-            services.AddSingleton<IConnectionMultiplexer>(_ =>
-                ConnectionMultiplexer.Connect(
-                    redisConnection));
-            services.AddScoped<ICacheService, RedisCacheService>();
+            var resolvedRedisConnection = BuildRedisConnectionString(redisConnection, redisToken);
+            if (!string.IsNullOrWhiteSpace(resolvedRedisConnection))
+            {
+                services.AddSingleton<IConnectionMultiplexer>(_ =>
+                    ConnectionMultiplexer.Connect(resolvedRedisConnection));
+                services.AddScoped<ICacheService, RedisCacheService>();
+            }
+            else if (isDevelopment)
+            {
+                Console.WriteLine("[WARN] Redis no configurado correctamente. Se usará caché en memoria (NoOp) en Development.");
+                services.AddScoped<ICacheService, NoOpCacheService>();
+            }
+            else
+            {
+                throw new InvalidOperationException("ConnectionStrings:Redis no configurado");
+            }
 
             // SignalR
             services.AddSignalR();
             services.AddScoped<SignalRNotificacionService>();
 
             return services;
+        }
+
+        private static string? BuildRedisConnectionString(string? redisConnection, string? redisToken)
+        {
+            if (string.IsNullOrWhiteSpace(redisConnection))
+                return null;
+
+            var raw = redisConnection.Trim();
+            if (!(raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                || raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+            {
+                return raw;
+            }
+
+            if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri) || string.IsNullOrWhiteSpace(uri.Host))
+                return null;
+
+            var password = string.IsNullOrWhiteSpace(redisToken)
+                ? string.Empty
+                : $",password={redisToken.Trim()}";
+
+            var port = uri.Port > 0 ? uri.Port : 6379;
+            return $"{uri.Host}:{port},ssl=true,abortConnect=false{password}";
         }
     }
 }

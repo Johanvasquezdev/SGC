@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PROTECTED_ROUTES = ["/admin", "/paciente"];
 
-export function middleware(request: NextRequest) {
-  // Protege rutas sensibles y valida token/rol.
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isProtected = PROTECTED_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
+  const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
   if (!isProtected) return NextResponse.next();
 
   const token = request.cookies.get("medagenda_token")?.value;

@@ -1,16 +1,21 @@
-import { ShieldPlus } from "lucide-react";
-
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-      <div className="mb-8 flex flex-col items-center">
-        <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 mb-4">
-          <ShieldPlus className="w-8 h-8 text-white" />
-        </div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">MedAgenda</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Portal de Gestion Clinica</p>
+    <div className="min-h-screen w-full relative overflow-hidden bg-[#030a1f] text-white">
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(90deg, rgba(3,10,31,0.96) 0%, rgba(3,10,31,0.88) 55%, rgba(7,45,72,0.62) 100%)" }}
+        />
+        <div
+          className="absolute -top-40 right-12 h-[420px] w-[420px] rounded-full opacity-25"
+          style={{ background: "radial-gradient(circle, #10b981 0%, transparent 72%)" }}
+        />
+        <div
+          className="absolute -bottom-52 left-1/2 h-[760px] w-[760px] -translate-x-1/2 rounded-full opacity-15"
+          style={{ background: "radial-gradient(circle, #1e3a8a 0%, transparent 66%)" }}
+        />
       </div>
-      {children}
+      <div className="relative z-10 min-h-screen w-full">{children}</div>
     </div>
   );
 }

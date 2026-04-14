@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Stethoscope, Search, Plus, CheckCircle2, XCircle, Loader2, Phone, X } from "lucide-react";
 import Image from "next/image";
 import { MedicoDTO, CreateMedicoRequest, UpdateMedicoRequest } from "@/types/medico.types";
@@ -31,8 +31,6 @@ export default function AdminMedicosPage() {
   const cargarMedicos = async () => {
     setIsLoading(true);
     try {
-      // Reutilizamos el servicio que creamos para el paciente, 
-      // pero el admin necesita ver a todos (activos e inactivos)
       const data = await MedicoService.obtenerTodos();
       setMedicos(data);
     } catch (error) {
@@ -56,11 +54,19 @@ export default function AdminMedicosPage() {
   }, []);
 
   // Filtrado dinámico en el cliente
-  const medicosFiltrados = medicos.filter(m => 
-    m.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
-    m.especialidadNombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    m.exequatur.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const medicosFiltrados = useMemo(() => {
+    const term = busqueda.trim().toLowerCase();
+    if (!term) return medicos;
+
+    return medicos.filter((m) => {
+      return (
+        m.nombre.toLowerCase().includes(term) ||
+        (m.especialidadNombre || "").toLowerCase().includes(term) ||
+        m.exequatur.toLowerCase().includes(term) ||
+        (m.email || "").toLowerCase().includes(term)
+      );
+    });
+  }, [medicos, busqueda]);
 
   const abrirCrear = () => {
     setModoEdicion(false);
@@ -128,42 +134,69 @@ export default function AdminMedicosPage() {
     await cargarMedicos();
   };
 
+  const totalMedicos = medicos.length;
+  const medicosActivos = medicos.filter((m) => m.activo).length;
+  const medicosInactivos = totalMedicos - medicosActivos;
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
-      
-      {/* Cabecera */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <Stethoscope className="w-7 h-7 text-indigo-500" />
-            Directorio de Médicos
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Administra el personal médico, sus especialidades y estados en el sistema.
-          </p>
+      <header className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/15 via-slate-900 to-indigo-500/20 p-6 md:p-7">
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-indigo-500/20 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/90">
+              Administracion
+            </p>
+            <h1 className="mt-2 flex items-center gap-2 text-3xl font-bold tracking-tight text-white">
+              <Stethoscope className="h-7 w-7 text-cyan-300" />
+              Directorio de Medicos
+            </h1>
+            <p className="mt-2 max-w-2xl text-slate-300">
+              Gestiona perfiles profesionales, especialidades y estado operativo del personal medico.
+            </p>
+          </div>
+
+          <button
+            onClick={abrirCrear}
+            className="inline-flex items-center gap-2 rounded-xl bg-cyan-500/20 px-4 py-2 text-sm font-medium text-cyan-100 transition-colors hover:bg-cyan-500/30"
+          >
+            <Plus className="h-4 w-4" /> Registrar medico
+          </button>
         </div>
-        <button
-          onClick={abrirCrear}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-colors text-sm font-medium shadow-sm shadow-indigo-200 dark:shadow-none"
-        >
-          <Plus className="w-4 h-4" /> Registrar Médico
-        </button>
       </header>
 
+      <section className="grid gap-4 md:grid-cols-3">
+        <article className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-5">
+          <p className="text-sm text-slate-400">Total medicos</p>
+          <p className="mt-1 text-2xl font-bold text-white">{isLoading ? "--" : totalMedicos}</p>
+        </article>
+        <article className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+          <p className="text-sm text-emerald-300">Activos</p>
+          <p className="mt-1 text-2xl font-bold text-white">{isLoading ? "--" : medicosActivos}</p>
+        </article>
+        <article className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5">
+          <p className="text-sm text-rose-300">Inactivos</p>
+          <p className="mt-1 text-2xl font-bold text-white">{isLoading ? "--" : medicosInactivos}</p>
+        </article>
+      </section>
+
       <div className="bg-slate-900/60 rounded-xl shadow-sm border border-slate-800/80 overflow-hidden">
-        
-        {/* Barra de Herramientas */}
-        <div className="p-4 border-b border-slate-800/80 flex justify-between items-center bg-slate-950/70">
+        <div className="p-4 border-b border-slate-800/80 flex flex-col gap-3 bg-slate-950/70 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text"
-              placeholder="Buscar por nombre, especialidad o exequatur..."
+              placeholder="Buscar por nombre, especialidad, exequatur o email"
               className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-800 bg-slate-950/70 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-white"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
+          <p className="text-xs text-slate-400">
+            {isLoading ? "Cargando..." : `${medicosFiltrados.length} resultado(s)`}
+          </p>
         </div>
 
         {/* Tabla de Datos */}
@@ -178,7 +211,7 @@ export default function AdminMedicosPage() {
                 <th className="px-6 py-4 font-medium text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+            <tbody className="divide-y divide-slate-800/80">
               {isLoading ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center">
@@ -189,7 +222,7 @@ export default function AdminMedicosPage() {
               ) : medicosFiltrados.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
-                    No se encontraron médicos registrados.
+                    No se encontraron medicos para el filtro actual.
                   </td>
                 </tr>
               ) : (

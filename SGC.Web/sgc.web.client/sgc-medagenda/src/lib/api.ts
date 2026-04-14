@@ -15,8 +15,12 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Opcional: Agregar un timeout predeterminado evita que la UI se quede 
+  // cargando infinitamente si el backend falla.
+  timeout: 10000, 
 });
 
+// Interceptor de Peticiones (Request)
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
@@ -30,12 +34,26 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Interceptor de Respuestas (Response)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Manejo de sesión expirada / no autorizada
     if (error.response?.status === 401) {
-      // Manejar token expirado
+      if (typeof window !== 'undefined') {
+        // 1. Limpiar los datos de sesión comprometidos/expirados
+        localStorage.removeItem('medagenda_token');
+        localStorage.removeItem('medagenda_user');
+
+        // 2. Redirigir al usuario al login solo si no está ya en la página de login.
+        // Esto previene un bucle de redirecciones infinitas.
+        const loginPath = '/'; // Ajusta esto si tu ruta de login es '/login'
+        if (window.location.pathname !== loginPath) {
+          window.location.href = loginPath;
+        }
+      }
     }
+    
     return Promise.reject(error);
   }
 );

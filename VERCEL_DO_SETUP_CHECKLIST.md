@@ -53,3 +53,30 @@ Then:
 - [ ] `dotnet test SGC.ApplicationTest/SGC.ApplicationTest.csproj` passes.
 - [ ] `npm run lint` passes.
 - [ ] Deployment notes updated in README/backlog docs.
+
+## 7) Production Ready Checkmarks
+
+- [ ] Message broker strategy defined:
+  - [ ] RabbitMQ for background jobs/commands.
+  - [ ] Kafka for event streaming/audit (only if required).
+  - [ ] If both are enabled, ownership split is documented.
+- [ ] Broker runtime checks implemented:
+  - [ ] RabbitMQ publish/consume health probe passes.
+  - [ ] Kafka producer/consumer test topic probe passes.
+- [ ] Dependency health checks are exposed and monitored:
+  - [ ] Redis connectivity + set/get + TTL probe.
+  - [ ] Twilio API auth + test message/status callback probe.
+  - [ ] SMTP auth + test email delivery probe.
+  - [ ] SignalR `/citahub` negotiate/connect + test broadcast probe.
+- [ ] Logging security hardening:
+  - [ ] No PII (email/phone) at `INF` level.
+  - [ ] Correlation id present in request and dependency logs.
+- [ ] CI/CD security gates active on every PR/main deployment:
+  - [ ] SAST (CodeQL or equivalent).
+  - [ ] Dependency vulnerability scan for .NET and npm.
+  - [ ] Secret scanning (gitleaks/trufflehog).
+- [ ] Post-deploy smoke test in staging and production includes:
+  - [ ] Auth flow.
+  - [ ] Citas read/write flow.
+  - [ ] SignalR real-time event.
+  - [ ] External dependency probes (Redis/Twilio/SMTP/broker).

@@ -173,4 +173,13 @@ app.MapHub<DisponibilidadHub>("/disponibilidadhub");
 // ============================================================
 app.MapHealthChecks("/health");
 
+app.Logger.LogInformation("Iniciando SGC.API en entorno {Environment}...", app.Environment.EnvironmentName);
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var urls = string.Join(", ", app.Urls);
+    app.Logger.LogInformation(
+        "SGC.API iniciado correctamente. URLs: {Urls}",
+        string.IsNullOrWhiteSpace(urls) ? "(sin URLs reportadas por host)" : urls);
+});
+
 app.Run();

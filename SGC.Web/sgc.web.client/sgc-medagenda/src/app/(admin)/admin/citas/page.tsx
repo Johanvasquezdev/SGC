@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarCheck, Loader2 } from "lucide-react";
+import { CalendarCheck, Loader2, Search, Clock3, Activity } from "lucide-react";
 import { CitaDTO, EstadoCita } from "@/types/api.types";
 import { CitaService } from "@/services/cita.service";
 import dayjs from "dayjs";
@@ -75,14 +75,73 @@ export default function AdminCitasPage() {
     return true;
   });
 
+  const totalFiltradas = citasFiltradas.length;
+  const pendientes = citasFiltradas.filter((c) => c.estado === EstadoCita.Solicitada).length;
+  const confirmadas = citasFiltradas.filter((c) => c.estado === EstadoCita.Confirmada).length;
+  const enProgreso = citasFiltradas.filter((c) => c.estado === EstadoCita.EnProgreso).length;
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <header className="flex items-center gap-2 text-white">
-        <CalendarCheck className="text-indigo-400" />
-        <h1 className="text-2xl font-bold">Gestión de Citas</h1>
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
+      <header className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/15 via-slate-900 to-emerald-500/15 p-6 md:p-7">
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300/90">
+              Administracion
+            </p>
+            <h1 className="mt-2 flex items-center gap-2 text-3xl font-bold tracking-tight text-white">
+              <CalendarCheck className="h-7 w-7 text-indigo-300" />
+              Gestion de Citas
+            </h1>
+            <p className="mt-2 max-w-2xl text-slate-300">
+              Consulta, filtra y opera citas de pacientes en una sola vista operativa.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
+            <p className="text-xs text-slate-300">Resultados actuales</p>
+            <p className="text-2xl font-bold text-white">{loading ? "--" : totalFiltradas}</p>
+          </div>
+        </div>
       </header>
 
-      <div className="flex flex-col md:flex-row gap-3 items-start md:items-end">
+      <section className="grid gap-4 md:grid-cols-4">
+        <article className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-5">
+          <p className="text-sm text-slate-400">Total filtradas</p>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? "--" : totalFiltradas}</p>
+        </article>
+        <article className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
+          <div className="flex items-center gap-2 text-amber-300">
+            <Clock3 className="h-4 w-4" />
+            <p className="text-sm">Solicitadas</p>
+          </div>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? "--" : pendientes}</p>
+        </article>
+        <article className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+          <div className="flex items-center gap-2 text-emerald-300">
+            <CalendarCheck className="h-4 w-4" />
+            <p className="text-sm">Confirmadas</p>
+          </div>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? "--" : confirmadas}</p>
+        </article>
+        <article className="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-5">
+          <div className="flex items-center gap-2 text-indigo-300">
+            <Activity className="h-4 w-4" />
+            <p className="text-sm">En progreso</p>
+          </div>
+          <p className="mt-1 text-2xl font-bold text-white">{loading ? "--" : enProgreso}</p>
+        </article>
+      </section>
+
+      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4">
+        <div className="mb-4 flex items-center gap-2 text-sm text-slate-300">
+          <Search className="h-4 w-4" />
+          Filtros de consulta
+        </div>
+
+        <div className="flex flex-col items-start gap-3 md:flex-row md:items-end">
         <div className="flex flex-col gap-2">
           <label className="text-sm text-slate-300">Paciente ID</label>
           <input
@@ -115,8 +174,9 @@ export default function AdminCitasPage() {
         </button>
         {error && <span className="text-rose-400 text-sm">{error}</span>}
       </div>
+      </section>
 
-      <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/60">
+      <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/70">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-950/70 border-b border-slate-800/80 text-slate-300">
             <tr>
