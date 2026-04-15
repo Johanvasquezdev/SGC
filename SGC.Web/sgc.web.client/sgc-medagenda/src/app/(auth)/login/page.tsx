@@ -21,7 +21,9 @@ export default function LoginPage() {
     try {
       await AuthService.login({ email, password });
       const raw = localStorage.getItem("medagenda_user");
+      console.log("Usuario guardado:", raw);
       const usuario = raw ? JSON.parse(raw) : null;
+      console.log("Rol detectado:", usuario?.rol);
 
       if (usuario?.rol === "Administrador") {
         router.push("/admin/dashboard");
@@ -37,12 +39,9 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-[var(--med-navy)] text-slate-200 overflow-hidden px-4 sm:px-6 selection:bg-[var(--med-emerald)] selection:text-white font-sans">
-      {/* Background Ambient Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[var(--med-emerald-glow)] blur-[120px] rounded-[100%] pointer-events-none opacity-60" />
 
-      {/* Main Content Wrapper */}
       <div className="relative z-10 w-full max-w-[420px] flex flex-col items-center animate-fade-in-up">
-        {/* Logo Section */}
         <div className="mb-8 flex flex-col items-center">
           <div className="relative mb-5">
             <div className="absolute inset-0 scale-150 rounded-2xl blur-xl opacity-40 bg-gradient-to-br from-[var(--med-emerald)] to-[var(--med-emerald-hover)]" />
@@ -58,14 +57,12 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Glass-lite Auth Card */}
         <div className="w-full bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-lg)] p-8 shadow-[var(--shadow-premium)] backdrop-blur-xl">
           <h2 className="mb-6 text-xl font-semibold text-white tracking-tight">
             Iniciar Sesión
           </h2>
 
           <form onSubmit={handleLogin} className="space-y-5" noValidate>
-            {/* Email Input */}
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
@@ -87,7 +84,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password Input */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label
@@ -117,14 +113,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="animate-fade-in-up rounded-[var(--radius-md)] border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
                 {error}
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -141,7 +135,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Register Link */}
           <div className="mt-8 text-center text-sm text-slate-400">
             ¿No tienes una cuenta?{" "}
             <Link
@@ -153,7 +146,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Footer Copyright */}
         <div
           className="mt-8 text-xs text-slate-500 text-center animate-fade-in-up"
           style={{ animationDelay: "150ms" }}

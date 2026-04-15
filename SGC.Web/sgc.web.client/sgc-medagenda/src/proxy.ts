@@ -5,6 +5,12 @@ const PROTECTED_ROUTES = ["/admin", "/paciente"];
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  if (pathname === "/paciente/null" || pathname.startsWith("/paciente/null/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/paciente/dashboard";
+    return NextResponse.redirect(url);
+  }
+
   const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
   if (!isProtected) return NextResponse.next();
 

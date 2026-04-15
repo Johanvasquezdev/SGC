@@ -15,7 +15,12 @@ export default function AdminPagosPage() {
 
   useEffect(() => {
     const fetchPagos = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setPagos([]);
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
       try {
         const data = await PagoService.obtenerPorPaciente(user.id);
         setPagos(data);

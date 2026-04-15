@@ -37,6 +37,8 @@ export function UserSettingsForm() {
         setEmail(perfil.email || "");
         setTelefono(perfil.telefono || "");
         setRol(String(perfil.rol || ""));
+      } catch (error: any) {
+        setProfileMessage(error?.response?.data?.message || "No se pudo cargar el perfil.");
       } finally {
         setLoading(false);
       }

@@ -1,14 +1,9 @@
 import axios from 'axios';
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL;
-
-if (!API_URL) {
-  throw new Error(
-    "Missing NEXT_PUBLIC_API_URL or NEXT_PUBLIC_API_BASE_URL environment variable."
-  );
-}
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  '';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -47,7 +42,7 @@ api.interceptors.response.use(
 
         // 2. Redirigir al usuario al login solo si no está ya en la página de login.
         // Esto previene un bucle de redirecciones infinitas.
-        const loginPath = '/'; // Ajusta esto si tu ruta de login es '/login'
+        const loginPath = '/login';
         if (window.location.pathname !== loginPath) {
           window.location.href = loginPath;
         }

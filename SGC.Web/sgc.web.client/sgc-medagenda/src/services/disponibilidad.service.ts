@@ -3,6 +3,7 @@ import { DisponibilidadDTO, CreateDisponibilidadRequest } from '@/types/api.type
 
 export class DisponibilidadService {
   static async obtenerPorMedico(medicoId: number, fecha?: string): Promise<DisponibilidadDTO[]> {
+    if (!medicoId || medicoId <= 0) return [];
     const params = fecha ? `?fecha=${fecha}` : '';
     const response = await api.get<DisponibilidadDTO[]>(`/api/disponibilidad/medico/${medicoId}${params}`);
     return response.data;

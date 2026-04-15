@@ -1,16 +1,21 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === "undefined") return true;
     const stored = localStorage.getItem("theme");
-    if (stored === "dark") return true;
     if (stored === "light") return false;
     return true;
   });
+
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
@@ -56,6 +61,18 @@ export function ThemeToggle() {
     setIsDark(next);
     window.dispatchEvent(new Event("theme-changed"));
   };
+
+  if (!mounted) {
+    return (
+      <button
+        className="relative p-2 rounded-xl bg-card border border-border hover:bg-accent text-foreground"
+        aria-label="Cambiar tema"
+        disabled
+      >
+        <Sun className="w-5 h-5" />
+      </button>
+    );
+  }
 
   return (
     <button

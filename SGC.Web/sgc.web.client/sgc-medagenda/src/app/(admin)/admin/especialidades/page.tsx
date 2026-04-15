@@ -5,6 +5,9 @@ import { Stethoscope, Plus, Loader2, X, Search } from "lucide-react";
 import { EspecialidadDTO, EspecialidadService } from "@/services/especialidad.service";
 
 export default function EspecialidadesPage() {
+  const nombreInputId = "especialidad-nombre";
+  const descripcionInputId = "especialidad-descripcion";
+  const busquedaInputId = "especialidades-busqueda";
   const [especialidades, setEspecialidades] = useState<EspecialidadDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,10 +97,11 @@ export default function EspecialidadesPage() {
           </div>
 
           <button
+            type="button"
             onClick={abrirCrear}
             className="inline-flex items-center gap-2 rounded-xl bg-indigo-500/20 px-4 py-2 text-sm font-medium text-indigo-100 transition-colors hover:bg-indigo-500/30"
           >
-            <Plus className="h-4 w-4" /> Anadir nueva
+            <Plus aria-hidden="true" className="h-4 w-4" /> Anadir nueva
           </button>
         </div>
       </header>
@@ -119,9 +123,11 @@ export default function EspecialidadesPage() {
 
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <label className="relative block w-full sm:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          <label htmlFor={busquedaInputId} className="relative block w-full sm:max-w-sm">
+            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
+              id={busquedaInputId}
+              aria-label="Buscar especialidades"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar por nombre o descripcion"
@@ -175,6 +181,7 @@ export default function EspecialidadesPage() {
                   </td>
                   <td className="p-4 text-right">
                     <button
+                      type="button"
                       onClick={() => abrirEditar(esp)}
                       className="px-3 py-1.5 rounded-lg text-xs border border-slate-700 text-slate-200 hover:bg-slate-800"
                     >
@@ -195,19 +202,27 @@ export default function EspecialidadesPage() {
               <h2 className="text-lg font-semibold text-white">
                 {modoEdicion ? "Editar Especialidad" : "Registrar Especialidad"}
               </h2>
-              <button onClick={cerrarModal} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
+              <button type="button" onClick={cerrarModal} aria-label="Cerrar modal" className="text-slate-400 hover:text-white">
+                <X aria-hidden="true" className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={guardar} className="p-5 space-y-4 text-slate-200">
+              <label htmlFor={nombreInputId} className="sr-only">
+                Nombre de especialidad
+              </label>
               <input
+                id={nombreInputId}
                 required
                 placeholder="Nombre"
                 className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
                 value={formData.nombre}
                 onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
               />
+              <label htmlFor={descripcionInputId} className="sr-only">
+                Descripcion de especialidad
+              </label>
               <textarea
+                id={descripcionInputId}
                 placeholder="Descripción"
                 className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
                 value={formData.descripcion}

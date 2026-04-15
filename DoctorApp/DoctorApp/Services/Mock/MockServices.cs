@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using DoctorApp.DTOs.Requests;
 using DoctorApp.DTOs.Responses;
 using DoctorApp.Exceptions;
@@ -51,117 +54,14 @@ public class MockCitasService : ICitasService
     {
         return Task.FromResult<CitaResponseDto?>(new CitaResponseDto { Id = citaId });
     }
-}
-
-public class MockDisponibilidadService : IDisponibilidadService
-{
-    public Task<List<DisponibilidadResponseDto>> ObtenerDisponibilidadesAsync(int medicoId)
+// 👇 REEMPLAZA EL MÉTODO ANTERIOR POR ESTE 👇
+    public Task<CitaResponseDto> CancelarCitaAsync(int citaId, string? motivo)
     {
-        return Task.FromResult(new List<DisponibilidadResponseDto>());
-    }
-
-    public Task<DisponibilidadResponseDto> CrearDisponibilidadAsync(CrearDisponibilidadRequest request)
-    {
-        return Task.FromResult(new DisponibilidadResponseDto
-        {
-            Id = 1,
-            MedicoId = request.MedicoId,
-            DiaSemana = request.DiaSemana.ToString(),
-            HoraInicio = request.HoraInicio,
-            HoraFin = request.HoraFin,
-            DuracionCitaMin = request.DuracionCitaMin,
-            EsRecurrente = request.EsRecurrente
+        // Ahora sí devolvemos el objeto que exige la interfaz
+        return Task.FromResult(new CitaResponseDto 
+        { 
+            Id = citaId, 
+            Estado = "Cancelada" 
         });
     }
-
-    public Task<DisponibilidadResponseDto> ActualizarDisponibilidadAsync(ActualizarDisponibilidadRequest request)
-    {
-        return Task.FromResult(new DisponibilidadResponseDto
-        {
-            Id = request.DisponibilidadId,
-            MedicoId = request.MedicoId,
-            DiaSemana = request.DiaSemana.ToString(),
-            HoraInicio = request.HoraInicio,
-            HoraFin = request.HoraFin,
-            DuracionCitaMin = request.DuracionCitaMin,
-            EsRecurrente = request.EsRecurrente
-        });
     }
-
-    public Task EliminarDisponibilidadAsync(int disponibilidadId) => Task.CompletedTask;
-
-    public Task<DisponibilidadResponseDto?> ObtenerDisponibilidadPorIdAsync(int disponibilidadId)
-    {
-        return Task.FromResult<DisponibilidadResponseDto?>(new DisponibilidadResponseDto { Id = disponibilidadId });
-    }
-}
-
-public class MockAuthService : IAuthService
-{
-    public Task<AuthTokenResponse> LoginAsync(string usuario, string contrasena)
-    {
-        if (usuario == "doctor" && contrasena == "password")
-        {
-            return Task.FromResult(new AuthTokenResponse
-            {
-                Token = "mock",
-                NombreUsuario = "Doctor Demo",
-                Rol = "Medico",
-                Expiracion = DateTime.UtcNow.AddHours(1)
-            });
-        }
-
-        throw new UnauthorizedException("Credenciales invalidas");
-    }
-
-    public Task LogoutAsync() => Task.CompletedTask;
-
-    public Task<bool> EstaAutenticadoAsync() => Task.FromResult(true);
-}
-
-public class MockDoctorService : IDoctorService
-{
-    public Task<DoctorResponseDto> RegistrarDoctorAsync(DoctorRequestDto datos)
-    {
-        return Task.FromResult(new DoctorResponseDto
-        {
-            Id = 1,
-            Nombre = $"{datos.Nombre} {datos.Apellido}".Trim(),
-            Email = datos.Email ?? string.Empty,
-            Especialidad = datos.Especialidad,
-            TelefonoConsultorio = datos.Telefono,
-            Activo = true,
-            MedicoActivo = true
-        });
-    }
-
-    public Task<DoctorResponseDto> ObtenerDoctorActualAsync()
-    {
-        throw new UnauthorizedException("No hay doctor registrado");
-    }
-
-    public Task<DoctorResponseDto> ActualizarDoctorAsync(int doctorId, DoctorRequestDto datos)
-    {
-        return Task.FromResult(new DoctorResponseDto
-        {
-            Id = doctorId,
-            Nombre = $"{datos.Nombre} {datos.Apellido}".Trim(),
-            Email = datos.Email ?? string.Empty,
-            Especialidad = datos.Especialidad,
-            TelefonoConsultorio = datos.Telefono,
-            Activo = true,
-            MedicoActivo = true
-        });
-    }
-
-    public Task<List<CitaResponseDto>> GetCitasByDoctorIdAsync(int doctorId)
-    {
-        return Task.FromResult(new List<CitaResponseDto>());
-    }
-
-    public void EstablecerDoctorId(int doctorId)
-    {
-    }
-
-    public int? ObtenerDoctorIdCacheado() => null;
-}

@@ -14,12 +14,7 @@ export default function MisCitasPage() {
   const [citas, setCitas] = useState<CitaDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Escucha eventos del hub para notificar cambios en tiempo real.
-  const signalRBaseUrl =
-    process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
-
   useSignalR({
-    hubUrl: signalRBaseUrl ? `${signalRBaseUrl.replace(/\/$/, "")}/citahub` : "",
     onNuevaCita: () => {
       toast.info("Nueva cita registrada");
     },

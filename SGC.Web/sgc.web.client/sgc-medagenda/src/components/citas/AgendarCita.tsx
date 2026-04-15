@@ -33,6 +33,9 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
   const [pagoCreado, setPagoCreado] = useState(false);
   const [pacienteActualId, setPacienteActualId] = useState<number | null>(null);
   const router = useRouter();
+  const fechaHoraId = "agendar-fecha-hora";
+  const motivoId = "agendar-motivo";
+  const notasId = "agendar-notas";
 
   if (!isOpen || !medico) return null;
 
@@ -106,8 +109,8 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
       <div className="bg-slate-950/95 rounded-2xl shadow-xl w-full max-w-md border border-slate-800 overflow-hidden">
         <div className="flex justify-between items-center p-4 border-b border-slate-800 bg-slate-950/90">
           <h2 className="text-lg font-semibold text-white">Agendar con {medico.nombre}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+          <button type="button" onClick={onClose} aria-label="Cerrar modal" className="text-slate-400 hover:text-white transition-colors">
+            <X aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
         <div className="p-6 text-slate-100">
@@ -157,6 +160,8 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
+                id={fechaHoraId}
+                aria-label="Fecha y hora"
                 type="datetime-local"
                 required
                 className="w-full px-4 py-2 border border-slate-800 bg-slate-950/70 text-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -164,6 +169,8 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
                 onChange={(e) => setFechaHora(e.target.value)}
               />
               <input
+                id={motivoId}
+                aria-label="Motivo de la cita"
                 type="text"
                 required
                 placeholder="Motivo..."
@@ -172,12 +179,14 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
                 onChange={(e) => setMotivo(e.target.value)}
               />
               <textarea
+                id={notasId}
+                aria-label="Notas adicionales"
                 placeholder="Notas..."
                 className="w-full px-4 py-2 border border-slate-800 bg-slate-950/70 text-slate-100 rounded-xl placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
               />
-              {error && <div className="text-red-500 text-sm">{error}</div>}
+              {error && <div role="alert" aria-live="polite" className="text-red-500 text-sm">{error}</div>}
               <button
                 disabled={isLoading}
                 className="w-full bg-emerald-600 text-white py-3 rounded-xl flex justify-center hover:bg-emerald-500 transition-colors"

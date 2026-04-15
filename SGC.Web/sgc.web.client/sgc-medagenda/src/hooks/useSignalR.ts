@@ -4,20 +4,16 @@ import { useEffect } from "react";
 import * as signalR from "@microsoft/signalr";
 
 interface UseSignalROptions {
-  hubUrl: string;
+  hubUrl?: string;
   onNuevaCita?: (payload: unknown) => void;
 }
 
 export function useSignalR({ hubUrl, onNuevaCita }: UseSignalROptions) {
   useEffect(() => {
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!baseUrl) {
-      return;
-    }
-    const normalizedBase = baseUrl.replace(/\/$/, "");
-    const resolvedHubUrl = hubUrl || `${normalizedBase}/citahub`;
+      process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
+      process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+    const resolvedHubUrl = hubUrl || (baseUrl ? `${baseUrl}/citahub` : "/citahub");
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(resolvedHubUrl, {

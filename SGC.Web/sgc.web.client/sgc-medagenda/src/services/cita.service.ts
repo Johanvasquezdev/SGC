@@ -2,12 +2,14 @@ import api from '@/lib/api';
 import { CitaDTO, CreateCitaDTO } from '@/types/api.types';
 
 export class CitaService {
-  static async crearCita(citaData: CreateCitaDTO): Promise<CitaDTO> {
-    const response = await api.post<CitaDTO>('/api/citas', citaData);
+  static async obtenerCitasPorPaciente(pacienteId: number): Promise<CitaDTO[]> {
+    if (!pacienteId || pacienteId <= 0) return [];
+    const response = await api.get<CitaDTO[]>(`/api/citas/paciente/${pacienteId}`);
     return response.data;
   }
-  static async obtenerCitasPorPaciente(pacienteId: number): Promise<CitaDTO[]> {
-    const response = await api.get<CitaDTO[]>(`/api/citas/paciente/${pacienteId}`);
+
+  static async crearCita(citaData: CreateCitaDTO): Promise<CitaDTO> {
+    const response = await api.post<CitaDTO>('/api/citas', citaData);
     return response.data;
   }
   static async obtenerCitasPorMedico(medicoId: number): Promise<CitaDTO[]> {

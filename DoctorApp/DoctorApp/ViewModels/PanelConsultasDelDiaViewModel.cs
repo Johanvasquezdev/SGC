@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using DoctorApp.Exceptions;
 using DoctorApp.Models;
 using DoctorApp.Services.Interfaces;
 using DoctorApp.Security;

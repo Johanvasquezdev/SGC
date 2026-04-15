@@ -29,13 +29,15 @@ export default function AuditoriaPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex gap-2 text-white">
-            <Shield /> Auditoría
+            <Shield aria-hidden="true" /> Auditoría
           </h1>
           <p className="text-slate-400 text-sm mt-1">
             Trazabilidad de operaciones por entidad.
           </p>
         </div>
         <select
+          id="entidad-filtro"
+          aria-label="Filtrar registros por entidad"
           value={entidad}
           onChange={(e) => setEntidad(e.target.value)}
           className="px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100"

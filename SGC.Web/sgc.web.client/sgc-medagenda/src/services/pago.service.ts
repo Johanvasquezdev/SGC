@@ -11,6 +11,7 @@ export class PagoService {
     return response.data.confirmado;
   }
   static async obtenerPorPaciente(pacienteId: number): Promise<PagoResponse[]> {
+    if (!pacienteId || pacienteId <= 0) return [];
     const response = await api.get<PagoResponse[]>(`/api/pagos/paciente/${pacienteId}`);
     return response.data;
   }

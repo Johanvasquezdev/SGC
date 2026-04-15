@@ -60,7 +60,7 @@ export function CitaCard({ doctorNombre, especialidad, fecha, hora, estado }: Ci
           {estado}
         </span>
         <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-          <MoreVertical className="w-5 h-5" />
+          <MoreVertical aria-hidden="true" className="w-5 h-5" />
         </button>
       </div>
     </div>

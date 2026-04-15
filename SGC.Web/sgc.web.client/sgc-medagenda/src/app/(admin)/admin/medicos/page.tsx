@@ -159,10 +159,11 @@ export default function AdminMedicosPage() {
           </div>
 
           <button
+            type="button"
             onClick={abrirCrear}
             className="inline-flex items-center gap-2 rounded-xl bg-cyan-500/20 px-4 py-2 text-sm font-medium text-cyan-100 transition-colors hover:bg-cyan-500/30"
           >
-            <Plus className="h-4 w-4" /> Registrar medico
+            <Plus aria-hidden="true" className="h-4 w-4" /> Registrar medico
           </button>
         </div>
       </header>
@@ -185,8 +186,10 @@ export default function AdminMedicosPage() {
       <div className="bg-slate-900/60 rounded-xl shadow-sm border border-slate-800/80 overflow-hidden">
         <div className="p-4 border-b border-slate-800/80 flex flex-col gap-3 bg-slate-950/70 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
+              id="medicos-busqueda"
+              aria-label="Buscar medicos"
               type="text"
               placeholder="Buscar por nombre, especialidad, exequatur o email"
               className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-800 bg-slate-950/70 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-white"
@@ -270,12 +273,14 @@ export default function AdminMedicosPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
+                          type="button"
                           onClick={() => abrirEditar(medico)}
                           className="px-3 py-1.5 rounded-lg text-xs border border-slate-700 text-slate-200 hover:bg-slate-800"
                         >
                           Editar
                         </button>
                         <button
+                          type="button"
                           onClick={() => toggleActivo(medico)}
                           className={`px-3 py-1.5 rounded-lg text-xs border ${
                             medico.activo
@@ -302,13 +307,14 @@ export default function AdminMedicosPage() {
               <h2 className="text-lg font-semibold text-white">
                 {modoEdicion ? "Editar Médico" : "Registrar Médico"}
               </h2>
-              <button onClick={cerrarModal} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
+              <button type="button" onClick={cerrarModal} aria-label="Cerrar modal" className="text-slate-400 hover:text-white">
+                <X aria-hidden="true" className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={guardarMedico} className="p-5 space-y-4 text-slate-200">
               <div className="grid gap-4">
                 <input
+                  aria-label="Nombre completo"
                   required
                   placeholder="Nombre completo"
                   className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
@@ -316,6 +322,7 @@ export default function AdminMedicosPage() {
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                 />
                 <input
+                  aria-label="Correo electronico"
                   required
                   type="email"
                   placeholder="Email"
@@ -325,6 +332,7 @@ export default function AdminMedicosPage() {
                 />
                 {!modoEdicion && (
                   <input
+                    aria-label="Contrasena"
                     required
                     type="password"
                     placeholder="Contraseña"
@@ -334,12 +342,14 @@ export default function AdminMedicosPage() {
                   />
                 )}
                 <input
+                  aria-label="Exequatur"
                   placeholder="Exequatur"
                   className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
                   value={formData.exequatur || ""}
                   onChange={(e) => setFormData({ ...formData, exequatur: e.target.value })}
                 />
                 <select
+                  aria-label="Seleccionar especialidad"
                   className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100"
                   value={formData.especialidadId ?? ""}
                   onChange={(e) =>
@@ -354,6 +364,7 @@ export default function AdminMedicosPage() {
                   ))}
                 </select>
                 <select
+                  aria-label="Seleccionar proveedor de salud"
                   className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100"
                   value={formData.proveedorSaludId ?? ""}
                   onChange={(e) =>
@@ -368,12 +379,14 @@ export default function AdminMedicosPage() {
                   ))}
                 </select>
                 <input
+                  aria-label="Telefono de consultorio"
                   placeholder="Teléfono consultorio"
                   className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
                   value={formData.telefonoConsultorio || ""}
                   onChange={(e) => setFormData({ ...formData, telefonoConsultorio: e.target.value })}
                 />
                 <input
+                  aria-label="URL de foto"
                   placeholder="Foto (URL)"
                   className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
                   value={formData.foto || ""}

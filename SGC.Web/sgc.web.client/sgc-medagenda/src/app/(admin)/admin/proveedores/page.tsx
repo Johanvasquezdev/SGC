@@ -5,6 +5,7 @@ import { Building2, Plus, Loader2, X, Search, CheckCircle2, XCircle } from "luci
 import { ProveedorSaludDTO, ProveedorSaludService } from "@/services/proveedor.service";
 
 export default function ProveedoresPage() {
+  const busquedaInputId = "proveedores-busqueda";
   const [proveedores, setProveedores] = useState<ProveedorSaludDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -106,10 +107,11 @@ export default function ProveedoresPage() {
           </div>
 
           <button
+            type="button"
             onClick={abrirCrear}
             className="inline-flex items-center gap-2 rounded-xl bg-indigo-500/20 px-4 py-2 text-sm font-medium text-indigo-100 transition-colors hover:bg-indigo-500/30"
           >
-            <Plus className="h-4 w-4" /> Registrar proveedor
+            <Plus aria-hidden="true" className="h-4 w-4" /> Registrar proveedor
           </button>
         </div>
       </header>
@@ -138,9 +140,11 @@ export default function ProveedoresPage() {
       </section>
 
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4">
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        <label htmlFor={busquedaInputId} className="relative block">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
+            id={busquedaInputId}
+            aria-label="Buscar proveedores"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nombre, tipo, telefono o email"
@@ -195,6 +199,7 @@ export default function ProveedoresPage() {
                   </td>
                   <td className="p-4 text-right">
                     <button
+                      type="button"
                       onClick={() => abrirEditar(prov)}
                       className="px-3 py-1.5 rounded-lg text-xs border border-slate-700 text-slate-200 hover:bg-slate-800"
                     >
@@ -215,12 +220,13 @@ export default function ProveedoresPage() {
               <h2 className="text-lg font-semibold text-white">
                 {modoEdicion ? "Editar Proveedor" : "Registrar Proveedor"}
               </h2>
-              <button onClick={cerrarModal} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
+              <button type="button" onClick={cerrarModal} aria-label="Cerrar modal" className="text-slate-400 hover:text-white">
+                <X aria-hidden="true" className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={guardar} className="p-5 space-y-4 text-slate-200">
               <input
+                aria-label="Nombre del proveedor"
                 required
                 placeholder="Nombre"
                 className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
@@ -228,18 +234,21 @@ export default function ProveedoresPage() {
                 onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
               />
               <input
+                aria-label="Tipo de proveedor"
                 placeholder="Tipo (ARS, Clínica, Hospital)"
                 className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
                 value={formData.tipo}
                 onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
               />
               <input
+                aria-label="Telefono"
                 placeholder="Teléfono"
                 className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"
                 value={formData.telefono}
                 onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
               />
               <input
+                aria-label="Correo electronico"
                 type="email"
                 placeholder="Email"
                 className="w-full px-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-100 placeholder:text-slate-500"

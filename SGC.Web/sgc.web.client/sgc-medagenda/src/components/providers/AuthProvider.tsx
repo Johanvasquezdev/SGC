@@ -13,21 +13,37 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function normalizeUserId(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
 function getUserFromStorage(): AuthUser | null {
   // Lee el usuario del storage o lo reconstruye desde el JWT.
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem("medagenda_user");
   if (raw) {
     try {
-      const parsed = JSON.parse(raw) as AuthUser;
-      if (parsed?.id) return parsed;
+      const parsed = JSON.parse(raw) as Partial<AuthUser> & { id?: unknown };
+      const storedUserId = normalizeUserId(parsed?.id);
+      if (storedUserId) {
+        return {
+          id: storedUserId,
+          nombre: parsed.nombre || "",
+          rol: parsed.rol || "",
+          email: parsed.email,
+        };
+      }
       const token = localStorage.getItem("medagenda_token");
-      if (!token) return parsed;
+      if (!token) return null;
       const payload = decodeJwt(token);
       const userId = getUserIdFromPayload(payload);
+      if (!userId) return null;
       return {
-        ...parsed,
-        id: userId || parsed.id,
+        id: userId,
+        nombre: parsed.nombre || payload?.unique_name || "",
+        rol: parsed.rol || payload?.role || "",
+        email: parsed.email || payload?.email,
       };
     } catch {
       return null;

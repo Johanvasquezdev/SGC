@@ -27,7 +27,12 @@ export default function PacienteDashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setCitas([]);
+        setMedicos([]);
+        setLoading(false);
+        return;
+      }
       try {
         const [citasData, medicosData] = await Promise.all([
           CitaService.obtenerCitasPorPaciente(user.id),
