@@ -56,6 +56,24 @@ namespace SGC.Application.Services
                 $"CitaId: {request.CitaId}, Monto: {request.Monto}");
         }
 
+        public async Task<bool> SimularConfirmacionAsync(int citaId)
+        {
+            return await ExecuteOperacionAsync(
+                "SimularConfirmacion",
+                async () =>
+                {
+                    var pago = await _pagoRepo.GetByCitaAsync(citaId);
+                    if (pago != null && pago.Estado == EstadoPago.Pendiente)
+                    {
+                        pago.Confirmar();
+                        await _pagoRepo.UpdateAsync(pago);
+                        return true;
+                    }
+                    return false;
+                },
+                $"CitaId: {citaId}");
+        }
+
         // Confirma el pago una vez que el cliente ha completado el proceso de pago en el servicio externo, actualizando el estado del pago en la base de datos a confirmado.
         public async Task<bool> ConfirmarPagoAsync(
             string stripePaymentIntentId)

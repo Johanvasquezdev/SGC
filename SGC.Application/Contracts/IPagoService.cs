@@ -1,4 +1,4 @@
-﻿using SGC.Application.DTOs.Payments;
+using SGC.Application.DTOs.Payments;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,6 +9,8 @@ namespace SGC.Application.Contracts
     {
         Task<string> CrearIntentoPagoAsync(CrearPagoRequest request);
         // Crea un intento de pago en Stripe y devuelve el ID del PaymentIntent para que el cliente pueda completar el proceso de pago.
+
+        Task<bool> SimularConfirmacionAsync(int citaId);
 
         Task<bool> ConfirmarPagoAsync(string stripePaymentIntentId);
         // Confirma el pago en Stripe utilizando el ID del PaymentIntent. Esto se llama desde el webhook de Stripe cuando se recibe la confirmacion de pago exitoso.

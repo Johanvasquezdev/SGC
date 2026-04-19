@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -18,11 +19,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${geist.className} antialiased`}>
-        <AuthProvider>
-          {children}
-          <Toaster richColors position="top-right" />
-        </AuthProvider>
+      <body className={`${geist.className} antialiased`} suppressHydrationWarning>
+        <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem={false} suppressHydrationWarning>
+          <AuthProvider>
+            {children}
+            <Toaster richColors position="top-right" />
+          </AuthProvider>
+        </NextThemesProvider>
       </body>
     </html>
   );

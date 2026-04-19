@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import {
   X,
@@ -119,7 +119,7 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
               <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
               <h3 className="text-lg font-semibold text-white">Cita Agendada</h3>
               <p className="text-slate-400 text-sm mt-2">
-                Puedes crear el pago ahora o verlo luego en Pagos.
+                Puedes completar el pago de tu consulta ahora de forma segura.
               </p>
               <div className="mt-6 flex flex-col gap-3">
                 <button
@@ -135,16 +135,19 @@ export function AgendarCitaModal({ medico, isOpen, onClose }: Props) {
                         moneda: "DOP",
                       });
                       setPagoCreado(true);
-                      toast.success("Intento de pago creado.");
+                      toast.success("Redirigiendo a la pasarela de pagos...");
+                      
+                      // Redirect to checkout form
+                      router.push(`/paciente/checkout/${citaCreadaId}`);
                     } catch (e: any) {
-                      toast.error("No se pudo crear el pago.");
+                      toast.error("No se pudo iniciar el proceso de pago.");
                     } finally {
                       setPagoLoading(false);
                     }
                   }}
-                  className="w-full bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-500 transition-colors disabled:opacity-60"
+                  className="w-full bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-500 transition-colors disabled:opacity-60 flex justify-center"
                 >
-                  {pagoLoading ? "Creando pago..." : pagoCreado ? "Pago creado" : "Pagar ahora"}
+                  {pagoLoading ? "Procesando..." : "Completar Pago Seguro"}
                 </button>
                 <button
                   onClick={() => {

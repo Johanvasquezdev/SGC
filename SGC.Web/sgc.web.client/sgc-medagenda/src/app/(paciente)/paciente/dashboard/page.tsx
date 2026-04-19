@@ -17,6 +17,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { MedicoCard } from "@/components/medicos/MedicoCard";
 import { AgendarCitaModal } from "@/components/citas/AgendarCita";
 import { toast } from "sonner";
+import { AnimatedStatsCard } from "@/components/animations/Animatedstatscard";
+import { AnimatedList, AnimatedCard, usePageTransition } from "@/components/animations/Animatedcomponents";
 
 export default function PacienteDashboard() {
   const { user } = useAuth();
@@ -50,6 +52,8 @@ export default function PacienteDashboard() {
     fetchData();
   }, [user?.id]);
 
+  usePageTransition();
+
   const medicosById = useMemo(() => {
     const map = new Map<number, MedicoDTO>();
     medicos.forEach(m => map.set(m.id, m));
@@ -68,15 +72,15 @@ export default function PacienteDashboard() {
   const getStatusStyles = (estado: EstadoCita | string) => {
     switch ((estado || "").toString().toLowerCase()) {
       case "confirmada":
-        return "bg-emerald-500/15 text-emerald-300";
+        return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20";
       case "solicitada":
-        return "bg-amber-500/15 text-amber-300";
+        return "bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20";
       case "cancelada":
-        return "bg-rose-500/15 text-rose-300";
+        return "bg-rose-500/10 text-rose-600 dark:text-rose-300 border border-rose-500/20";
       case "noasistio":
-        return "bg-slate-500/20 text-slate-300";
+        return "bg-muted text-muted-foreground border border-border";
       default:
-        return "bg-slate-500/20 text-slate-300";
+        return "bg-muted text-muted-foreground border border-border";
     }
   };
 
@@ -91,68 +95,62 @@ export default function PacienteDashboard() {
   };
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Bienvenido, {user?.nombre || "Paciente"}
-        </h1>
-        <p className="text-muted-foreground">
-          Gestiona tus citas y encuentra médicos especialistas
-        </p>
+    <div className="space-y-8 page-content animate-in fade-in duration-500">
+      <header className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/15 via-white dark:via-slate-950 to-teal-500/15 p-6 md:p-8 shadow-sm">
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 blur-3xl opacity-50" />
+        <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-teal-500/10 dark:bg-teal-500/20 blur-3xl opacity-50" />
+        
+        <div className="relative z-10">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-2">
+            Panel de Control
+          </p>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">
+            Hola, <span className="text-emerald-600 dark:text-emerald-400">{user?.nombre?.split(" ")[0] || "Paciente"}</span> 👋
+          </h1>
+          <p className="mt-2 text-muted-foreground font-medium max-w-xl leading-relaxed">
+            Gestiona tus citas de forma inteligente y mantén un seguimiento detallado de tu salud.
+          </p>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-emerald-500/15 p-3">
-              <CalendarCheck className="h-6 w-6 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Citas Hoy</p>
-              <p className="text-2xl font-bold text-foreground">{loading ? "-" : citasHoy.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-emerald-500/15 p-3">
-              <Clock className="h-6 w-6 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Citas Pendientes</p>
-              <p className="text-2xl font-bold text-foreground">{loading ? "-" : citasPendientes.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-emerald-500/15 p-3">
-              <Stethoscope className="h-6 w-6 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Médicos Disponibles</p>
-              <p className="text-2xl font-bold text-foreground">{loading ? "-" : medicos.length}</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <AnimatedStatsCard
+          title="Citas Hoy"
+          value={loading ? 0 : citasHoy.length}
+          icon={CalendarCheck}
+          delay={100}
+          variant="emerald"
+        />
+        <AnimatedStatsCard
+          title="Citas Pendientes"
+          value={loading ? 0 : citasPendientes.length}
+          icon={Clock}
+          delay={200}
+          variant="amber"
+        />
+        <AnimatedStatsCard
+          title="Médicos Disponibles"
+          value={loading ? 0 : medicos.length}
+          icon={Stethoscope}
+          delay={300}
+          variant="cyan"
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">Próximas Citas</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-foreground">Próximas Citas</h2>
             <div className="flex items-center gap-4">
               <a
                 href="/paciente/medicos"
-                className="text-sm font-medium text-emerald-500 hover:text-emerald-400"
+                className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 hover:underline"
               >
                 Agendar cita
               </a>
               <a
                 href="/paciente/citas"
-                className="text-sm font-medium text-emerald-500 hover:text-emerald-400"
+                className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
               >
                 Ver todas
               </a>
@@ -160,23 +158,24 @@ export default function PacienteDashboard() {
           </div>
 
           {proximasCitas.length === 0 ? (
-            <div className="rounded-2xl border border-border/60 bg-card/70 p-6 text-muted-foreground backdrop-blur-sm">
-              No tienes citas próximas. Agenda una con un médico disponible.
+            <div className="rounded-3xl border border-border bg-card/50 p-12 text-center text-muted-foreground shadow-sm">
+              <Calendar className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+              <p className="font-medium text-sm">No tienes citas próximas. Agenda una con un médico disponible.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <AnimatedList className="space-y-3">
               {proximasCitas.map((cita) => {
                 const medico = medicosById.get(cita.medicoId);
                 return (
-                  <div key={cita.id} className="rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur-sm">
+                  <AnimatedCard key={cita.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-all">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="rounded-xl bg-emerald-500/15 p-3">
-                          <CalendarDays className="h-5 w-5 text-emerald-500" />
+                      <div className="flex items-center gap-5">
+                        <div className="rounded-2xl bg-emerald-500/10 p-3 shadow-inner">
+                          <CalendarDays className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-foreground">{medico?.nombre || "Médico"}</p>
-                          <p className="text-sm text-emerald-500">
+                          <p className="text-lg font-bold text-foreground leading-none">{medico?.nombre || "Médico"}</p>
+                          <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
                             {medico?.especialidadNombre || "Especialidad"}
                           </p>
                         </div>
@@ -215,10 +214,10 @@ export default function PacienteDashboard() {
                         Cancelar cita
                       </button>
                     )}
-                  </div>
+                  </AnimatedCard>
                 );
               })}
-            </div>
+            </AnimatedList>
           )}
         </div>
 
@@ -233,11 +232,13 @@ export default function PacienteDashboard() {
             </a>
           </div>
 
-          <div className="grid gap-4">
+          <AnimatedList className="grid gap-4">
             {medicosDestacados.map((medico) => (
-              <MedicoCard key={medico.id} medico={medico} onAgendarClick={setSelectedMedico} />
+              <AnimatedCard key={medico.id}>
+                <MedicoCard medico={medico} onAgendarClick={setSelectedMedico} />
+              </AnimatedCard>
             ))}
-          </div>
+          </AnimatedList>
         </div>
       </div>
 

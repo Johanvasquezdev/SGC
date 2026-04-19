@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 import { Star, MapPin, Clock, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { MedicoDTO } from "@/types/medico.types";
@@ -8,15 +10,19 @@ interface MedicoCardProps {
 }
 
 export function MedicoCard({ medico, onAgendarClick }: MedicoCardProps) {
+  const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(medico.nombre)}&background=10b981&color=fff`;
+  const [imgSrc, setImgSrc] = useState(medico.foto || fallbackUrl);
+
   return (
     <div className="group bg-card rounded-2xl p-6 shadow-sm hover:shadow-md transition-all border border-border flex flex-col h-full">
       <div className="flex items-start gap-4">
         <Image
-          src={medico.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(medico.nombre)}&background=0D8B93&color=fff`}
+          src={imgSrc}
           alt={`Foto de ${medico.nombre}`}
           width={64}
           height={64}
           unoptimized
+          onError={() => setImgSrc(fallbackUrl)}
           className="w-16 h-16 rounded-full object-cover border-2 border-emerald-200 dark:border-emerald-900"
         />
         <div>

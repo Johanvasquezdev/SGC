@@ -1,31 +1,25 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Clock, MapPin, Loader2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Loader2 } from "lucide-react";
 import { CitaDTO, EstadoCita } from "@/types/api.types";
 import { CitaService } from "@/services/cita.service";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useSignalR } from "@/hooks/useSignalR";
 import { toast } from "sonner";
 import dayjs from "dayjs";
+import { usePageTransition, AnimatedCard } from "@/components/animations/Animatedcomponents";
 
 export default function MisCitasPage() {
   const { user } = useAuth();
   const [citas, setCitas] = useState<CitaDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useSignalR({
-    onNuevaCita: () => {
-      toast.info("Nueva cita registrada");
-    },
-  });
+  useSignalR({ onNuevaCita: () => toast.info("Nueva cita registrada") });
 
   useEffect(() => {
     const fetchCitas = async () => {
-      if (!user?.id) {
-        setIsLoading(false);
-        return;
-      }
+      if (!user?.id) { setIsLoading(false); return; }
       try {
         const data = await CitaService.obtenerCitasPorPaciente(user.id);
         setCitas(data);
@@ -43,8 +37,9 @@ export default function MisCitasPage() {
     if (!motivo) return;
     try {
       await CitaService.cancelarCita(id, motivo);
-      setCitas((prev) => prev.map((c) => (c.id === id ? { ...c, estado: EstadoCita.Cancelada } : c)));
-    } catch (e) {
+      setCitas(prev => prev.map(c => c.id === id ? { ...c, estado: EstadoCita.Cancelada } : c));
+      toast.success("Cita cancelada correctamente.");
+    } catch {
       toast.error("No se pudo cancelar la cita.");
     }
   };
@@ -55,75 +50,113 @@ export default function MisCitasPage() {
     const iso = new Date(nuevaFecha.replace(" ", "T")).toISOString();
     try {
       await CitaService.reprogramarCita(id, iso);
-      setCitas((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, fechaHora: iso, estado: EstadoCita.Solicitada } : c))
-      );
-    } catch (e) {
+      setCitas(prev => prev.map(c => c.id === id ? { ...c, fechaHora: iso, estado: EstadoCita.Solicitada } : c));
+      toast.success("Cita reprogramada correctamente.");
+    } catch {
       toast.error("No se pudo reprogramar la cita.");
     }
   };
 
+  usePageTransition();
+
+  function getStatusStyles(estado: string) {
+    switch (estado?.toLowerCase()) {
+      case "confirmada": return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+      case "solicitada": return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+      case "cancelada": return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20";
+      case "noasistio": return "bg-muted text-muted-foreground border border-border";
+      default: return "bg-muted text-muted-foreground border border-border";
+    }
+  }
+
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Mis Citas</h1>
-        <p className="text-muted-foreground mt-1">Historial y próximas consultas programadas.</p>
+    <div className="space-y-6 page-content animate-in fade-in duration-500">
+      <header className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/15 via-white dark:via-slate-950 to-teal-500/15 p-6 md:p-7 shadow-sm">
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 blur-3xl opacity-50" />
+        <div className="relative z-10">
+          <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-2">
+            <Calendar className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+            Mis Citas Médicas
+          </h1>
+          <p className="text-muted-foreground font-medium mt-1">Historial y próximas consultas programadas.</p>
+        </div>
       </header>
 
       {isLoading ? (
-        <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-600" /></div>
-      ) : citas.length === 0 ? (
-        <div className="text-center py-12 bg-card rounded-2xl border border-border">
-          <CalendarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">No tienes citas agendadas.</p>
+        <div className="py-20 flex flex-col items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
+          <p className="mt-4 text-sm font-bold text-muted-foreground uppercase tracking-widest">Cargando historial...</p>
         </div>
+      ) : citas.length === 0 ? (
+        <AnimatedCard className="bg-card/50 border border-border rounded-3xl p-16 text-center shadow-sm">
+          <Calendar className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground">No tienes citas agendadas</h2>
+          <p className="text-muted-foreground mt-2 font-medium">Comienza por buscar un médico especialista.</p>
+          <a href="/paciente/medicos" className="mt-6 inline-flex bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-full font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+            Explorar Médicos
+          </a>
+        </AnimatedCard>
       ) : (
-        <div className="grid gap-4">
-          {citas.map(cita => (
-            <div key={cita.id} className="bg-card p-6 rounded-2xl border border-border flex flex-col md:flex-row gap-6 justify-between items-center hover:shadow-md transition-shadow">
-              <div className="flex gap-4 items-center">
-                <div className="bg-emerald-500/10 w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
-                  <span className="text-sm">{dayjs(cita.fechaHora).format('MMM')}</span>
-                  <span className="text-xl leading-none">{dayjs(cita.fechaHora).format('DD')}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg text-foreground">Consulta Médica</h3>
-                  <div className="flex gap-3 text-sm text-muted-foreground mt-1">
-                    <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {dayjs(cita.fechaHora).format('hh:mm A')}</span>
-                    <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> Consultorio Principal</span>
+        <div className="grid gap-5">
+          {citas.map((cita, idx) => (
+            <AnimatedCard
+              key={cita.id}
+              delay={idx * 50}
+              className="bg-card border border-border rounded-2xl p-5 hover:shadow-xl transition-all group hover:-translate-y-1"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="w-20 h-20 rounded-2xl border-2 border-emerald-500/20 bg-emerald-500/5 flex flex-col items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                    <span className="text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-tighter">
+                      {dayjs(cita.fechaHora).format("MMM")}
+                    </span>
+                    <span className="text-emerald-600 dark:text-emerald-400 text-3xl font-black">
+                      {dayjs(cita.fechaHora).format("DD")}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-foreground font-black text-xl leading-tight group-hover:text-emerald-500 transition-colors">
+                      Consulta Médica
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-4 mt-2.5">
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm font-bold">
+                        <Clock className="w-4 h-4 text-emerald-500" />
+                        <span>{dayjs(cita.fechaHora).format("hh:mm A")}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm font-bold">
+                        <MapPin className="w-4 h-4 text-emerald-500" />
+                        <span>Consultorio Principal</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusStyles(cita.estado)} shadow-sm`}>
+                    {cita.estado}
+                  </span>
+                  {(cita.estado === EstadoCita.Confirmada || cita.estado === EstadoCita.Solicitada) && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => reprogramar(cita.id)}
+                        className="px-5 py-2.5 border border-border text-foreground text-xs font-bold rounded-xl hover:bg-muted transition-all active:scale-95 shadow-sm"
+                      >
+                        Reprogramar
+                      </button>
+                      <button
+                        onClick={() => cancelar(cita.id)}
+                        className="px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl hover:bg-rose-500/20 transition-all active:scale-95 shadow-sm"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              <div className="flex items-center gap-4 w-full md:w-auto justify-end">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  cita.estado === EstadoCita.Confirmada ? 'bg-emerald-100 text-emerald-700' :
-                  cita.estado === EstadoCita.Solicitada ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
-                }`}>
-                  {cita.estado}
-                </span>
-                {(cita.estado === EstadoCita.Confirmada || cita.estado === EstadoCita.Solicitada) && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => reprogramar(cita.id)}
-                      className="text-sm font-medium text-emerald-300 hover:text-emerald-200 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2 rounded-lg transition-colors border border-emerald-500/30"
-                    >
-                      Reprogramar
-                    </button>
-                    <button
-                      onClick={() => cancelar(cita.id)}
-                      className="text-sm font-medium text-rose-300 hover:text-rose-200 bg-rose-500/10 hover:bg-rose-500/20 px-4 py-2 rounded-lg transition-colors border border-rose-500/30"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            </AnimatedCard>
           ))}
         </div>
       )}
     </div>
   );
 }
-

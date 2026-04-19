@@ -16,6 +16,15 @@ export class PagoService {
     return response.data;
   }
 
+  static async obtenerPorCita(citaId: number): Promise<PagoResponse | null> {
+    try {
+      const response = await api.get<PagoResponse>(`/api/pagos/cita/${citaId}`);
+      return response.data;
+    } catch {
+      return null;
+    }
+  }
+
   static async reembolsar(id: number): Promise<boolean> {
     const response = await api.post<{ reembolsado: boolean }>(`/api/pagos/reembolsar/${id}`);
     return response.data.reembolsado;

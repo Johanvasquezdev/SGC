@@ -1,51 +1,57 @@
 "use client";
+
+import Link from "next/link";
 import { Bell, Search } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ThemeToggle } from "@/components/theme-toggle";
-import Link from "next/link";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const initials = user?.nombre?.trim().charAt(0).toUpperCase() || "A";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <div className="flex">
-        <aside className="hidden lg:block w-72 h-screen sticky top-0">
+        <aside className="sticky top-0 hidden h-screen w-72 lg:block">
           <Sidebar />
         </aside>
 
         <div className="flex-1 min-h-screen">
-          <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur">
-            <div className="flex items-center gap-4 px-6 py-4">
-              <div className="relative flex-1 max-w-2xl">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  placeholder="Buscar usuarios, médicos, citas..."
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+          <header className="sticky top-0 z-30 border-b border-border bg-background/50 backdrop-blur-xl">
+            <div className="px-4 py-4 md:px-6">
+              <div className="mx-auto flex w-full max-w-4xl items-center justify-center gap-4">
+                <div className="relative min-w-0 max-w-2xl flex-1">
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    placeholder="Buscar usuarios, médicos, citas..."
+                    className="w-full rounded-xl border border-border bg-secondary py-2.5 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="flex shrink-0 items-center gap-3">
+                  <ThemeToggle />
+
+                  <Link
+                    href="/admin/auditoria"
+                    className="relative rounded-xl border border-border bg-secondary p-2 text-muted-foreground transition-all hover:bg-secondary/80 hover:text-foreground"
+                    aria-label="Abrir notificaciones"
+                  >
+                    <Bell className="h-5 w-5" />
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">
+                      3
+                    </span>
+                  </Link>
+
+                  <Link
+                    href="/admin/settings"
+                    aria-label="Abrir configuración de usuario"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-indigo-500/40 bg-indigo-500/20 text-sm font-semibold text-indigo-200 transition-all hover:bg-indigo-500/30"
+                  >
+                    {initials}
+                  </Link>
+                </div>
               </div>
-
-              <ThemeToggle />
-
-              <a
-                href="/admin/auditoria"
-                className="relative p-2 rounded-xl bg-card border border-border hover:bg-accent"
-              >
-                <Bell className="w-5 h-5 text-foreground" />
-                <span className="absolute -right-1 -top-1 w-4 h-4 text-[10px] bg-indigo-500 text-slate-950 rounded-full flex items-center justify-center">
-                  3
-                </span>
-              </a>
-
-              <Link
-                href="/admin/settings"
-                aria-label="Abrir configuración de usuario"
-                className="w-9 h-9 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-semibold hover:bg-indigo-500/30"
-              >
-                {initials}
-              </Link>
             </div>
           </header>
 

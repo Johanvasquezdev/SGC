@@ -1,158 +1,335 @@
 "use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Loader2, Mail, Lock, ShieldPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { AuthService } from "@/services/auth.service";
+import { ThreeBackground } from "@/components/animations/Threebackground";
+import anime from "animejs";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
+  
+  const bgGrad = isAdminLogin ? "from-indigo-900 via-indigo-800 to-indigo-600" : "${bgGrad}";
+  const shadowColor = isAdminLogin ? "shadow-indigo-500/20" : "${shadowColor}";
+  const textColor = isAdminLogin ? "text-indigo-200" : "text-emerald-200";
+  const rightBgGrad = isAdminLogin ? "from-indigo-50/50 dark:from-indigo-950/20" : "from-emerald-50/50 dark:from-emerald-950/20";
+  const focusRing = isAdminLogin ? "focus:ring-indigo-500/30 focus:border-indigo-50" : "${focusRing}";
+  const textLink = isAdminLogin ? "text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300" : "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300";
+  const btnGrad = isAdminLogin ? "from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 shadow-indigo-500/25 hover:shadow-indigo-500/30" : "from-emerald-500 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 shadow-emerald-500/25 hover:shadow-emerald-500/30";
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const formRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
+
+  // ── Entrance animations ────────────────────────────────────
+  useEffect(() => {
+    // Logo bounce in
+    anime({
+      targets: logoRef.current,
+      translateY: [-30, 0],
+      opacity: [0, 1],
+      duration: 800,
+      easing: "easeOutElastic(1, .6)",
+    });
+
+    // Form slide up
+    anime({
+      targets: formRef.current,
+      translateY: [40, 0],
+      opacity: [0, 1],
+      duration: 700,
+      delay: 200,
+      easing: "easeOutExpo",
+    });
+
+    // Feature items stagger
+    anime({
+      targets: ".feature-item",
+      translateX: [-30, 0],
+      opacity: [0, 1],
+      duration: 600,
+      delay: anime.stagger(100, { start: 400 }),
+      easing: "easeOutExpo",
+    });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     setError("");
 
-    try {
-      await AuthService.login({ email, password });
-      const raw = localStorage.getItem("medagenda_user");
-      console.log("Usuario guardado:", raw);
-      const usuario = raw ? JSON.parse(raw) : null;
-      console.log("Rol detectado:", usuario?.rol);
+    // Button press animation
+    anime({
+      targets: ".submit-btn",
+      scale: [1, 0.97, 1],
+      duration: 300,
+      easing: "easeOutElastic(1, .5)",
+    });
 
-      if (usuario?.rol === "Administrador") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/paciente/dashboard");
-      }
+    try {
+      const response = await AuthService.login({ email: form.email, password: form.password });
+
+      // Success animation before redirect
+      anime({
+        targets: formRef.current,
+        translateY: [0, -20],
+        opacity: [1, 0],
+        duration: 400,
+        easing: "easeInExpo",
+        complete: () => {
+          if (response.rol === "Administrador") router.push("/admin/dashboard");
+          else if (response.rol === "Paciente")
+            router.push("/paciente/dashboard");
+          else if (response.rol === "Medico") router.push("/medico/dashboard");
+          else router.push("/");
+        },
+      });
     } catch (err: any) {
-      setError("Credenciales inválidas. Por favor, intenta de nuevo.");
+      // Error shake animation
+      anime({
+        targets: formRef.current,
+        translateX: [-10, 10, -8, 8, -4, 4, 0],
+        duration: 500,
+        easing: "easeOutElastic(1, .3)",
+      });
+
+      const msg =
+        err?.response?.data?.message ??
+        "Credenciales incorrectas. Verifica tu email y contraseña.";
+      setError(String(msg));
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-[var(--med-navy)] text-slate-200 overflow-hidden px-4 sm:px-6 selection:bg-[var(--med-emerald)] selection:text-white font-sans">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[var(--med-emerald-glow)] blur-[120px] rounded-[100%] pointer-events-none opacity-60" />
+    <div className="min-h-screen flex relative overflow-hidden">
+      {/* ── Left Panel — Branding with 3D Background ── */}
+      <div
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden
+                      bg-gradient-to-br from-[#064e3b] via-[#065f46] to-[#059669]"
+      >
+        {/* Three.js Particles */}
+        <ThreeBackground />
 
-      <div className="relative z-10 w-full max-w-[420px] flex flex-col items-center animate-fade-in-up">
-        <div className="mb-8 flex flex-col items-center">
-          <div className="relative mb-5">
-            <div className="absolute inset-0 scale-150 rounded-2xl blur-xl opacity-40 bg-gradient-to-br from-[var(--med-emerald)] to-[var(--med-emerald-hover)]" />
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--med-emerald)] to-[var(--med-emerald-hover)] shadow-lg shadow-[var(--med-emerald-glow)]">
-              <ShieldPlus className="h-7 w-7 text-white" strokeWidth={2} />
+        {/* Content over 3D */}
+        <div
+          className="relative z-10 flex flex-col items-center justify-center
+                        p-12 w-full"
+        >
+          <div ref={logoRef} className="text-center" style={{ opacity: 0 }}>
+            <div
+              className="w-24 h-24 bg-white/10 rounded-3xl flex items-center
+                            justify-center mx-auto mb-6 backdrop-blur-sm
+                            border border-white/20 shadow-2xl
+                            shadow-emerald-500/20"
+            >
+              <span className="text-5xl">🏥</span>
             </div>
+            <h1 className="text-5xl font-bold text-white mb-2 tracking-tight">
+              MedAgenda
+            </h1>
+            <p className={`text-base font-medium max-w-md mx-auto mb-12 transition-colors duration-500 ${textColor}`}>
+              Gestiona y organiza tus citas médicas en un solo lugar, de forma rápida, segura e inteligente.
+            </p>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            MedAgenda
-          </h1>
-          <p className="mt-2 text-sm text-slate-400 font-medium">
-            Portal de Gestión Clínica
-          </p>
-        </div>
 
-        <div className="w-full bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-lg)] p-8 shadow-[var(--shadow-premium)] backdrop-blur-xl">
-          <h2 className="mb-6 text-xl font-semibold text-white tracking-tight">
-            Iniciar Sesión
-          </h2>
-
-          <form onSubmit={handleLogin} className="space-y-5" noValidate>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-300"
+          <div className="space-y-4 w-full max-w-xs">
+            {[
+              { icon: "📅", text: "Agenda tus citas fácilmente" },
+              { icon: "🔔", text: "Recordatorios automáticos" },
+              { icon: "💳", text: "Pagos seguros en línea" },
+              { icon: "🤖", text: "Asistente virtual 24/7" },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="feature-item flex items-center gap-3
+                           bg-white/10 rounded-2xl px-5 py-3.5
+                           backdrop-blur-sm border border-white/10
+                           hover:bg-white/15 transition-colors duration-200"
+                style={{ opacity: 0 }}
               >
-                Correo Electrónico
-              </label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 transition-colors duration-200 group-focus-within:text-[var(--med-emerald)]" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="dr.smith@ejemplo.com"
-                  className="w-full bg-[var(--med-navy-surface)] border border-slate-700/50 rounded-[var(--radius-md)] py-2.5 pl-11 pr-4 text-white placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--med-emerald)]/40 focus:border-[var(--med-emerald)] hover:border-slate-600 motion-reduce:transition-none"
-                  required
-                />
+                <span className="text-2xl">{item.icon}</span>
+                <span className="text-white/90 font-medium">{item.text}</span>
               </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right Panel — Form ── */}
+      <div
+        className="w-full lg:w-1/2 flex items-center justify-center
+                      p-8 bg-background relative"
+      >
+        {/* Subtle background pattern */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-br pointer-events-none transition-colors duration-500 ${rightBgGrad}`}
+        />
+
+        <div className="w-full max-w-md relative z-10 lg:translate-y-10">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground">MedAgenda</h1>
+            <p className="text-muted-foreground text-xs mt-2 max-w-[280px] mx-auto text-center">
+              Gestiona y organiza tus citas médicas en un solo lugar, de forma rápida, segura e inteligente.
+            </p>
+          </div>
+
+          <div
+            ref={formRef}
+            className="bg-card rounded-3xl shadow-2xl border border-border/50
+                       p-8 backdrop-blur-sm"
+            style={{ opacity: 0 }}
+          >
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-foreground">
+                Bienvenido de nuevo
+              </h2>
+              <p className="text-muted-foreground text-sm mt-1">
+                Ingresa tus credenciales para continuar
+              </p>
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-slate-300"
-                >
-                  Contraseña
-                </label>
-                <button
-                  type="button"
-                  className="text-sm font-medium text-[var(--med-emerald)] hover:text-white transition-colors duration-200"
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 transition-colors duration-200 group-focus-within:text-[var(--med-emerald)]" />
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-[var(--med-navy-surface)] border border-slate-700/50 rounded-[var(--radius-md)] py-2.5 pl-11 pr-4 text-white placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--med-emerald)]/40 focus:border-[var(--med-emerald)] hover:border-slate-600 motion-reduce:transition-none"
-                  required
-                />
-              </div>
+            
+            {/* Toggle Role */}
+            <div className="flex bg-secondary p-1 rounded-xl mb-6">
+              <button
+                type="button"
+                onClick={() => setIsAdminLogin(false)}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${!isAdminLogin ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Paciente
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAdminLogin(true)}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${isAdminLogin ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Administrador
+              </button>
             </div>
 
+            {/* Error */}
             {error && (
-              <div className="animate-fade-in-up rounded-[var(--radius-md)] border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
-                {error}
+              <div
+                className="flex items-start gap-2 bg-destructive/10
+                              border border-destructive/20 text-destructive
+                              rounded-2xl p-4 text-sm mb-6"
+              >
+                <span>⚠️</span>
+                <span>{error}</span>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--med-emerald)] hover:bg-[var(--med-emerald-hover)] text-white font-medium rounded-[var(--radius-md)] px-4 py-2.5 mt-2 transition-all duration-200 active:scale-[0.98] disabled:active:scale-100 disabled:opacity-70 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--med-emerald)] focus:ring-offset-2 focus:ring-offset-[var(--med-navy)] shadow-md shadow-[var(--med-emerald-glow)] motion-reduce:transition-none"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Ingresando...</span>
-                </>
-              ) : (
-                "Ingresar a mi cuenta"
-              )}
-            </button>
-          </form>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">
+                  Correo Electrónico
+                </label>
+                <div className="relative">
+                  <span
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2
+                                   text-muted-foreground text-sm"
+                  >
+                    ✉️
+                  </span>
+                  <input
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
+                    required
+                    className={`w-full pl-10 pr-4 py-3 bg-secondary border border-border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 ${focusRing}`}
+                  />
+                </div>
+              </div>
 
-          <div className="mt-8 text-center text-sm text-slate-400">
-            ¿No tienes una cuenta?{" "}
-            <Link
-              href="/registro"
-              className="font-medium text-white hover:text-[var(--med-emerald)] transition-colors duration-200"
-            >
-              Registrarme
-            </Link>
+              {/* Password */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-foreground">
+                    Contraseña
+                  </label>
+                  <button
+                    type="button"
+                    className={`text-xs hover:underline font-medium transition-colors ${textLink}`}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+                <div className="relative">
+                  <span
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2
+                                   text-muted-foreground text-sm"
+                  >
+                    🔒
+                  </span>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
+                    required
+                    className={`w-full pl-10 pr-12 py-3 bg-secondary border border-border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 ${focusRing}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2
+                               text-muted-foreground hover:text-foreground
+                               text-sm transition-colors"
+                  >
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className={`submit-btn w-full bg-gradient-to-r text-white font-semibold py-3 rounded-xl transition-all duration-500 text-sm mt-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg ${btnGrad}`}
+              >
+                {loading ? (
+                  <>
+                    <span
+                      className="w-4 h-4 border-2 border-white/30
+                                     border-t-white rounded-full animate-spin"
+                    />
+                    Iniciando sesión...
+                  </>
+                ) : (
+                  "Iniciar Sesión →"
+                )}
+              </button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-border text-center">
+              <p className="text-sm text-muted-foreground">
+                ¿No tienes cuenta?{" "}
+                <Link
+                  href="/registro"
+                  className={`font-semibold hover:underline transition-colors duration-500 ${textLink}`}
+                >
+                  Regístrate gratis
+                </Link>
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div
-          className="mt-8 text-xs text-slate-500 text-center animate-fade-in-up"
-          style={{ animationDelay: "150ms" }}
-        >
-          &copy; {new Date().getFullYear()} MedAgenda. Todos los derechos
-          reservados. <br className="sm:hidden" />
-          Seguro y en cumplimiento HIPAA.
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            MedAgenda · 2026
+          </p>
         </div>
       </div>
     </div>

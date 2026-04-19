@@ -1,20 +1,37 @@
 import api from '@/lib/api';
-import { CitaDTO, CreateCitaDTO } from '@/types/api.types';
+import { CitaDTO, CreateCitaDTO, EstadoCita } from '@/types/api.types';
 
 export class CitaService {
+  private static normalizeEstado(cita: CitaDTO): CitaDTO {
+    const estado = (cita.estado || "").toString();
+    const fecha = new Date(cita.fechaHora);
+    const ahora = new Date();
+
+    if (!estado.trim()) {
+      return { ...cita, estado: EstadoCita.Solicitada };
+    }
+
+    // Una cita futura no debería mostrarse como "NoAsistio".
+    if (estado.toLowerCase() === EstadoCita.NoAsistio.toLowerCase() && fecha > ahora) {
+      return { ...cita, estado: EstadoCita.Solicitada };
+    }
+
+    return cita;
+  }
+
   static async obtenerCitasPorPaciente(pacienteId: number): Promise<CitaDTO[]> {
     if (!pacienteId || pacienteId <= 0) return [];
     const response = await api.get<CitaDTO[]>(`/api/citas/paciente/${pacienteId}`);
-    return response.data;
+    return response.data.map((cita) => this.normalizeEstado(cita));
   }
 
   static async crearCita(citaData: CreateCitaDTO): Promise<CitaDTO> {
     const response = await api.post<CitaDTO>('/api/citas', citaData);
-    return response.data;
+    return this.normalizeEstado(response.data);
   }
   static async obtenerCitasPorMedico(medicoId: number): Promise<CitaDTO[]> {
     const response = await api.get<CitaDTO[]>(`/api/citas/medico/${medicoId}`);
-    return response.data;
+    return response.data.map((cita) => this.normalizeEstado(cita));
   }
   static async cancelarCita(citaId: number, motivo: string): Promise<void> {
     await api.put(`/api/citas/${citaId}/cancelar`, { motivo });
